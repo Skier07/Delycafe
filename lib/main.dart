@@ -1,0 +1,52 @@
+import 'package:delycafe/screens/home_screen.dart';
+import 'package:delycafe/services/address_service.dart';
+import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/order_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ),
+  );
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthService(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CartService(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrderService(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AddressService(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: HomeScreen(),
+    );
+  }
+}
