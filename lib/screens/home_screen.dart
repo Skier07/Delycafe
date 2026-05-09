@@ -9,6 +9,7 @@ import 'package:delycafe/screens/orders_screen.dart';
 import 'package:delycafe/screens/profile_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/update_service.dart';
 import 'package:delycafe/ui/components/glass/dark_glass_sheet.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -34,6 +35,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   HomeOverlayType _activeOverlay = HomeOverlayType.none;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdates(context);
+    });
+  }
 
   @override
   void didChangeDependencies() {
