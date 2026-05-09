@@ -47,78 +47,80 @@ class AddressesScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Список
-            Expanded(
-              child: addresses.isEmpty
-                  ? const Center(child: Text('Нет адресов'))
-                  : ListView.builder(
-                      itemCount: addresses.length,
-                      itemBuilder: (context, index) {
-                        final addr = addresses[index];
-                        final isSelected =
-                            index == addressService.selectedIndex;
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Список
+              Expanded(
+                child: addresses.isEmpty
+                    ? const Center(child: Text('Нет адресов'))
+                    : ListView.builder(
+                        itemCount: addresses.length,
+                        itemBuilder: (context, index) {
+                          final addr = addresses[index];
+                          final isSelected =
+                              index == addressService.selectedIndex;
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.header.withValues(alpha: 0.1)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              // Текст
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    addressService.selectAddress(index);
-                                  },
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        addr.title,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.header.withValues(alpha: 0.1)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                // Текст
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      addressService.selectAddress(index);
+                                    },
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          addr.title,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                      Text(addr.address),
-                                    ],
+                                        Text(addr.address),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
 
-                              //Удалить
-                              IconButton(
-                                onPressed: () {
-                                  addressService.removeAddress(index);
-                                },
-                                icon: const Icon(Icons.delete),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            const SizedBox(height: 12),
-
-            // Кнопка добавить
-            SizedBox(
-              width: double.infinity,
-              child: AuthButton(
-                onPressed: () {
-                  _showAddDialog(context);
-                },
-                text: 'Добавить адрес',
+                                //Удалить
+                                IconButton(
+                                  onPressed: () {
+                                    addressService.removeAddress(index);
+                                  },
+                                  icon: const Icon(Icons.delete),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+
+              // Кнопка добавить
+              SizedBox(
+                width: double.infinity,
+                child: AuthButton(
+                  onPressed: () {
+                    _showAddDialog(context);
+                  },
+                  text: 'Добавить адрес',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

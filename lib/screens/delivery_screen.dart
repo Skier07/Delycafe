@@ -29,61 +29,55 @@ class DeliveryScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text('Оплата и доставка'),
+        title: const Text('Доставка и оплата'),
         titleTextStyle: const TextStyle(
           color: Colors.white,
           fontSize: 22,
         ),
       ),
-      body: Stack(
-        children: [
-          ListView(
-            padding: const EdgeInsets.all(16),
-            children: const [
-              _SectionCard(
-                title: 'Время работы',
-                content:
-                    'Мы работаем с понедельника по четверг с 9 до 21 часа.\n'
-                    'В пятницу и субботу — с 9 до 22.\n'
-                    'В воскресенье — с 9 до 21.\n\n'
-                    'Кухня закрывается за 30 минут до конца рабочего дня.',
-              ),
-              SizedBox(height: 16),
-              _SectionCard(
-                title: 'Доставка и оплата',
-                content:
-                    'Оплата возможна через Мир, Visa, Mastercard и СБП.\n\n'
-                    'Все платежи защищены SSL.\n'
-                    'Данные карты не сохраняются.',
-              ),
-              SizedBox(height: 16),
-              _SectionCard(
-                title: 'Заказ по телефону',
-                content: '+7 (900) 022-30-22\n\n'
-                    'При заказе от 3000₽ — предоплата.\n'
-                    'Можно оплатить в кафе.',
-              ),
-              SizedBox(height: 16),
-              _SectionCard(
-                title: 'Доставка по Озёрску',
-                content: 'от 1700₽ — бесплатно\n'
-                    'от 1000 до 1700₽ — доставка 200₽\n'
-                    '< 1000₽ — доставка 250₽\n\n'
-                    'Приём заказов: 9:00 — 20:00',
-              ),
-              SizedBox(height: 16),
-              _SectionCard(
-                title: 'Доставка в Татыш',
-                content: 'Стоимость: 450₽\n'
-                    'Минимум: 2 часа\n'
-                    'Заказы: 9:00–19:00',
-              ),
-              SizedBox(height: 16),
-              _WarningCard(
-                text: 'Если нет лифта — подъём до 5 этажа бесплатный.\n'
-                    'Далее — 50₽/этаж.',
-              ),
-            ],
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          _SectionCard(
+            title: 'Время работы',
+            content: 'Мы работаем с понедельника по четверг с 9 до 21 часа.\n'
+                'В пятницу и субботу — с 9 до 22.\n'
+                'В воскресенье — с 9 до 21.\n\n'
+                'Кухня закрывается за 30 минут до конца рабочего дня.',
+          ),
+          SizedBox(height: 16),
+          _SectionCard(
+            title: 'Доставка и оплата',
+            content: 'Оплата возможна через Мир, Visa, Mastercard и СБП.\n\n'
+                'Все платежи защищены SSL.\n'
+                'Данные карты не сохраняются.',
+          ),
+          SizedBox(height: 16),
+          _SectionCard(
+            title: 'Заказ по телефону',
+            content: '+7 (900) 022-30-22\n\n'
+                'При заказе от 3000₽ — предоплата.\n'
+                'Можно оплатить в кафе.',
+          ),
+          SizedBox(height: 16),
+          _SectionCard(
+            title: 'Доставка по Озёрску',
+            content: 'от 1700₽ — бесплатно\n'
+                'от 1000 до 1700₽ — доставка 200₽\n'
+                '< 1000₽ — доставка 250₽\n\n'
+                'Приём заказов: 9:00 — 20:00',
+          ),
+          SizedBox(height: 16),
+          _SectionCard(
+            title: 'Доставка в Татыш',
+            content: 'Стоимость: 450₽\n'
+                'Минимум: 2 часа\n'
+                'Заказы: 9:00–19:00',
+          ),
+          SizedBox(height: 16),
+          _WarningCard(
+            text: 'Если нет лифта — подъём до 5 этажа бесплатный.\n'
+                'Далее — 50₽/этаж.',
           ),
         ],
       ),
@@ -102,9 +96,19 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShaderGlassContainer(
-      borderRadius: 20,
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(3, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -137,29 +141,31 @@ class _WarningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.red.withValues(alpha: 0.08),
-        border: Border.all(
-          color: Colors.red.withValues(alpha: 0.3),
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.red.withValues(alpha: 0.08),
+          border: Border.all(
+            color: Colors.red.withValues(alpha: 0.3),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.red),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.w500,
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

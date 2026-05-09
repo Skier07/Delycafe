@@ -76,11 +76,11 @@ class _HomeScreenState extends State<HomeScreen> {
           IgnorePointer(
             ignoring: _activeOverlay == HomeOverlayType.none,
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 220),
+              duration: const Duration(milliseconds: 50),
               curve: Curves.easeOut,
               opacity: _activeOverlay == HomeOverlayType.none ? 0 : 1,
               child: AnimatedSlide(
-                duration: const Duration(milliseconds: 260),
+                duration: const Duration(milliseconds: 140),
                 curve: Curves.easeOutCubic,
                 offset: _activeOverlay == HomeOverlayType.none
                     ? const Offset(1, 0)
