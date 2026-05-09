@@ -8,7 +8,7 @@ class UpdateService {
   static Future<void> checkForUpdates(BuildContext context) async {
     try {
       final response = await Dio().get(
-        'https://raw.githubusercontent.com/Skier07/Delycafe/refs/heads/main/version.json',
+        'https://raw.githubusercontent.com/Skier07/delycafe/refs/heads/main/version.json',
       );
 
       final data = response.data;
