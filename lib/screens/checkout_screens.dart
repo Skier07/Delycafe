@@ -276,12 +276,14 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                   const SizedBox(height: 30),
 
                   // Кнопка
-                  SizedBox(
-                    child: AuthButton(
-                      onPressed: () {
-                        _submitOrder(context);
-                      },
-                      text: 'Оформить заказ',
+                  SafeArea(
+                    child: SizedBox(
+                      child: AuthButton(
+                        onPressed: () {
+                          _submitOrder(context);
+                        },
+                        text: 'Оформить заказ',
+                      ),
                     ),
                   ),
                 ],
