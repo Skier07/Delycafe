@@ -56,7 +56,7 @@ class AboutScreen extends StatelessWidget {
           Positioned.fill(
             child: Column(
               children: [
-                SizedBox(height: screenHeight * 0.32),
+                SizedBox(height: screenHeight * 0.25),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

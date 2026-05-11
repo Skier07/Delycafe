@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
@@ -11,7 +13,7 @@ class UpdateService {
         'https://raw.githubusercontent.com/Skier07/Delycafe/refs/heads/main/version.json',
       );
 
-      final data = response.data;
+      final data = jsonDecode(response.data);
 
       final latestVersion = data['version'];
       final apkUrl = data['apk_url'];
