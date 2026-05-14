@@ -1,3 +1,17 @@
+class ProductVariant {
+  final String id;
+  final String title;
+  final int price;
+  final String weight;
+
+  const ProductVariant({
+    required this.id,
+    required this.title,
+    required this.price,
+    required this.weight,
+  });
+}
+
 class CatalogItem {
   final String id;
   final String title;
@@ -14,6 +28,7 @@ class CatalogItem {
   final int sortOrder;
   final String? weight;
   final String? composition;
+  final List<ProductVariant> variants;
 
   const CatalogItem({
     required this.id,
@@ -31,5 +46,6 @@ class CatalogItem {
     this.sortOrder = 0,
     this.weight,
     this.composition,
+    this.variants = const [],
   });
 }

@@ -1,10 +1,12 @@
 import 'package:delycafe/models/catalog_item.dart';
+import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final CatalogItem item;
   final VoidCallback? onAddToCart;
 
@@ -15,7 +17,51 @@ class ProductDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  ProductVariant? _selectedVariant;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.item.variants.isNotEmpty) {
+      _selectedVariant = widget.item.variants.first;
+    }
+  }
+
+  int get _currentPrice {
+    return _selectedVariant?.price ?? widget.item.price;
+  }
+
+  String get _currentWeight {
+    return _selectedVariant?.weight ?? widget.item.weight ?? 'за порцию';
+  }
+
+  void _addToCart() {
+    if (!widget.item.isAvailable) return;
+
+    context.read<CartService>().addToCart(
+          widget.item,
+          variant: _selectedVariant,
+        );
+
+    final variantText =
+        _selectedVariant != null ? ' (${_selectedVariant!.title})' : '';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${widget.item.title}$variantText добавлен в корзину'),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
       body: Stack(
@@ -61,7 +107,7 @@ class ProductDetailScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '${item.price} ₽',
+                            '$_currentPrice ₽',
                             style: const TextStyle(
                               fontSize: 30,
                               fontWeight: FontWeight.w800,
@@ -70,7 +116,7 @@ class ProductDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            item.weight ?? 'за порцию',
+                            _currentWeight,
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.black.withValues(alpha: 0.55),
@@ -78,6 +124,73 @@ class ProductDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (item.variants.isNotEmpty) ...[
+                        const SizedBox(height: 18),
+                        _InfoBlock(
+                          title: 'Выберите размер',
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: item.variants.map((variant) {
+                              final selected =
+                                  _selectedVariant?.id == variant.id;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedVariant = variant;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? AppColors.header
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: selected
+                                          ? AppColors.header
+                                          : Colors.black
+                                              .withValues(alpha: 0.12),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        variant.title,
+                                        style: TextStyle(
+                                          color: selected
+                                              ? Colors.white
+                                              : Colors.black87,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${variant.weight} · ${variant.price} ₽',
+                                        style: TextStyle(
+                                          color: selected
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.85,
+                                                )
+                                              : Colors.black54,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                       if (item.shortDescription != null &&
                           item.shortDescription!.trim().isNotEmpty) ...[
                         const SizedBox(height: 16),
@@ -207,7 +320,7 @@ class ProductDetailScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Text(
-                        '${item.price} ₽',
+                        '$_currentPrice ₽',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
@@ -220,17 +333,7 @@ class ProductDetailScreen extends StatelessWidget {
                     width: 170,
                     height: double.infinity,
                     child: GestureDetector(
-                      onTap: () {
-                        if (!item.isAvailable) return;
-                        if (onAddToCart != null) {
-                          onAddToCart!.call();
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${item.title} добавлен в корзину'),
-                          ),
-                        );
-                      },
+                      onTap: _addToCart,
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(

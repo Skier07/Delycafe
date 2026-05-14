@@ -70,16 +70,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                HomeBanner(
-                  screenHeight: screenHeight,
-                  onMenuPressed: () => _openOverlay(HomeOverlayType.menu),
-                  onAccountPressed: () => _openOverlay(HomeOverlayType.account),
-                ),
-                const CatalogSection(),
-              ],
+          CatalogSection(
+            banner: HomeBanner(
+              screenHeight: screenHeight,
+              onMenuPressed: () => _openOverlay(HomeOverlayType.menu),
+              onAccountPressed: () => _openOverlay(HomeOverlayType.account),
             ),
           ),
           IgnorePointer(

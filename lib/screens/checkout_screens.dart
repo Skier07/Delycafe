@@ -103,7 +103,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                             // Название
                             Expanded(
                               child: Text(
-                                item.product.title,
+                                item.displayTitle,
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w600),
                               ),
@@ -114,7 +114,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                               onTap: () {
                                 context
                                     .read<CartService>()
-                                    .decreaseQuantity(item.product.id);
+                                    .decreaseCartItem(item);
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(6),
@@ -142,7 +142,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                               onTap: () {
                                 context
                                     .read<CartService>()
-                                    .increaseQuantity(item.product.id);
+                                    .increaseCartItem(item);
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(6),
@@ -161,7 +161,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
 
                             // Цена
                             Text(
-                              '${item.product.price * item.quantity} ₽',
+                              '${item.unitPrice * item.quantity} ₽',
                               style: const TextStyle(
                                   fontSize: 20, fontWeight: FontWeight.w600),
                             ),

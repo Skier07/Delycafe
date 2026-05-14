@@ -5,7 +5,7 @@ const mockProfile = UserProfile(
   phone: '+7 (909) 068 50 92',
   points: 35,
   addresses: [
-    'г. Озёрск, ул. Матросова, 26, кв. 4',
+    'г. Озёрск, ул. Матросова, 00, кв. 0',
   ],
   ordersCount: 12,
   favoriteItem: 'Цыпленок барбекю',
