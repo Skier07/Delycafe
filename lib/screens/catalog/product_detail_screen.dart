@@ -128,66 +128,103 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         const SizedBox(height: 18),
                         _InfoBlock(
                           title: 'Выберите размер',
-                          child: Wrap(
-                            spacing: 10,
-                            runSpacing: 8,
-                            children: item.variants.map((variant) {
-                              final selected =
-                                  _selectedVariant?.id == variant.id;
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isSmallPhone = constraints.maxWidth < 330;
 
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedVariant = variant;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 160),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? AppColors.header
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: selected
-                                          ? AppColors.header
-                                          : Colors.black
-                                              .withValues(alpha: 0.12),
+                              final double gap = isSmallPhone ? 6 : 8;
+                              final double horizontalPadding =
+                                  isSmallPhone ? 6 : 10;
+                              final double verticalPadding =
+                                  isSmallPhone ? 10 : 12;
+                              final double titleFontSize =
+                                  isSmallPhone ? 12 : 14;
+                              final double infoFontSize =
+                                  isSmallPhone ? 10.5 : 12;
+
+                              return Row(
+                                children: List.generate(item.variants.length,
+                                    (index) {
+                                  final variant = item.variants[index];
+                                  final selected =
+                                      _selectedVariant?.id == variant.id;
+
+                                  return Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        right: index == item.variants.length - 1
+                                            ? 0
+                                            : gap,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedVariant = variant;
+                                          });
+                                        },
+                                        child: AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 160),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: horizontalPadding,
+                                            vertical: verticalPadding,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: selected
+                                                ? AppColors.header
+                                                : Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            border: Border.all(
+                                              color: selected
+                                                  ? AppColors.header
+                                                  : Colors.black
+                                                      .withValues(alpha: 0.12),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  variant.title,
+                                                  maxLines: 1,
+                                                  style: TextStyle(
+                                                    color: selected
+                                                        ? Colors.white
+                                                        : Colors.black87,
+                                                    fontSize: titleFontSize,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  '${variant.weight} · ${variant.price} ₽',
+                                                  maxLines: 1,
+                                                  style: TextStyle(
+                                                    color: selected
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.85)
+                                                        : Colors.black54,
+                                                    fontSize: infoFontSize,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        variant.title,
-                                        style: TextStyle(
-                                          color: selected
-                                              ? Colors.white
-                                              : Colors.black87,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${variant.weight} · ${variant.price} ₽',
-                                        style: TextStyle(
-                                          color: selected
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.85,
-                                                )
-                                              : Colors.black54,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                  );
+                                }),
                               );
-                            }).toList(),
+                            },
                           ),
                         ),
                       ],
