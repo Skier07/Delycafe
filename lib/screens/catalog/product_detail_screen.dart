@@ -129,7 +129,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         _InfoBlock(
                           title: 'Выберите размер',
                           child: Wrap(
-                            spacing: 8,
+                            spacing: 10,
                             runSpacing: 8,
                             children: item.variants.map((variant) {
                               final selected =
@@ -144,8 +144,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 160),
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
+                                    horizontal: 10,
+                                    vertical: 14,
                                   ),
                                   decoration: BoxDecoration(
                                     color: selected
