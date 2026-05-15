@@ -136,11 +136,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               final double horizontalPadding =
                                   isSmallPhone ? 6 : 10;
                               final double verticalPadding =
-                                  isSmallPhone ? 10 : 12;
+                                  isSmallPhone ? 14 : 16;
                               final double titleFontSize =
-                                  isSmallPhone ? 12 : 14;
+                                  isSmallPhone ? 14 : 16;
                               final double infoFontSize =
-                                  isSmallPhone ? 10.5 : 12;
+                                  isSmallPhone ? 12 : 14;
 
                               return Row(
                                 children: List.generate(item.variants.length,
