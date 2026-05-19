@@ -1,0 +1,545 @@
+import 'package:delycafe/ui/components/buttons/auth_button.dart';
+import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:flutter/material.dart';
+
+enum DeliveryType {
+  ozersk,
+  prom,
+  tatysh,
+  pickup,
+}
+
+enum DeliveryUrgency {
+  asap,
+  byTime,
+}
+
+enum PaymentMethod {
+  card,
+  sbp,
+}
+
+class GuestCheckoutData {
+  final String name;
+  final String phone;
+  final DeliveryType deliveryType;
+  final int deliveryPrice;
+  final String address;
+  final DeliveryUrgency urgency;
+  final String? deliveryTime;
+  final PaymentMethod paymentMethod;
+  final String comment;
+
+  const GuestCheckoutData({
+    required this.name,
+    required this.phone,
+    required this.deliveryType,
+    required this.deliveryPrice,
+    required this.address,
+    required this.urgency,
+    required this.deliveryTime,
+    required this.paymentMethod,
+    required this.comment,
+  });
+}
+
+class GuestCheckoutForm extends StatefulWidget {
+  final int cartTotal;
+  final String? initialPhone;
+  final void Function(GuestCheckoutData data) onSubmit;
+
+  const GuestCheckoutForm({
+    super.key,
+    required this.cartTotal,
+    this.initialPhone,
+    required this.onSubmit,
+  });
+
+  @override
+  State<GuestCheckoutForm> createState() => _GuestCheckoutFormState();
+}
+
+class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _commentController = TextEditingController();
+  final _timeController = TextEditingController();
+
+  DeliveryType _deliveryType = DeliveryType.ozersk;
+  DeliveryUrgency _urgency = DeliveryUrgency.asap;
+  PaymentMethod _paymentMethod = PaymentMethod.card;
+
+  static const int _promDeliveryPrice = 350;
+  static const int _tatyshDeliveryPrice = 450;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
+      _phoneController.text = widget.initialPhone!;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _commentController.dispose();
+    _timeController.dispose();
+    super.dispose();
+  }
+
+  int get _deliveryPrice {
+    switch (_deliveryType) {
+      case DeliveryType.ozersk:
+        if (widget.cartTotal >= 1700) return 0;
+        if (widget.cartTotal >= 1000) return 200;
+        return 250;
+
+      case DeliveryType.prom:
+        return _promDeliveryPrice;
+
+      case DeliveryType.tatysh:
+        return _tatyshDeliveryPrice;
+
+      case DeliveryType.pickup:
+        return 0;
+    }
+  }
+
+  int get _totalWithDelivery {
+    return widget.cartTotal + _deliveryPrice;
+  }
+
+  bool get _needsAddress {
+    return _deliveryType != DeliveryType.pickup;
+  }
+
+  String get _deliveryInfo {
+    switch (_deliveryType) {
+      case DeliveryType.ozersk:
+        return 'Озёрск: от 1700 ₽ бесплатно, от 1000 до 1700 ₽ - 200 ₽, до 1000 ₽ - 250';
+
+      case DeliveryType.prom:
+        return 'Промплощадка: доставка $_promDeliveryPrice ₽';
+
+      case DeliveryType.tatysh:
+        return 'Татыш: доставка $_tatyshDeliveryPrice ₽, минимальное время - около 2 часов';
+
+      case DeliveryType.pickup:
+        return 'Самовывоз: заберите заказ самостоятельно из кафе';
+    }
+  }
+
+  String _deliveryTitle(DeliveryType type) {
+    switch (type) {
+      case DeliveryType.ozersk:
+        return 'Озёрск';
+      case DeliveryType.prom:
+        return 'Промплощадка';
+      case DeliveryType.tatysh:
+        return 'Татыш';
+      case DeliveryType.pickup:
+        return 'Самовывоз';
+    }
+  }
+
+  String _paymentTitle(PaymentMethod method) {
+    switch (method) {
+      case PaymentMethod.card:
+        return 'Картой';
+      case PaymentMethod.sbp:
+        return 'СБП';
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final result = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (result == null) return;
+
+    final hour = result.hour.toString().padLeft(2, '0');
+    final minute = result.minute.toString().padLeft(2, '0');
+
+    setState(() {
+      _timeController.text = '$hour:$minute';
+    });
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final data = GuestCheckoutData(
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      deliveryType: _deliveryType,
+      deliveryPrice: _deliveryPrice,
+      address: _needsAddress ? _addressController.text.trim() : 'Самовывоз',
+      urgency: _urgency,
+      deliveryTime: _urgency == DeliveryUrgency.byTime
+          ? _timeController.text.trim()
+          : null,
+      paymentMethod: _paymentMethod,
+      comment: _commentController.text.trim(),
+    );
+
+    widget.onSubmit(data);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _BlockTitle('Контактные данные'),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _nameController,
+            textInputAction: TextInputAction.next,
+            decoration: _inputDecoration('Имя'),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Введите имя';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            textInputAction: TextInputAction.next,
+            decoration: _inputDecoration('Телефон'),
+            validator: (value) {
+              final text = value?.trim() ?? '';
+
+              if (text.isEmpty) {
+                return 'Введите телефон';
+              }
+              if (text.length < 10) {
+                return 'Введите номер полностью';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 24),
+          const _BlockTitle('Способ получения'),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.7,
+            children: DeliveryType.values.map((type) {
+              return _ChoiceCard(
+                title: _deliveryTitle(type),
+                selected: _deliveryType == type,
+                onTap: () {
+                  setState(() {
+                    _deliveryType = type;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.header.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              _deliveryInfo,
+              style: TextStyle(
+                height: 1.45,
+                fontSize: 14,
+                color: Colors.black.withValues(alpha: 0.78),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (_needsAddress) ...[
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _addressController,
+              textInputAction: TextInputAction.next,
+              decoration: _inputDecoration('Адрес доставки'),
+              validator: (value) {
+                if (!_needsAddress) return null;
+
+                if (value == null || value.trim().isEmpty) {
+                  return 'Введите адрес доставки';
+                }
+                return null;
+              },
+            ),
+          ],
+          const SizedBox(height: 24),
+          const _BlockTitle('Когда доставить'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ChoiceCard(
+                  title: 'Как можно скорее',
+                  selected: _urgency == DeliveryUrgency.asap,
+                  onTap: () {
+                    setState(() {
+                      _urgency = DeliveryUrgency.asap;
+                      _timeController.clear();
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ChoiceCard(
+                  title: 'Ко времени',
+                  selected: _urgency == DeliveryUrgency.byTime,
+                  onTap: () {
+                    setState(() {
+                      _urgency = DeliveryUrgency.byTime;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          if (_urgency == DeliveryUrgency.byTime) ...[
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _timeController,
+              readOnly: true,
+              onTap: _pickTime,
+              decoration: _inputDecoration('Выберите время'),
+              validator: (value) {
+                if (_urgency == DeliveryUrgency.byTime &&
+                    (value == null || value.trim().isEmpty)) {
+                  return 'Выберите время';
+                }
+                return null;
+              },
+            ),
+          ],
+          const SizedBox(height: 24),
+          const _BlockTitle('Оплата'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ChoiceCard(
+                  title: _paymentTitle(PaymentMethod.card),
+                  selected: _paymentMethod == PaymentMethod.card,
+                  onTap: () {
+                    setState(() {
+                      _paymentMethod = PaymentMethod.card;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ChoiceCard(
+                  title: _paymentTitle(PaymentMethod.sbp),
+                  selected: _paymentMethod == PaymentMethod.sbp,
+                  onTap: () {
+                    setState(() {
+                      _paymentMethod = PaymentMethod.sbp;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const _BlockTitle('Комментарий'),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _commentController,
+            maxLines: 3,
+            decoration: _inputDecoration('Комментарий к заказу'),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _PriceRow(
+                  title: 'Товары',
+                  value:
+                      _deliveryPrice == 0 ? 'Бесплатно' : '$_deliveryPrice ₽',
+                ),
+                const Divider(height: 24),
+                _PriceRow(
+                  title: 'Итого',
+                  value: '$_totalWithDelivery ₽',
+                  isTotal: true,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          SafeArea(
+            top: false,
+            child: AuthButton(
+              text: 'Оформить заказ',
+              onPressed: _submit,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: AppColors.header,
+          width: 1.4,
+        ),
+      ),
+    );
+  }
+}
+
+class _ChoiceCard extends StatelessWidget {
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ChoiceCard({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 12,
+        ),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.header : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected
+                ? AppColors.header
+                : Colors.black.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black87,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlockTitle extends StatelessWidget {
+  final String text;
+
+  const _BlockTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 19,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  final String title;
+  final String value;
+  final bool isTotal;
+
+  const _PriceRow({
+    required this.title,
+    required this.value,
+    this.isTotal = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: isTotal ? 18 : 15,
+            fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
+            color: Colors.black.withValues(alpha: isTotal ? 1 : 0.65),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 20 : 15,
+            fontWeight: isTotal ? FontWeight.w800 : FontWeight.w600,
+            color: isTotal ? AppColors.header : Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
