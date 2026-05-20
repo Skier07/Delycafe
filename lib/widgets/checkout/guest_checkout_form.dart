@@ -185,78 +185,87 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     await showCupertinoModalPopup(
       context: context,
       builder: (context) {
-        return Container(
-          height: 320,
+        return Material(
           color: Colors.white,
-          child: SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 52,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Отмена',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+            ),
+            child: SizedBox(
+              height: 320,
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 52,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Отмена',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const Text(
-                        'Выберите время',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          final hour =
-                              selectedDateTime.hour.toString().padLeft(2, '0');
-                          final minute = selectedDateTime.minute
-                              .toString()
-                              .padLeft(2, '0');
-
-                          setState(() {
-                            _timeController.text = '$hour:$minute';
-                          });
-
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Готово',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                          const Text(
+                            'Выберите время',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
+                          TextButton(
+                            onPressed: () {
+                              final hour = selectedDateTime.hour
+                                  .toString()
+                                  .padLeft(2, '0');
+                              final minute = selectedDateTime.minute
+                                  .toString()
+                                  .padLeft(2, '0');
+
+                              setState(() {
+                                _timeController.text = '$hour:$minute';
+                              });
+
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Готово',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.time,
+                        use24hFormat: true,
+                        minuteInterval: minuteInterval,
+                        initialDateTime: selectedDateTime,
+                        onDateTimeChanged: (DateTime value) {
+                          selectedDateTime = value;
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const Divider(height: 1),
-                Expanded(
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.time,
-                    use24hFormat: true,
-                    minuteInterval: minuteInterval,
-                    initialDateTime: selectedDateTime,
-                    onDateTimeChanged: (DateTime value) {
-                      selectedDateTime = value;
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -599,7 +608,7 @@ class _ChoiceCard extends StatelessWidget {
           maxLines: 2,
           style: TextStyle(
             color: selected ? Colors.white : Colors.black87,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
