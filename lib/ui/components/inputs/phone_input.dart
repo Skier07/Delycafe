@@ -65,7 +65,7 @@ class PhoneInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     // сколько цифр было ДО курсора
-    int digitsBeforeCursor = _countDigits(
+    var digitsBeforeCursor = _countDigits(
       newValue.text.substring(0, newValue.selection.start),
     );
 
@@ -86,7 +86,7 @@ class PhoneInputFormatter extends TextInputFormatter {
     final formatted = _format(digits);
 
     // пересчитываем позицию курсора
-    int newCursorPosition = _calculateCursorPosition(
+    var newCursorPosition = _calculateCursorPosition(
       formatted,
       digitsBeforeCursor,
     );

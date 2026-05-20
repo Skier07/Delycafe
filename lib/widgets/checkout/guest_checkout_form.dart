@@ -1,6 +1,8 @@
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 enum DeliveryType {
   ozersk,
@@ -60,6 +62,11 @@ class GuestCheckoutForm extends StatefulWidget {
 }
 
 class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
+  bool get _isPhoneComplete {
+    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    return digits.length == 10;
+  }
+
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -80,7 +87,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     super.initState();
 
     if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
-      _phoneController.text = widget.initialPhone!;
+      _phoneController.text = PhoneInputFormatter.formatDigits(
+        widget.initialPhone!,
+      );
     }
   }
 
@@ -159,26 +168,118 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   Future<void> _pickTime() async {
-    final result = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
+    const minuteInterval = 5;
+
+    final now = DateTime.now();
+
+    final roundedMinute = (now.minute / minuteInterval).ceil() * minuteInterval;
+
+    var selectedDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      roundedMinute,
     );
-    if (result == null) return;
 
-    final hour = result.hour.toString().padLeft(2, '0');
-    final minute = result.minute.toString().padLeft(2, '0');
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return Container(
+          height: 320,
+          color: Colors.white,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 52,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Отмена',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        'Выберите время',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          final hour =
+                              selectedDateTime.hour.toString().padLeft(2, '0');
+                          final minute = selectedDateTime.minute
+                              .toString()
+                              .padLeft(2, '0');
 
-    setState(() {
-      _timeController.text = '$hour:$minute';
-    });
+                          setState(() {
+                            _timeController.text = '$hour:$minute';
+                          });
+
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Готово',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    use24hFormat: true,
+                    minuteInterval: minuteInterval,
+                    initialDateTime: selectedDateTime,
+                    onDateTimeChanged: (DateTime value) {
+                      selectedDateTime = value;
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    final phoneDigits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    if (phoneDigits.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Введите номер телефона полностью'),
+        ),
+      );
+      return;
+    }
+    final fullPhone = '+7$phoneDigits';
 
     final data = GuestCheckoutData(
       name: _nameController.text.trim(),
-      phone: _phoneController.text.trim(),
+      phone: fullPhone,
       deliveryType: _deliveryType,
       deliveryPrice: _deliveryPrice,
       address: _needsAddress ? _addressController.text.trim() : 'Самовывоз',
@@ -218,16 +319,27 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
-            decoration: _inputDecoration('Телефон'),
+            inputFormatters: [
+              PhoneInputFormatter(),
+            ],
+            decoration: _inputDecoration(
+              'Телефон',
+              prefixText: '+7 ',
+            ),
+            onChanged: (_) {
+              setState(() {});
+            },
             validator: (value) {
-              final text = value?.trim() ?? '';
+              final digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
 
-              if (text.isEmpty) {
+              if (digits.isEmpty) {
                 return 'Введите телефон';
               }
-              if (text.length < 10) {
+
+              if (digits.length != 10) {
                 return 'Введите номер полностью';
               }
+
               return null;
             },
           ),
@@ -390,7 +502,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             child: Column(
               children: [
                 _PriceRow(
-                  title: 'Товары',
+                  title: 'Доставка',
                   value:
                       _deliveryPrice == 0 ? 'Бесплатно' : '$_deliveryPrice ₽',
                 ),
@@ -408,7 +520,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             top: false,
             child: AuthButton(
               text: 'Оформить заказ',
-              onPressed: _submit,
+              onPressed: _isPhoneComplete ? _submit : null,
             ),
           ),
         ],
@@ -416,9 +528,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
+  InputDecoration _inputDecoration(String label, {String? prefixText}) {
     return InputDecoration(
       labelText: label,
+      prefixText: prefixText,
+      prefixStyle: const TextStyle(
+        color: Colors.black45,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
@@ -541,5 +659,99 @@ class _PriceRow extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class PhoneInputFormatter extends TextInputFormatter {
+  static String formatDigits(String input) {
+    var digits = input.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length == 11 &&
+        (digits.startsWith('7') || digits.startsWith('8'))) {
+      digits = digits.substring(1);
+    }
+
+    if (digits.length > 10) {
+      digits = digits.substring(0, 10);
+    }
+
+    return _format(digits);
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var cursorPosition = newValue.selection.start;
+
+    if (cursorPosition < 0) {
+      cursorPosition = newValue.text.length;
+    }
+
+    var digitsBeforeCursor = _countDigits(
+      newValue.text.substring(0, cursorPosition),
+    );
+
+    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length == 11 &&
+        (digits.startsWith('7') || digits.startsWith('8'))) {
+      digits = digits.substring(1);
+    }
+
+    if (digits.length > 10) {
+      digits = digits.substring(0, 10);
+    }
+
+    if (digitsBeforeCursor > digits.length) {
+      digitsBeforeCursor = digits.length;
+    }
+
+    final formatted = _format(digits);
+
+    final newCursorPosition = _calculateCursorPosition(
+      formatted,
+      digitsBeforeCursor,
+    );
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: newCursorPosition),
+    );
+  }
+
+  static int _countDigits(String text) {
+    return text.replaceAll(RegExp(r'\D'), '').length;
+  }
+
+  static String _format(String digits) {
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < digits.length; i++) {
+      if (i == 3 || i == 6 || i == 8) {
+        buffer.write(' ');
+      }
+
+      buffer.write(digits[i]);
+    }
+
+    return buffer.toString();
+  }
+
+  int _calculateCursorPosition(String formatted, int digitIndex) {
+    var digitCount = 0;
+
+    for (var i = 0; i < formatted.length; i++) {
+      if (RegExp(r'\d').hasMatch(formatted[i])) {
+        digitCount++;
+      }
+
+      if (digitCount == digitIndex) {
+        return i + 1;
+      }
+    }
+
+    return formatted.length;
   }
 }

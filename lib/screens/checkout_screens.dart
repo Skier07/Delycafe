@@ -1,61 +1,31 @@
 import 'package:delycafe/models/order.dart';
-import 'package:delycafe/screens/addresses_screen.dart';
-import 'package:delycafe/services/address_service.dart';
+import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/order_service.dart';
-import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/widgets/checkout/guest_checkout_form.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class CheckoutScreens extends StatefulWidget {
+class CheckoutScreens extends StatelessWidget {
   const CheckoutScreens({super.key});
-
-  @override
-  State<CheckoutScreens> createState() => _CheckoutScreensState();
-}
-
-class _CheckoutScreensState extends State<CheckoutScreens> {
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _commentController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    final addressService = context.read<AddressService>();
-
-    if (addressService.selectedAddress != null) {
-      _addressController.text = addressService.selectedAddress!.address;
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    final addressService = context.read<AddressService>();
-
-    if (addressService.selectedAddress != null &&
-        _addressController.text.isEmpty) {
-      _addressController.text = addressService.selectedAddress!.address;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
-    final addressService = context.watch<AddressService>();
-    final selected = addressService.selectedAddress;
+    final auth = context.watch<AuthService>();
+    final user = auth.currentUser;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFEF7FF),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: AppColors.header,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 64,
         titleSpacing: 16,
         title: Row(
           children: [
@@ -82,34 +52,271 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
       ),
       body: cart.items.isEmpty
           ? const Center(
-              child: Text('Корзина пуста'),
+              child: Text(
+                'Корзина пуста',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Товары
-                  Column(
-                    children: cart.items.map((item) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            // Название
-                            Expanded(
-                              child: Text(
-                                item.displayTitle,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w600),
-                              ),
-                            ),
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              children: [
+                _CartSummaryCard(cart: cart),
+                const SizedBox(height: 24),
+                GuestCheckoutForm(
+                  cartTotal: cart.totalPrice,
+                  initialPhone: user?.phone,
+                  onSubmit: (data) {
+                    _submitOrder(
+                      context: context,
+                      cart: cart,
+                      data: data,
+                    );
+                  },
+                ),
+              ],
+            ),
+    );
+  }
 
-                            // Кнопка -
+  void _submitOrder({
+    required BuildContext context,
+    required CartService cart,
+    required GuestCheckoutData data,
+  }) {
+    final orderService = context.read<OrderService>();
+
+    final deliveryText = _deliveryTypeTitle(data.deliveryType);
+    final urgencyText = _urgencyTitle(data);
+    final paymentText = _paymentTitle(data.paymentMethod);
+
+    final orderItems = [
+      ...cart.items.map(
+        (item) =>
+            '${item.displayTitle} x${item.quantity} — ${item.totalPrice} ₽',
+      ),
+      'Получение: $deliveryText',
+      'Доставка: ${data.deliveryPrice == 0 ? 'Бесплатно' : '${data.deliveryPrice} ₽'}',
+      'Адрес: ${data.address}',
+      'Время: $urgencyText',
+      'Оплата: $paymentText',
+      if (data.comment.trim().isNotEmpty) 'Комментарий: ${data.comment}',
+      'Клиент: ${data.name}',
+      'Телефон: ${data.phone}',
+    ];
+
+    final order = Order(
+      items: orderItems,
+      totalPrice: cart.totalPrice + data.deliveryPrice,
+      date: DateTime.now(),
+    );
+
+    orderService.addOrder(order);
+    cart.clearCart();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Заказ оформлен'),
+      ),
+    );
+
+    Navigator.pop(context);
+  }
+
+  String _deliveryTypeTitle(DeliveryType type) {
+    switch (type) {
+      case DeliveryType.ozersk:
+        return 'Озёрск';
+      case DeliveryType.prom:
+        return 'Промплощадка';
+      case DeliveryType.tatysh:
+        return 'Татыш';
+      case DeliveryType.pickup:
+        return 'Самовывоз';
+    }
+  }
+
+  String _urgencyTitle(GuestCheckoutData data) {
+    switch (data.urgency) {
+      case DeliveryUrgency.asap:
+        return 'Как можно скорее';
+      case DeliveryUrgency.byTime:
+        return 'Ко времени: ${data.deliveryTime}';
+    }
+  }
+
+  String _paymentTitle(PaymentMethod method) {
+    switch (method) {
+      case PaymentMethod.card:
+        return 'Картой';
+      case PaymentMethod.sbp:
+        return 'СБП';
+    }
+  }
+}
+
+class _CartSummaryCard extends StatelessWidget {
+  final CartService cart;
+
+  const _CartSummaryCard({
+    required this.cart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ваш заказ',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...cart.items.map((item) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.displayTitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                        ),
+                        if (item.displayWeight.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            item.displayWeight,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '${item.unitPrice} ₽ за шт.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () {
+                      context.read<CartService>().decreaseCartItem(item);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.remove, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${item.quantity}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      context.read<CartService>().increaseCartItem(item);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.header,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      '${item.totalPrice} ₽',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.header,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const Divider(height: 22),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Товары',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '${cart.totalPrice} ₽',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.header,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* // Кнопка -
                             GestureDetector(
                               onTap: () {
                                 context
@@ -157,166 +364,4 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-
-                            // Цена
-                            Text(
-                              '${item.unitPrice * item.quantity} ₽',
-                              style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Итог
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Итого:',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      Text(
-                        '${cart.totalPrice} ₽',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Телефон
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      labelText: 'Телефон',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Адрес
-                  if (selected != null) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.header.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              selected.address,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  TextField(
-                    controller: _addressController,
-                    decoration: InputDecoration(
-                      labelText: 'Адрес доставки',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AddressesScreen(),
-                        ),
-                      );
-
-                      final addressService = context.read<AddressService>();
-
-                      if (addressService.selectedAddress != null) {
-                        setState(() {
-                          _addressController.text =
-                              addressService.selectedAddress!.address;
-                        });
-                      }
-                    },
-                    child: const Text('Выбрать из сохранённых'),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Комментарий
-                  TextField(
-                    controller: _commentController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: 'Комментарий',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Кнопка
-                  SafeArea(
-                    child: SizedBox(
-                      child: AuthButton(
-                        onPressed: () {
-                          _submitOrder(context);
-                        },
-                        text: 'Оформить заказ',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-    );
-  }
-
-  void _submitOrder(BuildContext context) {
-    final cart = context.read<CartService>();
-    final orderService = context.read<OrderService>();
-
-    if (_phoneController.text.isEmpty || _addressController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Заполни телефон и адрес')),
-      );
-      return;
-    }
-
-    final order = Order(
-      items:
-          cart.items.map((e) => '${e.product.title} x${e.quantity}').toList(),
-      totalPrice: cart.totalPrice,
-      date: DateTime.now(),
-    );
-    orderService.addOrder(order);
-
-    cart.clearCart();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Заказ оформлен (mock)')),
-    );
-    // context.read<CartService>().clearCart();
-    Navigator.pop(context);
-  }
-}
+                            const SizedBox(width: 12), */
