@@ -1,0 +1,789 @@
+{
+  "226": {
+    "image": "assets/images/pizza/picca_zlodeyka.jpg",
+    "weight": "400",
+    "description": "Колбаски Баварские, мясной фарш, огурчики маринованные, лук красный маринованный, сыр, зелень, соусы Сальса и Фирменный",
+    "isHit": true
+  },
+  "227": {
+    "image": "assets/images/pizza/picca_zlodeyka.jpg",
+    "weight": "400",
+    "description": "Колбаски Баварские, мясной фарш, огурчики маринованные, лук красный маринованный, сыр, зелень, соусы Сальса и Фирменный",
+    "isHit": true
+  },
+  "228": {
+    "image": "assets/images/pizza/picca_zlodeyka.jpg",
+    "weight": "400",
+    "description": "Колбаски Баварские, мясной фарш, огурчики маринованные, лук красный маринованный, сыр, зелень, соусы Сальса и Фирменный",
+    "isHit": true
+  },
+  "867": {
+    "image": "assets/images/potato/zapechennyy_kartofel.jpg",
+    "weight": "350",
+    "description": "Картофель, запеченный в фольге, сливочное масло, молоко, сыры Голландский и Моцарелла",
+    "isNew": true
+  },
+  "537": {
+    "image": "assets/images/sauces/sous_syrnyy.jpg",
+    "weight": "1 шт",
+    "description": "Соус сырный"
+  },
+  "382": {
+    "image": "assets/images/desserts/chizkeyk_klubnika.jpg",
+    "description": "Только натуральные ингредиенты",
+    "weight": "1 шт"
+  },
+  "943": {
+    "image": "assets/images/pizza/picca_ugor_s_unagi.jpg",
+    "description": "Жареный угорь, томат, сыр сливочный, сыр Моцарелла, салат Чука, сливочно-чесночный соус, соус Унаги, зелень",
+    "weight": "750",
+    "isNew": true,
+    "isHit": true
+  },
+  "944": {
+    "image": "assets/images/pizza/picca_ugor_s_unagi.jpg",
+    "description": "Жареный угорь, томат, сыр сливочный, сыр Моцарелла, салат Чука, сливочно-чесночный соус, соус Унаги, зелень",
+    "weight": "750",
+    "isNew": true,
+    "isHit": true
+  },
+  "890": {
+    "image": "assets/images/pizza/picca_fantaziya.jpg",
+    "description": "Курица варёно- копченая, фасоль красная, помидор, Морковь по- корейски, соус сливочно - чесночный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "400"
+  },
+  "891": {
+    "image": "assets/images/pizza/picca_fantaziya.jpg",
+    "description": "Курица варёно- копченая, фасоль красная, помидор, Морковь по- корейски, соус сливочно - чесночный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "400"
+  },
+  "892": {
+    "image": "assets/images/pizza/picca_fantaziya.jpg",
+    "description": "Курица варёно- копченая, фасоль красная, помидор, Морковь по- корейски, соус сливочно - чесночный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "400"
+  },
+  "909": {
+    "image": "assets/images/pizza/pikantnyy_losos.jpg",
+    "description": "Лосось, cливочный соус, соус Спайси, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "700",
+    "isNew": true,
+    "isHit": true
+  },
+  "910": {
+    "image": "assets/images/pizza/pikantnyy_losos.jpg",
+    "description": "Лосось, cливочный соус, соус Спайси, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "700",
+    "isNew": true,
+    "isHit": true
+  },
+  "911": {
+    "image": "assets/images/pizza/pikantnyy_losos.jpg",
+    "description": "Лосось, cливочный соус, соус Спайси, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "700",
+    "isNew": true,
+    "isHit": true
+  },
+  "906": {
+    "image": "assets/images/pizza/slivochnyy_losos.jpg",
+    "description": "Лосось, Сливочный соус , сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "700",
+    "isNew": true
+  },
+  "907": {
+    "image": "assets/images/pizza/slivochnyy_losos.jpg",
+    "description": "Лосось, Сливочный соус , сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "700",
+    "isNew": true
+  },
+  "908": {
+    "image": "assets/images/pizza/slivochnyy_losos.jpg",
+    "description": "Лосось, Сливочный соус , сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "700",
+    "isNew": true
+  },
+  "850": {
+    "image": "assets/images/pizza/picca_morskoy_briz.jpg",
+    "description": "Состав : Семга, брокколи, сыр Моцареллла, сыр Голландский, сливочный соус, зелень",
+    "weight": "400",
+    "isNew": true,
+    "isHit": true
+  },
+  "851": {
+    "image": "assets/images/pizza/picca_morskoy_briz.jpg",
+    "description": "Состав : Семга, брокколи, сыр Моцареллла, сыр Голландский, сливочный соус, зелень",
+    "weight": "400",
+    "isNew": true,
+    "isHit": true
+  },
+  "852": {
+    "image": "assets/images/pizza/picca_morskoy_briz.jpg",
+    "description": "Состав : Семга, брокколи, сыр Моцареллла, сыр Голландский, сливочный соус, зелень",
+    "weight": "400",
+    "isNew": true,
+    "isHit": true
+  },
+  "208": {
+    "image": "assets/images/pizza/golodnyy_myasnik.jpg",
+    "description": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус томатный, сыр, оливки, зелень",
+    "weight": "400",
+    "isHit": true
+  },
+  "209": {
+    "image": "assets/images/pizza/golodnyy_myasnik.jpg",
+    "description": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус томатный, сыр, оливки, зелень",
+    "weight": "400",
+    "isHit": true
+  },
+  "210": {
+    "image": "assets/images/pizza/golodnyy_myasnik.jpg",
+    "description": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус томатный, сыр, оливки, зелень",
+    "weight": "400",
+    "isHit": true
+  },
+  "928": {
+    "image": "assets/images/pizza/golodnyy_myasnik_chili.jpg",
+    "description": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус острый, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "929": {
+    "image": "assets/images/pizza/golodnyy_myasnik_chili.jpg",
+    "description": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус острый, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "930": {
+    "image": "assets/images/pizza/golodnyy_myasnik_chili.jpg",
+    "description": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус острый, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "855": {
+    "image": "assets/images/pizza/picca_markiza.jpg",
+    "description": "Сервелат элитный, курочка варено-копченая, томат, кетчуп, соус фирменный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "400",
+    "isNew": true
+  },
+  "856": {
+    "image": "assets/images/pizza/picca_markiza.jpg",
+    "description": "Сервелат элитный, курочка варено-копченая, томат, кетчуп, соус фирменный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "400",
+    "isNew": true
+  },
+  "857": {
+    "image": "assets/images/pizza/picca_markiza.jpg",
+    "description": "Сервелат элитный, курочка варено-копченая, томат, кетчуп, соус фирменный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "weight": "400",
+    "isNew": true
+  },
+  "238": {
+    "image": "assets/images/pizza/picca_mister_bekon.jpg",
+    "description": "Бекон, томат, лук красный маринованный, жареный лук-фри, соус сливочно-чесночный, сыр, зелень",
+    "weight": "400"
+  },
+  "239": {
+    "image": "assets/images/pizza/picca_mister_bekon.jpg",
+    "description": "Бекон, томат, лук красный маринованный, жареный лук-фри, соус сливочно-чесночный, сыр, зелень",
+    "weight": "400"
+  },
+  "240": {
+    "image": "assets/images/pizza/picca_mister_bekon.jpg",
+    "description": "Бекон, томат, лук красный маринованный, жареный лук-фри, соус сливочно-чесночный, сыр, зелень",
+    "weight": "400"
+  },
+  "211": {
+    "image": "assets/images/pizza/picca_gribnaya.jpg",
+    "description": "Грибы, соус картофельно-чесночный, сыр, оливки, зелень, жареный лучок",
+    "weight": "400"
+  },
+  "212": {
+    "image": "assets/images/pizza/picca_gribnaya.jpg",
+    "description": "Грибы, соус картофельно-чесночный, сыр, оливки, зелень, жареный лучок",
+    "weight": "400"
+  },
+  "213": {
+    "image": "assets/images/pizza/picca_gribnaya.jpg",
+    "description": "Грибы, соус картофельно-чесночный, сыр, оливки, зелень, жареный лучок",
+    "weight": "400"
+  },
+  "223": {
+    "image": "assets/images/pizza/picca_zhguchaya_chika.jpg",
+    "description": "Соус жгуче-острый Сальса, копченая куриная грудка, острый перец Халапеньо, шампиньоны, помидоры, болгарский перец, сыр, оливки, зелень",
+    "weight": "400",
+    "isHit": true
+  },
+  "224": {
+    "image": "assets/images/pizza/picca_zhguchaya_chika.jpg",
+    "description": "Соус жгуче-острый Сальса, копченая куриная грудка, острый перец Халапеньо, шампиньоны, помидоры, болгарский перец, сыр, оливки, зелень",
+    "weight": "400",
+    "isHit": true
+  },
+  "225": {
+    "image": "assets/images/pizza/picca_zhguchaya_chika.jpg",
+    "description": "Соус жгуче-острый Сальса, копченая куриная грудка, острый перец Халапеньо, шампиньоны, помидоры, болгарский перец, сыр, оливки, зелень",
+    "weight": "400",
+    "isHit": true
+  },
+  "256": {
+    "image": "assets/images/pizza/picca_proshutto.jpg",
+    "description": "Курица-гриль, шампиньоны жаренные с луком, соус томатный, соус сливочно-чесночный, сыр, оливки, помидоры, зелень",
+    "weight": "400"
+  },
+  "257": {
+    "image": "assets/images/pizza/picca_proshutto.jpg",
+    "description": "Курица-гриль, шампиньоны жаренные с луком, соус томатный, соус сливочно-чесночный, сыр, оливки, помидоры, зелень",
+    "weight": "400"
+  },
+  "258": {
+    "image": "assets/images/pizza/picca_proshutto.jpg",
+    "description": "Курица-гриль, шампиньоны жаренные с луком, соус томатный, соус сливочно-чесночный, сыр, оливки, помидоры, зелень",
+    "weight": "400"
+  },
+  "214": {
+    "image": "assets/images/pizza/picca_derevenskaya_s_kuricey.jpg",
+    "description": "Куриная грудка, картофель,соус Портабелло, лук красный, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "215": {
+    "image": "assets/images/pizza/picca_derevenskaya_s_kuricey.jpg",
+    "description": "Куриная грудка, картофель,соус Портабелло, лук красный, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "216": {
+    "image": "assets/images/pizza/picca_derevenskaya_s_kuricey.jpg",
+    "description": "Куриная грудка, картофель,соус Портабелло, лук красный, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "232": {
+    "image": "assets/images/pizza/picca_korona.jpg",
+    "description": "Копченая курочка, кукуруза, болгарский перчик, сыр, томаты, сливочно-чесночный соус, оливки, зелень",
+    "weight": "400"
+  },
+  "233": {
+    "image": "assets/images/pizza/picca_korona.jpg",
+    "description": "Копченая курочка, кукуруза, болгарский перчик, сыр, томаты, сливочно-чесночный соус, оливки, зелень",
+    "weight": "400"
+  },
+  "234": {
+    "image": "assets/images/pizza/picca_korona.jpg",
+    "description": "Копченая курочка, кукуруза, болгарский перчик, сыр, томаты, сливочно-чесночный соус, оливки, зелень",
+    "weight": "400"
+  },
+  "229": {
+    "image": "assets/images/pizza/picca_karbonara.jpg",
+    "description": "Ветчина, свинина варено-копченая, яйцо, сыры Моцарелла и Пармезан, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "230": {
+    "image": "assets/images/pizza/picca_karbonara.jpg",
+    "description": "Ветчина, свинина варено-копченая, яйцо, сыры Моцарелла и Пармезан, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "231": {
+    "image": "assets/images/pizza/picca_karbonara.jpg",
+    "description": "Ветчина, свинина варено-копченая, яйцо, сыры Моцарелла и Пармезан, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "262": {
+    "image": "assets/images/pizza/picca_cezar.jpg",
+    "description": "Куриная грудка, пекинская капуста, сливочно-чесночный соус, помидоры, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "263": {
+    "image": "assets/images/pizza/picca_cezar.jpg",
+    "description": "Куриная грудка, пекинская капуста, сливочно-чесночный соус, помидоры, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "264": {
+    "image": "assets/images/pizza/picca_cezar.jpg",
+    "description": "Куриная грудка, пекинская капуста, сливочно-чесночный соус, помидоры, сыр, оливки, зелень",
+    "weight": "400"
+  },
+  "235": {
+    "image": "assets/images/pizza/picca_margarita.jpg",
+    "description": "Итальянские травы, томатный соус, сыр Моцарелла, помидоры, оливки, зелень",
+    "weight": "400"
+  },
+  "236": {
+    "image": "assets/images/pizza/picca_margarita.jpg",
+    "description": "Итальянские травы, томатный соус, сыр Моцарелла, помидоры, оливки, зелень",
+    "weight": "400"
+  },
+  "237": {
+    "image": "assets/images/pizza/picca_margarita.jpg",
+    "description": "Итальянские травы, томатный соус, сыр Моцарелла, помидоры, оливки, зелень",
+    "weight": "400"
+  },
+  "196": {
+    "image": "assets/images/pizza/picca_assorti.jpg",
+    "description": "Сервелат элитный, ветчина, свинина варено-копченая, шампиньоны жаренные с луком, сыр, помидоры, соус томатный, оливки, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "197": {
+    "image": "assets/images/pizza/picca_assorti.jpg",
+    "description": "Сервелат элитный, ветчина, свинина варено-копченая, шампиньоны жаренные с луком, сыр, помидоры, соус томатный, оливки, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "198": {
+    "image": "assets/images/pizza/picca_assorti.jpg",
+    "description": "Сервелат элитный, ветчина, свинина варено-копченая, шампиньоны жаренные с луком, сыр, помидоры, соус томатный, оливки, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "202": {
+    "image": "assets/images/pizza/picca_vecherinka.jpg",
+    "description": "Ветчина, шампиньоны, жареный лук, томатный соус, помидоры, сыр, оливки, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "203": {
+    "image": "assets/images/pizza/picca_vecherinka.jpg",
+    "description": "Ветчина, шампиньоны, жареный лук, томатный соус, помидоры, сыр, оливки, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "204": {
+    "image": "assets/images/pizza/picca_vecherinka.jpg",
+    "description": "Ветчина, шампиньоны, жареный лук, томатный соус, помидоры, сыр, оливки, зелень, соус сливочно-чесночный",
+    "weight": "400"
+  },
+  "268": {
+    "image": "assets/images/pizza/picca_chiken.jpg",
+    "description": "Курица копченая, морковь по-корейски, помидоры, сыр, соус сливочно-чесночный, оливки, зелень",
+    "weight": "400"
+  },
+  "269": {
+    "image": "assets/images/pizza/picca_chiken.jpg",
+    "description": "Курица копченая, морковь по-корейски, помидоры, сыр, соус сливочно-чесночный, оливки, зелень",
+    "weight": "400"
+  },
+  "270": {
+    "image": "assets/images/pizza/picca_chiken.jpg",
+    "description": "Курица копченая, морковь по-корейски, помидоры, сыр, соус сливочно-чесночный, оливки, зелень",
+    "weight": "400"
+  },
+  "271": {
+    "image": "assets/images/pizza/picca_yagodnaya.jpg",
+    "description": "Брусника, клюква, ананас, молоко сгущенное, творожная масса",
+    "weight": "400"
+  },
+  "272": {
+    "image": "assets/images/pizza/picca_yagodnaya.jpg",
+    "description": "Брусника, клюква, ананас, молоко сгущенное, творожная масса",
+    "weight": "400"
+  },
+  "273": {
+    "image": "assets/images/pizza/picca_yagodnaya.jpg",
+    "description": "Брусника, клюква, ананас, молоко сгущенное, творожная масса",
+    "weight": "400"
+  },
+  "389": {
+    "image": "assets/images/shaurma/shaurma_xxl.jpg",
+    "description": "В мягком лаваше: курица-гриль, свежая капуста, корейская морковь, помидоры, маринованные огурцы, фирменный соус, зелень"
+  },
+  "388": {
+    "image": "assets/images/shaurma/shaurma_firmennaya.jpg",
+    "description": "В мягком лаваше: курица-гриль, корейская морковь, фирменный соус + соус чили (острый), зелень, свежие огурцы в горчичном маринаде"
+  },
+  "392": {
+    "image": "assets/images/shaurma/shaurma_syrnaya.jpg",
+    "description": "В мягком лаваше: курица-гриль, свежий огурец, корейская морковь, помидор, соус сырный, сыр."
+  },
+  "391": {
+    "image": "assets/images/shaurma/shaurma_dyablo.jpg",
+    "description": "В мягком лаваше: курица-гриль, свежая капуста, корейская морковь, помидоры, маринованные огурцы, соус \"Чили\""
+  },
+  "1096": {
+    "image": "assets/images/pies/pirog_s_farshem_govyadina_svinina.jpg",
+    "description": "Тесто дрожжевое, фарш (говядина + свинина), картошка, сливочное масло.",
+    "weight": "1 000"
+  },
+  "1097": {
+    "image": "assets/images/pies/pirog_s_farshem_kurica_svinina.jpg",
+    "description": "Тесто дрожжевое, фарш (курица+свинина), картошка, сливочное масло.",
+    "weight": "1 000"
+  },
+  "30": {
+    "image": "assets/images/pancakes/blin_s_gribami.jpg",
+    "description": "Блин, грибы"
+  },
+  "28": {
+    "image": "assets/images/pancakes/blin_s_vetchinoy.jpg",
+    "description": "Блин, ветчина"
+  },
+  "26": {
+    "image": "assets/images/pancakes/blin_lyubimyy.jpg",
+    "description": "Блин, ветчина, помидоры, сыр, грибы, майонез"
+  },
+  "25": {
+    "image": "assets/images/pancakes/blin_zhulen.jpg",
+    "description": "Блин, грибы, курица, сыр, сметана (или майонез)"
+  },
+  "34": {
+    "image": "assets/images/pancakes/blin_s_medom.jpg",
+    "description": "Блин, мёд"
+  },
+  "29": {
+    "image": "assets/images/pancakes/blin_s_vetchinoy_i_syrom.jpg",
+    "description": "Блин, ветчина, сыр"
+  },
+  "37": {
+    "image": "assets/images/pancakes/blin_s_farshem.jpg",
+    "description": "Блин, фарш"
+  },
+  "36": {
+    "image": "assets/images/pancakes/blin_s_tvorogom_i_izyumom.jpg",
+    "description": "Блин, творог, изюм"
+  },
+  "42": {
+    "image": "assets/images/pancakes/blin_dog.jpg",
+    "description": "Сосиска в жареном блине на сливочном масле"
+  },
+  "27": {
+    "image": "assets/images/pancakes/blin_s_varenoy_sguschenkoy.jpg",
+    "description": "Блин, варёная сгущёнка"
+  },
+  "39": {
+    "image": "assets/images/pancakes/blin_firmennyy.jpg",
+    "description": "Блин, ветчина, сыр, помидор, чесночный соус"
+  },
+  "33": {
+    "image": "assets/images/pancakes/blin_s_maslom.jpg",
+    "description": "Блин, масло сливочное"
+  },
+  "35": {
+    "image": "assets/images/pancakes/blin_s_syrom.jpg",
+    "description": "Блин, сыр"
+  },
+  "32": {
+    "image": "assets/images/pancakes/blin_s_kuricey.jpg",
+    "description": "Блин, курица"
+  },
+  "280": {
+    "image": "assets/images/salads/salat_fruktovyy.jpg",
+    "description": "Банан, киви, апельсин, ананас консервированный, йогурт"
+  },
+  "278": {
+    "image": "assets/images/salads/salat_vostorg.jpg",
+    "description": "Копченая курочка, жареные грибочки, маринованный огурчик, красный лук, яйцо, майонез"
+  },
+  "594": {
+    "image": "assets/images/sauces/sous_slivochno_chesnochnyy.jpg",
+    "description": "Соус сливочно-чесночный"
+  },
+  "177": {
+    "image": "assets/images/sauces/ketchup.jpg",
+    "description": "Кетчуп средне-острый"
+  },
+  "525": {
+    "image": "assets/images/sauces/sous_barbekyu.jpg",
+    "description": "Соус Барбекю"
+  },
+  "598": {
+    "image": "assets/images/sauces/sous_diablo_ostryy.jpg",
+    "description": "Соус Диабло острый"
+  },
+  "535": {
+    "image": "assets/images/sauces/sous_salsa_sredne_ostryy.jpg",
+    "description": "Соус Сальса средне-острый"
+  },
+  "45": {
+    "image": "assets/images/burger/burger_gavayskiy.jpg",
+    "description": "Булочка с кунжутом обжаренная, куриная грудка жаренная, пекинская капуста, ананас, лук красный маринованный, сливочно-чесночный соус, сыр.",
+    "weight": "270"
+  },
+  "51": {
+    "image": "assets/images/burger/burger_chiken_de_lyuks.jpg",
+    "description": "Булочка с кунжутом обжаренная, курица в хрустящей панировке, пекинская капуста, сыр, обжаренные шампиньоны, маринованный лук, грибной сливочный соус.",
+    "weight": "260"
+  },
+  "47": {
+    "image": "assets/images/burger/burger_meksikanskiy.jpg",
+    "description": "Булочка с кунжутом обжаренная, сочная котлета из говядины и свинины, пекинская капуста, сыр, маринованный огурчик, помидор, соус Сальца среднеострый",
+    "weight": "280"
+  },
+  "50": {
+    "image": "assets/images/burger/burger_cezar.jpg",
+    "description": "Булочка с кунжутом обжаренная, сочная котлета из курицы, пекинская капуста, сыр, свежий огурчик, помидор, сливочно-чесночный соус.",
+    "weight": "280"
+  },
+  "52": {
+    "image": "assets/images/burger/chikenburger.jpg",
+    "description": "Булочка с кунжутом, филе куриной грудки, сыр слайс, маринованный огурчик, помидор, фирменный соус, кетчуп, лист пекинской капусты"
+  },
+  "48": {
+    "image": "assets/images/burger/burger_ostryy.jpg",
+    "description": "Булочка с кунжутом обжаренная, сочная котлета из говядины и свинины, пекинская капуста, сыр, перец халапеньо, маринованный огурчик, помидор, соус Чили.",
+    "weight": "280"
+  },
+  "385": {
+    "image": "assets/images/desserts/chizkeyk_shokolad.jpg",
+    "description": "Только натуральные ингредиенты, 100г"
+  },
+  "904": {
+    "image": "assets/images/desserts/chizkeyk_mango_marakuyya.jpg",
+    "description": "Только натуральные ингредиенты, 100г",
+    "weight": "100",
+    "isNew": true
+  },
+  "265": {
+    "image": "assets/images/pizza/picca_cyplenok_barbekyu.jpg",
+    "description": "Курица копченая, помидоры, соус BBQ, соус сливочно-чесночный, сыр, перец болгарский, красный лук, зелень",
+    "weight": "400"
+  },
+  "266": {
+    "image": "assets/images/pizza/picca_cyplenok_barbekyu.jpg",
+    "description": "Курица копченая, помидоры, соус BBQ, соус сливочно-чесночный, сыр, перец болгарский, красный лук, зелень",
+    "weight": "400"
+  },
+  "267": {
+    "image": "assets/images/pizza/picca_cyplenok_barbekyu.jpg",
+    "description": "Курица копченая, помидоры, соус BBQ, соус сливочно-чесночный, сыр, перец болгарский, красный лук, зелень",
+    "weight": "400"
+  },
+  "199": {
+    "image": "assets/images/pizza/picca_barbekyu.jpg",
+    "description": "Ветчина, бекон, помидоры, красный лук, сыр, соус Барбекю, зелень",
+    "weight": "400"
+  },
+  "200": {
+    "image": "assets/images/pizza/picca_barbekyu.jpg",
+    "description": "Ветчина, бекон, помидоры, красный лук, сыр, соус Барбекю, зелень",
+    "weight": "400"
+  },
+  "201": {
+    "image": "assets/images/pizza/picca_barbekyu.jpg",
+    "description": "Ветчина, бекон, помидоры, красный лук, сыр, соус Барбекю, зелень",
+    "weight": "400"
+  },
+  "387": {
+    "image": "assets/images/shaurma/shaurma_kesadilya.jpg",
+    "description": "Обжаренная пшеничная лепешка, наполненная сыром. Ветчина, грибочки, помидоры и сливочно-чесночный соус."
+  },
+  "393": {
+    "image": "assets/images/shaurma/shaurma_shashlychnaya_xxl.jpg",
+    "description": "В мягком лаваше: мясо свинины-шашлык, свежая капуста, корейская морковь, помидоры, маринованные огурцы, фирменный соус, зелень",
+    "weight": "430",
+    "isNew": true,
+    "isHit": true
+  },
+  "394": {
+    "image": "assets/images/shaurma/shaurma_shashlychnaya.jpg",
+    "description": "В мягком лаваше: мясо свинины-шашлык, свежая капуста, корейская морковь, помидоры, маринованные огурцы, фирменный соус, зелень",
+    "isHit": true
+  },
+  "397": {
+    "image": "assets/images/shaurma/shaurma_salsa.jpg",
+    "description": "В мягком лаваше: курица-гриль, свежая капуста, корейская морковь, помидоры, маринованные огурцы, соус \"Сальса\""
+  },
+  "395": {
+    "image": "assets/images/shaurma/shaurma_klassicheskaya.jpg",
+    "description": "В мягком лаваше: курица-гриль, свежая капуста, корейская морковь, помидоры, маринованные огурцы, фирменный соус, зелень"
+  },
+  "386": {
+    "image": "assets/images/shaurma/shaurma_giros.jpg",
+    "description": "В мягком лаваше: курица-гриль, капуста пекинская, болгарский перец, помидоры, свежие огурцы, сыр Голландский, соус."
+  },
+  "390": {
+    "image": "assets/images/shaurma/shaurma_barbekyu.jpg",
+    "description": "В мягком лаваше: курица-гриль, свежая капуста, корейская морковь, помидоры, маринованные огурцы, соус \"Барбекю\"."
+  },
+  "1092": {
+    "image": "assets/images/pies/pirog_s_kartoshkoy_i_kuricey.jpg",
+    "description": "Тесто дрожжевое, картошка, курица, лук репчатый, масло сливочное",
+    "weight": "1 000"
+  },
+  "1101": {
+    "image": "assets/images/pies/pirog_s_kartoshkoy_i_gribami.jpg",
+    "description": "Тесто дрожжевое, картошка, грибы, лук репчатый, масло сливочное",
+    "weight": "1 000"
+  },
+  "1093": {
+    "image": "assets/images/pies/pirom_s_myasom_i_kartoshkoy.jpg",
+    "description": "Тесто дрожжевое, свинина, картошка, лук репчатый, сливочное масло.",
+    "weight": "1 000"
+  },
+  "868": {
+    "image": "assets/images/potato/nachinka_1.jpg",
+    "description": "Ветчина, сыр, майонез"
+  },
+  "869": {
+    "image": "assets/images/potato/nachinka_2.jpg",
+    "description": "Сервелат Элитный, помидор, майонез"
+  },
+  "870": {
+    "image": "assets/images/potato/nachinka_3.jpg",
+    "description": "Колбаски Баварские, огурчик маринованный, майонез"
+  },
+  "871": {
+    "image": "assets/images/potato/nachinka_4.jpg",
+    "description": "Курочка копченая, морковка по-корейски, майонез"
+  },
+  "872": {
+    "image": "assets/images/potato/nachinka_5.jpg",
+    "description": "Лосось с/с, сыр, майонез"
+  },
+  "873": {
+    "image": "assets/images/potato/nachinka_6.jpg",
+    "description": "Грибочки жареные, сыр, майонез"
+  },
+  "874": {
+    "image": "assets/images/potato/nachinka_7.jpg",
+    "description": "Ветчина, жареные грибочки, майонез"
+  },
+  "875": {
+    "image": "assets/images/potato/nachinka_8.jpg",
+    "description": "Сыр Голландский, сыр Моцарелла, майонез"
+  },
+  "876": {
+    "image": "assets/images/potato/nachinka_9.jpg",
+    "description": "Сосиска молочная, помидор, майонез"
+  },
+  "877": {
+    "image": "assets/images/potato/nachinka_10.jpg",
+    "description": "Жареный бекон, жареный лучок"
+  },
+  "307": {
+    "image": "assets/images/soups/sup_brokkoli.jpg",
+    "description": "Брокколи, картофель, курица, сливочное масло, лук репчатый, сливки",
+    "weight": "250"
+  },
+  "306": {
+    "image": "assets/images/soups/gribnoy_sup_krem.jpg",
+    "description": "Шампиньоны свежие, сливочное масло, лук репчатый, чеснок, сливки.",
+    "weight": "250"
+  },
+  "311": {
+    "image": "assets/images/soups/sup_solyanka.jpg",
+    "description": "Сервелат элитный, свинина варено-копченая, ветчина, морковь, лук, огурцы маринованные, картофель, томатная паста, оливки, лимон",
+    "weight": "250"
+  },
+  "313": {
+    "image": "assets/images/soups/sup_uha.jpg",
+    "description": "Красная рыба, морковь, лук, картофель, зелень",
+    "weight": "250"
+  },
+  "312": {
+    "image": "assets/images/soups/krem_sup_syrnyy.jpg",
+    "description": "Плавленый сыр, сыр, копченая грудка, сливочное масло, лук репчатый, сливки",
+    "weight": "270"
+  },
+  "308": {
+    "image": "assets/images/soups/sup_kurinyy.jpg",
+    "description": "Курица, морковь, лук, картофель, яичная лапша, зелень",
+    "weight": "250"
+  },
+  "305": {
+    "image": "assets/images/soups/sup_borsch.jpg",
+    "description": "Говядина, капуста, свекла, морковь, лук, картофель, зелень",
+    "weight": "250"
+  },
+  "23": {
+    "image": "assets/images/pancakes/blin_s_gribami_i_syrom.jpg",
+    "description": "Блин, грибы, сыр"
+  },
+  "24": {
+    "image": "assets/images/pancakes/blin_s_gribami_yaycom_i_zelenyu.jpg",
+    "description": "Блин, грибы, яйцо, зелень"
+  },
+  "31": {
+    "image": "assets/images/pancakes/blin_s_gribami_vetchinoy_i_syrom.jpg",
+    "description": "Блин, грибы, ветчина, сыр"
+  },
+  "40": {
+    "image": "assets/images/pancakes/blinchik_cezar.jpg",
+    "description": "В жареном блине на сливочном масле, куриная грудка, лист пекинской капусты, сыр Голландский, помидор, фирменный соус."
+  },
+  "38": {
+    "image": "assets/images/pancakes/blinchik_so_sguschenkoy.jpg",
+    "description": "Блин, сгущёнка"
+  },
+  "43": {
+    "image": "assets/images/pancakes/blin_dog_dvoynoy.jpg",
+    "description": "2 сосиски в жареном блине на сливочном масле"
+  },
+  "44": {
+    "image": "assets/images/pancakes/blinchik_s_dzhemom.jpg",
+    "description": "Блин, джем"
+  },
+  "281": {
+    "image": "assets/images/salads/salat_cezar.jpg",
+    "description": "Пекинская капуста, грудка куриная, помидор, соус сливочно-чесночный, сухарики, сыр Пармезан",
+    "weight": "250"
+  },
+  "276": {
+    "image": "assets/images/salads/salat_nezhnost.jpg",
+    "description": "Ветчина, яйцо отварное, огурец свежий, кукуруза консервированная, майонез",
+    "weight": "250"
+  },
+  "277": {
+    "image": "assets/images/salads/salat_pikantnyy.jpg",
+    "description": "Курица копченая, корейская морковь, болгарский перец, майонез",
+    "weight": "250"
+  },
+  "275": {
+    "image": "assets/images/salads/salat_monika.jpg",
+    "description": "Грудка куриная, пекинская капуста, яйцо отварное, свежий огурец, лук, майонез",
+    "weight": "250"
+  },
+  "274": {
+    "image": "assets/images/salads/salat_verona.jpg",
+    "description": "Копченая курица, помидор, фасоль красная,чеснок, майонез, сухарики",
+    "weight": "250"
+  },
+  "137": {
+    "image": "assets/images/drinks/kofe_amerikano.jpg",
+    "description": "Кофе Американо, 200 мл"
+  },
+  "149": {
+    "image": "assets/images/drinks/kofe_espresso.jpg",
+    "description": "Кофе Эспрессо, 70 мл"
+  },
+  "138": {
+    "image": "assets/images/drinks/kofe_kapuchino.jpg",
+    "description": "Кофе Капучино, 200 мл"
+  },
+  "142": {
+    "image": "assets/images/drinks/kofe_latte.jpg",
+    "description": "Ароматный Латтэ, 200 мл"
+  },
+  "46": {
+    "image": "assets/images/burger/burger_klassicheskiy.jpg",
+    "description": "Булочка с кунжутом обжаренная, сочная котлета из говядины и свинины, сыр, маринованный огурчик, помидор, лук красный маринованный, фирменный соус, кетчуп, пекинская капуста.",
+    "weight": "280"
+  },
+  "336": {
+    "image": "assets/images/fastfood/french_dog_s_ohotnichey_kolbaskoy.jpg",
+    "description": "Французская булочка, фирменный соус, с/c огурец, кетчуп, горчица по желанию"
+  },
+  "333": {
+    "image": "assets/images/fastfood/syrnye_shariki.jpg",
+    "description": "Сырные шарики 100 г",
+    "weight": "100"
+  },
+  "329": {
+    "image": "assets/images/fastfood/kurinoe_file_v_hlopyah.jpg",
+    "description": "Куриное филе в хлопьях 100г",
+    "weight": "100"
+  },
+  "331": {
+    "image": "assets/images/fastfood/naggetsy_100_g.jpg",
+    "description": "Наггетсы куриные 100г",
+    "weight": "100"
+  },
+  "327": {
+    "image": "assets/images/fastfood/kartoshka_fri.jpg",
+    "description": "Картофель фри 100г",
+    "weight": "100"
+  },
+  "905": {
+    "image": "assets/images/desserts/chizkeyk_karamelnyy_s_arahisom.jpg",
+    "description": "Только натуральные ингредиенты, 100г",
+    "weight": "100",
+    "isNew": true
+  },
+  "174": {
+    "image": "assets/images/pasta/pasta_s_kuricey_i_gribami.jpg",
+    "description": "Итальянские спагетти, курица, шампиньоны, сливки, масло сливочное, сыр «Пармезан».",
+    "weight": "280"
+  },
+  "172": {
+    "image": "assets/images/pasta/pasta_karbonara.jpg",
+    "description": "Итальянские спагетти, бекон, помидоры, сливки, масло сливочное, сыр «Пармезан».",
+    "weight": "270"
+  }
+}

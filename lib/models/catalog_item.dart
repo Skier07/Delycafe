@@ -8,7 +8,7 @@ class ProductVariant {
     required this.id,
     required this.title,
     required this.price,
-    required this.weight,
+    this.weight = '',
   });
 }
 
@@ -43,7 +43,7 @@ class CatalogItem {
     this.isAvailable = true,
     this.isVisible = true,
     this.oldPrice,
-    this.sortOrder = 0,
+    this.sortOrder = 999999999,
     this.weight,
     this.composition,
     this.variants = const [],

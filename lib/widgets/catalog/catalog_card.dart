@@ -27,125 +27,177 @@ class CatalogCard extends StatelessWidget {
           ),
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(26)),
-              child: Stack(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AspectRatio(
-                    aspectRatio: 1.2,
-                    child: Image.asset(
-                      item.image,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
+                  Stack(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1.2,
+                        child: Image.asset(
+                          item.image,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              color: AppColors.header.withValues(alpha: 0.08),
+                              child: Center(
+                                child: Icon(
+                                  Icons.restaurant_menu,
+                                  size: 44,
+                                  color:
+                                      AppColors.header.withValues(alpha: 0.45),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      if (item.isHit || item.isNew)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (item.isHit)
+                                const _StatusBadge(
+                                  text: 'HOT',
+                                  color: Color(0xFFEE101B),
+                                ),
+                              if (item.isHit && item.isNew)
+                                const SizedBox(height: 8),
+                              if (item.isNew)
+                                const _StatusBadge(
+                                  text: 'New',
+                                  color: Color(0xFF7BEE10),
+                                ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (item.isHit) ...[
-                          const _StatusBadge(
-                            text: 'ХИТ',
-                            color: Color(0xFFEE101B),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            item.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.35,
+                              color: Colors.black.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          const Spacer(),
+                          Row(
+                            children: [
+                              Text(
+                                '${item.price} ₽',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: onAddToCart,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.header,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: const Text(
+                                    'В корзину',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
-                        if (item.isNew) ...[
-                          if (item.isHit) const SizedBox(height: 8),
-                          const _StatusBadge(
-                            text: 'New',
-                            color: Color(0xFF7BEE10),
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.35,
-                        color: Colors.black.withValues(alpha: 0.65),
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Text(
-                          '${item.price} ₽',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: onAddToCart,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.header,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Text(
-                              'В корзину',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          ),
+
+          // Тонкая белая стеклянная каёмка поверх всей карточки
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.90),
+                    width: 0.8,
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Едва заметная внутренняя тень, чтобы белая каёмка читалась объёмнее
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Padding(
+                padding: const EdgeInsets.all(1),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(19),
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.035),
+                      width: 0.6,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -172,12 +224,15 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.22),
+        ),
       ),
       child: Text(
         text,
         style: const TextStyle(
           color: Colors.white,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           fontSize: 12,
         ),
       ),

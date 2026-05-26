@@ -136,7 +136,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               final double horizontalPadding =
                                   isSmallPhone ? 6 : 10;
                               final double verticalPadding =
-                                  isSmallPhone ? 14 : 16;
+                                  isSmallPhone ? 12 : 16;
                               final double titleFontSize =
                                   isSmallPhone ? 14 : 16;
                               final double infoFontSize =
@@ -302,10 +302,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               text: 'Блюдо готовится после оформления заказа.',
                             ),
                             SizedBox(height: 8),
-                            _BuildText(
-                              text:
-                                  'Если нужно, позже сюда можно добавить вес, состав и калорийность.',
-                            ),
                           ],
                         ),
                       ),

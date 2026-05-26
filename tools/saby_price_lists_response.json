@@ -1,0 +1,15 @@
+{
+  "priceLists": [
+    {
+      "id": 4,
+      "name": "Прайс кафе"
+    },
+    {
+      "id": 6,
+      "name": "Прайс мойка"
+    }
+  ],
+  "outcome": {
+    "hasMore": false
+  }
+}

@@ -1,0 +1,1403 @@
+{
+  "totalNomenclatures": 565,
+  "categoriesFound": 27,
+  "productsFound": 408,
+  "catalogItemsGenerated": 126,
+  "newItemsGenerated": 9,
+  "hotItemsGenerated": 8,
+  "itemsWithWeight": 75,
+  "itemsWithCustomImage": 114,
+  "overridesFile": "tools\\catalog_overrides.json",
+  "overridesLoaded": 161,
+  "pizzaItemsGenerated": 34,
+  "sauceItemsGenerated": 6,
+  "hiddenProductIdsCount": 52,
+  "hiddenByIdProductsFound": [
+    {
+      "id": 41,
+      "name": "Блинбургер",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 49,
+      "name": "Бургер Студенческий",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 998,
+      "name": "0.3Х12 ПЭТ ДОБРЫЙ ЯБЛОЧНЫЙ СОК",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 995,
+      "name": "0.449Л X12 ЖБ БЕРН АРБУЗ ЗЕРО",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1001,
+      "name": "0.449Л X12 ЖБ БЕРН ОРИГИНАЛЬНЫЙ",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 987,
+      "name": "0.449Х12 ЖБ БЕРН ГУАВА",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 993,
+      "name": "0.5X24 ПЭТ БОНА АКВА СИЛЬНОГАЗИРОВАННАЯ",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 994,
+      "name": "0.5X24 ПЭТ ВОДА НЕГАЗ БОНА АКВА",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1000,
+      "name": "0.5Х12 ПЭТ РИЧ   ЧАЙ ЛИМОН СС",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 999,
+      "name": "0.5Х12 ПЭТ РИЧ   ЧАЙ МАНГО СС",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1052,
+      "name": "0.5Х24 ПЭТ ДОБРЫЙ КОЛА БЕЗ САХАРА НФ",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 996,
+      "name": "0.5Х24 ПЭТ ДОБРЫЙ ЛИМОН ЛАЙМ НФ",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 953,
+      "name": "Niagara Premium. газ. 0,5л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 954,
+      "name": "Niagara Premium. негаз 0,5л",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1069,
+      "name": "Безалкогольный негазированный напиток \"МОРСЭЛЬ\" с бруснично-клюквенным вкусом 1,45 л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 150,
+      "name": "Молочный коктейль",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1100,
+      "name": "Напиток безалкогольный негазированный \"ЗЕЛЕНЫЙ ЧАЙ ZENO(ЗЕНО)\"  пастеризованный с применением консервантов,Бутылка полимерная ПЭТ 0,5л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1074,
+      "name": "Напиток безалкогольный негазированный \"Черный чай ZENO (ЗЕНО)\" пастеризованный с применением консервантов",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1085,
+      "name": "Напиток безалкогольный среднегазированный \"НАТАХТАРИ\"со вкусом и ароматом винограда саперави  пастеризованный с применением консервантов,Бутылка полимерная ПЭТ 1л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1099,
+      "name": "Напиток безалкогольный среднегазированный \"НАТАХТАРИ\"со вкусом и ароматом винограда  саперави пастеризованный с применением консервантов,Бутылка стеклянная 0,5л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1072,
+      "name": "Напиток безалкогольный среднегазированный \"НАТАХТАРИ\" со вкусом и ароматом груши пастеризованный с применением консервантов",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1073,
+      "name": "Напиток безалкогольный среднегазированный \"НАТАХТАРИ\" со вкусом и ароматом тархуна пастеризованный с применением консервантов",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1098,
+      "name": "Напиток безалкогольный среднегазированный \"НАТАХТАРИ\"со вкусом и ароматом тархуна пастеризованный с применением консервантов,Бутылка стеклянная 0,5л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1009,
+      "name": "Напиток энергетический BURN \"Манго\" 449 мл",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 882,
+      "name": "Чай KURORTI 0.5",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 949,
+      "name": "Ягод сок. Морс вишневый 0,46 л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 950,
+      "name": "Ягод сок. Морс клюквенный 0,46 л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 951,
+      "name": "Ягод сок. Морс облепиховый 0,46 л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 952,
+      "name": "Ягод сок. Морс черносмородиновый 0,46 л.",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 140,
+      "name": "Кофе черный",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 141,
+      "name": "Кофе черный с молоком",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1070,
+      "name": "Чай SIMPATEA ОБЛЕПИХА с апельсином",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 143,
+      "name": "Чай зеленый 200мл",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 144,
+      "name": "Чай зеленый с лимоном",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 145,
+      "name": "Чай с молоком",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 146,
+      "name": "Чай со сливками",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 147,
+      "name": "Чай черный 200мл",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 148,
+      "name": "Чай черный с лимоном",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 279,
+      "name": "Салат Помидорка",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 309,
+      "name": "Окрошка",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 322,
+      "name": "Булка хд",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 328,
+      "name": "Картофель Фри140г",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 325,
+      "name": "Карт по-дерев 100г",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 324,
+      "name": "Карт по дерев со спец 140г",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 330,
+      "name": "Луковые кольца",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 332,
+      "name": "Наггеттсы 135г",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 903,
+      "name": "Чизкейк Кокос",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 383,
+      "name": "Чизкейк лайм",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 384,
+      "name": "Чизкейк малина",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 381,
+      "name": "Чизкейк  Нью-Йорк",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 1071,
+      "name": "Чизкейк Нью-Йорк (суфле) Фисташковый Чизберри 1,2кг (12порц)",
+      "reason": "hidden product id"
+    },
+    {
+      "id": 396,
+      "name": "Шашлык 100г",
+      "reason": "hidden product id"
+    }
+  ],
+  "skippedHiddenProductsList": [
+    {
+      "id": 97,
+      "name": "Батон Б",
+      "reason": "hidden category"
+    },
+    {
+      "id": 917,
+      "name": "Грибы доп 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 104,
+      "name": "Имбирь+Васаби",
+      "reason": "hidden category"
+    },
+    {
+      "id": 947,
+      "name": "Коробка Большая Dely",
+      "reason": "hidden category"
+    },
+    {
+      "id": 945,
+      "name": "Коробка маленькая Dely",
+      "reason": "hidden category"
+    },
+    {
+      "id": 946,
+      "name": "Коробка средняя Dely",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1142,
+      "name": "Лук маринованный добавка",
+      "reason": "hidden category"
+    },
+    {
+      "id": 934,
+      "name": "Майонез",
+      "reason": "hidden category"
+    },
+    {
+      "id": 106,
+      "name": "Морковь по корейски 30гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 107,
+      "name": "Огурец 30гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 912,
+      "name": "Пакет для пиццы",
+      "reason": "hidden category"
+    },
+    {
+      "id": 617,
+      "name": "Палочки для суши",
+      "reason": "hidden category"
+    },
+    {
+      "id": 916,
+      "name": "Помидор доп 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 108,
+      "name": "Помидор доп 30гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 933,
+      "name": "Сметана",
+      "reason": "hidden category"
+    },
+    {
+      "id": 109,
+      "name": "Соус Барбекью",
+      "reason": "hidden category"
+    },
+    {
+      "id": 112,
+      "name": "Соус Для курицы",
+      "reason": "hidden category"
+    },
+    {
+      "id": 113,
+      "name": "Соус Дьябло",
+      "reason": "hidden category"
+    },
+    {
+      "id": 114,
+      "name": "Соус Кетчуп",
+      "reason": "hidden category"
+    },
+    {
+      "id": 115,
+      "name": "Соус Кисло Сладкий ор",
+      "reason": "hidden category"
+    },
+    {
+      "id": 116,
+      "name": "Соус Кисло Сладкий чили",
+      "reason": "hidden category"
+    },
+    {
+      "id": 117,
+      "name": "Соус Ореховый",
+      "reason": "hidden category"
+    },
+    {
+      "id": 118,
+      "name": "Соус Сальса",
+      "reason": "hidden category"
+    },
+    {
+      "id": 119,
+      "name": "Соус Соевый",
+      "reason": "hidden category"
+    },
+    {
+      "id": 120,
+      "name": "Соус Сырный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 121,
+      "name": "Соус Чесночный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 913,
+      "name": "Стакан Бумажный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 122,
+      "name": "Стакан пластик",
+      "reason": "hidden category"
+    },
+    {
+      "id": 123,
+      "name": "Сыр пицца",
+      "reason": "hidden category"
+    },
+    {
+      "id": 124,
+      "name": "Сыр хот дог 30гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 125,
+      "name": "Халапеньо",
+      "reason": "hidden category"
+    },
+    {
+      "id": 98,
+      "name": "Доставка 100",
+      "reason": "hidden category"
+    },
+    {
+      "id": 937,
+      "name": "Доставка 150",
+      "reason": "hidden category"
+    },
+    {
+      "id": 99,
+      "name": "Доставка 50",
+      "reason": "hidden category"
+    },
+    {
+      "id": 100,
+      "name": "Доставка Промка 350",
+      "reason": "hidden category"
+    },
+    {
+      "id": 101,
+      "name": "Доставка Татыш 250",
+      "reason": "hidden category"
+    },
+    {
+      "id": 102,
+      "name": "Доставка Татыш 300",
+      "reason": "hidden category"
+    },
+    {
+      "id": 103,
+      "name": "Доставка Татыш 350",
+      "reason": "hidden category"
+    },
+    {
+      "id": 936,
+      "name": "Доставка Татыш 450",
+      "reason": "hidden category"
+    },
+    {
+      "id": 175,
+      "name": "Ветчина 100 гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 176,
+      "name": "Грудка кур 100 гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 178,
+      "name": "Майонез 1уп",
+      "reason": "hidden category"
+    },
+    {
+      "id": 179,
+      "name": "Макароны 450 гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 180,
+      "name": "Молоко 1л",
+      "reason": "hidden category"
+    },
+    {
+      "id": 181,
+      "name": "Огурец 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 182,
+      "name": "Огурцы мар 1б",
+      "reason": "hidden category"
+    },
+    {
+      "id": 183,
+      "name": "Пекинская капуста 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 184,
+      "name": "Помидор 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 185,
+      "name": "Сервелат 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 186,
+      "name": "Сервелат 300гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 187,
+      "name": "Сосиска фд 1 шт",
+      "reason": "hidden category"
+    },
+    {
+      "id": 188,
+      "name": "Сосиска хд 1шт",
+      "reason": "hidden category"
+    },
+    {
+      "id": 189,
+      "name": "Сыр Графск 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 190,
+      "name": "Тесто 0,5 кг",
+      "reason": "hidden category"
+    },
+    {
+      "id": 191,
+      "name": "Яблочко 100гр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 192,
+      "name": "Яйцо 1шт",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1181,
+      "name": "Бигус со свининой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1185,
+      "name": "Борщ столовая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1176,
+      "name": "Греча отварная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1221,
+      "name": "Гуляш курица",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1186,
+      "name": "Гуляш со свининой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1187,
+      "name": "Жаркое из курицы",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1160,
+      "name": "Жаркое по- домашнему",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1179,
+      "name": "Каша гречневая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1150,
+      "name": "Каша овсяная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1193,
+      "name": "Каша пшеная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1173,
+      "name": "Каша рисовая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1169,
+      "name": "контейнер второе 0,5 мл",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1168,
+      "name": "контейнер каша/салат 0,250мл",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1166,
+      "name": "контейнер суп",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1162,
+      "name": "Котлета куриная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1180,
+      "name": "Курица под сыром",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1204,
+      "name": "Ножка куриная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1164,
+      "name": "Пакеты майка",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1203,
+      "name": "Печень куриная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1178,
+      "name": "Плов со свининой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1195,
+      "name": "Рис отварной столовая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1161,
+      "name": "Рожки отварные",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1174,
+      "name": "Салат «Винегрет»",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1198,
+      "name": "Салат Красавица",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1196,
+      "name": "Салат Летний",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1184,
+      "name": "Салат Мимоза",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1158,
+      "name": "Салат Оливье",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1213,
+      "name": "Суп гороховый",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1183,
+      "name": "Суп куриный соловая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1194,
+      "name": "Суп Рассольник",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1159,
+      "name": "Суп Рыбный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1197,
+      "name": "Суп Солянка столовая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1175,
+      "name": "Суп Щи",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1177,
+      "name": "Тефтели в томатном соусе",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1170,
+      "name": "хлеб 1 кусок",
+      "reason": "hidden category"
+    },
+    {
+      "id": 1163,
+      "name": "чай для столовой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 152,
+      "name": "Сироп Ваниль",
+      "reason": "hidden category"
+    },
+    {
+      "id": 653,
+      "name": "Бекон с шкурой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 134,
+      "name": "Ветчина",
+      "reason": "hidden category"
+    },
+    {
+      "id": 656,
+      "name": "Курица копченая с костями",
+      "reason": "hidden category"
+    },
+    {
+      "id": 492,
+      "name": "Охота",
+      "reason": "hidden category"
+    },
+    {
+      "id": 495,
+      "name": "Пепперони",
+      "reason": "hidden category"
+    },
+    {
+      "id": 517,
+      "name": "Сервелат",
+      "reason": "hidden category"
+    },
+    {
+      "id": 523,
+      "name": "Сосиска люб",
+      "reason": "hidden category"
+    },
+    {
+      "id": 524,
+      "name": "Сосиска френч",
+      "reason": "hidden category"
+    },
+    {
+      "id": 580,
+      "name": "Яблочко",
+      "reason": "hidden category"
+    },
+    {
+      "id": 569,
+      "name": "Фарш из мяса",
+      "reason": "hidden category"
+    },
+    {
+      "id": 570,
+      "name": "Фарш куриный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 657,
+      "name": "Фарш сырой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 579,
+      "name": "Шашлык",
+      "reason": "hidden category"
+    },
+    {
+      "id": 418,
+      "name": "Грибы свежие",
+      "reason": "hidden category"
+    },
+    {
+      "id": 423,
+      "name": "Зеленный лук",
+      "reason": "hidden category"
+    },
+    {
+      "id": 428,
+      "name": "Капуста свежая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 433,
+      "name": "Картошка сырая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 655,
+      "name": "Лук красный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 467,
+      "name": "Лук репка",
+      "reason": "hidden category"
+    },
+    {
+      "id": 478,
+      "name": "Морковь",
+      "reason": "hidden category"
+    },
+    {
+      "id": 489,
+      "name": "Огурец свежий",
+      "reason": "hidden category"
+    },
+    {
+      "id": 494,
+      "name": "Пекинская капуста",
+      "reason": "hidden category"
+    },
+    {
+      "id": 496,
+      "name": "Перец болгарский",
+      "reason": "hidden category"
+    },
+    {
+      "id": 500,
+      "name": "Петрушка",
+      "reason": "hidden category"
+    },
+    {
+      "id": 501,
+      "name": "Помидор",
+      "reason": "hidden category"
+    },
+    {
+      "id": 513,
+      "name": "Свекла",
+      "reason": "hidden category"
+    },
+    {
+      "id": 516,
+      "name": "Сельдерей",
+      "reason": "hidden category"
+    },
+    {
+      "id": 563,
+      "name": "Укроп",
+      "reason": "hidden category"
+    },
+    {
+      "id": 440,
+      "name": "Кисло сладкий соус",
+      "reason": "hidden category"
+    },
+    {
+      "id": 111,
+      "name": "Соус Грибной",
+      "reason": "hidden category"
+    },
+    {
+      "id": 526,
+      "name": "Соус для Пиццы",
+      "reason": "hidden category"
+    },
+    {
+      "id": 399,
+      "name": "Авокадо",
+      "reason": "hidden category"
+    },
+    {
+      "id": 400,
+      "name": "Ананас",
+      "reason": "hidden category"
+    },
+    {
+      "id": 401,
+      "name": "Апельсин",
+      "reason": "hidden category"
+    },
+    {
+      "id": 402,
+      "name": "Банан",
+      "reason": "hidden category"
+    },
+    {
+      "id": 406,
+      "name": "Брокколи",
+      "reason": "hidden category"
+    },
+    {
+      "id": 407,
+      "name": "Брусника",
+      "reason": "hidden category"
+    },
+    {
+      "id": 408,
+      "name": "Булка гамбургер",
+      "reason": "hidden category"
+    },
+    {
+      "id": 409,
+      "name": "Булка френч",
+      "reason": "hidden category"
+    },
+    {
+      "id": 410,
+      "name": "Булка ХД",
+      "reason": "hidden category"
+    },
+    {
+      "id": 411,
+      "name": "Вареная сгущенка",
+      "reason": "hidden category"
+    },
+    {
+      "id": 660,
+      "name": "Говядина сырая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 415,
+      "name": "Горчица",
+      "reason": "hidden category"
+    },
+    {
+      "id": 416,
+      "name": "Горчица зернистая",
+      "reason": "hidden category"
+    },
+    {
+      "id": 135,
+      "name": "Грибы с луком",
+      "reason": "hidden category"
+    },
+    {
+      "id": 420,
+      "name": "Грудка куриная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 421,
+      "name": "Джем",
+      "reason": "hidden category"
+    },
+    {
+      "id": 422,
+      "name": "Дрожжи",
+      "reason": "hidden category"
+    },
+    {
+      "id": 607,
+      "name": "икра масаго",
+      "reason": "hidden category"
+    },
+    {
+      "id": 426,
+      "name": "Имбирь розовый",
+      "reason": "hidden category"
+    },
+    {
+      "id": 427,
+      "name": "Кальмары",
+      "reason": "hidden category"
+    },
+    {
+      "id": 602,
+      "name": "капуста маринованная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 434,
+      "name": "Картофель фри",
+      "reason": "hidden category"
+    },
+    {
+      "id": 429,
+      "name": "Картоф по дерев с чесноком",
+      "reason": "hidden category"
+    },
+    {
+      "id": 432,
+      "name": "Картошка отварная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 665,
+      "name": "квас",
+      "reason": "hidden category"
+    },
+    {
+      "id": 437,
+      "name": "Кетчуп  _кг",
+      "reason": "hidden category"
+    },
+    {
+      "id": 438,
+      "name": "Кетчуп хайнс",
+      "reason": "hidden category"
+    },
+    {
+      "id": 439,
+      "name": "Киви",
+      "reason": "hidden category"
+    },
+    {
+      "id": 441,
+      "name": "Клюква",
+      "reason": "hidden category"
+    },
+    {
+      "id": 443,
+      "name": "Корейская морковь",
+      "reason": "hidden category"
+    },
+    {
+      "id": 451,
+      "name": "Креветка для суши",
+      "reason": "hidden category"
+    },
+    {
+      "id": 452,
+      "name": "Креветки",
+      "reason": "hidden category"
+    },
+    {
+      "id": 679,
+      "name": "креветки во льду б/г 16/20",
+      "reason": "hidden category"
+    },
+    {
+      "id": 453,
+      "name": "Кукуруза",
+      "reason": "hidden category"
+    },
+    {
+      "id": 456,
+      "name": "Курица гриль7777",
+      "reason": "hidden category"
+    },
+    {
+      "id": 458,
+      "name": "Курица на суп",
+      "reason": "hidden category"
+    },
+    {
+      "id": 459,
+      "name": "Лаваш",
+      "reason": "hidden category"
+    },
+    {
+      "id": 460,
+      "name": "Лепешка пшеничная",
+      "reason": "hidden category"
+    },
+    {
+      "id": 461,
+      "name": "Лимон",
+      "reason": "hidden category"
+    },
+    {
+      "id": 658,
+      "name": "Лосось с шкурой",
+      "reason": "hidden category"
+    },
+    {
+      "id": 462,
+      "name": "Лосось филе",
+      "reason": "hidden category"
+    },
+    {
+      "id": 464,
+      "name": "Лук жареный японский",
+      "reason": "hidden category"
+    },
+    {
+      "id": 465,
+      "name": "Лук красный мар",
+      "reason": "hidden category"
+    },
+    {
+      "id": 136,
+      "name": "Майонез Провансаль  _кг",
+      "reason": "hidden category"
+    },
+    {
+      "id": 469,
+      "name": "Майонез Салатный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 470,
+      "name": "Макароны",
+      "reason": "hidden category"
+    },
+    {
+      "id": 471,
+      "name": "Маргарин",
+      "reason": "hidden category"
+    },
+    {
+      "id": 472,
+      "name": "Маслины",
+      "reason": "hidden category"
+    },
+    {
+      "id": 473,
+      "name": "Масло подсолнечное",
+      "reason": "hidden category"
+    },
+    {
+      "id": 474,
+      "name": "Масло сливочное",
+      "reason": "hidden category"
+    },
+    {
+      "id": 476,
+      "name": "Молоко",
+      "reason": "hidden category"
+    },
+    {
+      "id": 477,
+      "name": "Молоко сгущеное",
+      "reason": "hidden category"
+    },
+    {
+      "id": 484,
+      "name": "Морской гребешок",
+      "reason": "hidden category"
+    },
+    {
+      "id": 485,
+      "name": "Мука",
+      "reason": "hidden category"
+    },
+    {
+      "id": 486,
+      "name": "Наггетсы",
+      "reason": "hidden category"
+    },
+    {
+      "id": 488,
+      "name": "Нори",
+      "reason": "hidden category"
+    },
+    {
+      "id": 490,
+      "name": "Огурцы мар",
+      "reason": "hidden category"
+    },
+    {
+      "id": 507,
+      "name": "Рис вареный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 508,
+      "name": "Рис для суши",
+      "reason": "hidden category"
+    },
+    {
+      "id": 511,
+      "name": "Сахар",
+      "reason": "hidden category"
+    },
+    {
+      "id": 514,
+      "name": "Свинина",
+      "reason": "hidden category"
+    },
+    {
+      "id": 518,
+      "name": "Сливки 33%",
+      "reason": "hidden category"
+    },
+    {
+      "id": 519,
+      "name": "Сметана",
+      "reason": "hidden category"
+    },
+    {
+      "id": 520,
+      "name": "Снежный Краб",
+      "reason": "hidden category"
+    },
+    {
+      "id": 521,
+      "name": "Соль",
+      "reason": "hidden category"
+    },
+    {
+      "id": 536,
+      "name": "Соус соевый",
+      "reason": "hidden category"
+    },
+    {
+      "id": 542,
+      "name": "Соус Чили Шрирача",
+      "reason": "hidden category"
+    },
+    {
+      "id": 545,
+      "name": "Сыр",
+      "reason": "hidden category"
+    },
+    {
+      "id": 546,
+      "name": "Сыр Креметте",
+      "reason": "hidden category"
+    },
+    {
+      "id": 547,
+      "name": "Сыр Моцарелла",
+      "reason": "hidden category"
+    },
+    {
+      "id": 553,
+      "name": "Сырные леп",
+      "reason": "hidden category"
+    },
+    {
+      "id": 554,
+      "name": "Сырок творожный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 548,
+      "name": "Сыр Пармезан",
+      "reason": "hidden category"
+    },
+    {
+      "id": 549,
+      "name": "Сыр плавленный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 550,
+      "name": "Сыр слайсы",
+      "reason": "hidden category"
+    },
+    {
+      "id": 551,
+      "name": "Сыр Сулугуни",
+      "reason": "hidden category"
+    },
+    {
+      "id": 552,
+      "name": "Сыр Чеддер",
+      "reason": "hidden category"
+    },
+    {
+      "id": 556,
+      "name": "Тесто",
+      "reason": "hidden category"
+    },
+    {
+      "id": 557,
+      "name": "Томатная паста",
+      "reason": "hidden category"
+    },
+    {
+      "id": 558,
+      "name": "Топинг клубничный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 560,
+      "name": "Тунец филе",
+      "reason": "hidden category"
+    },
+    {
+      "id": 561,
+      "name": "Угорь жареный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 564,
+      "name": "Уксус 9%",
+      "reason": "hidden category"
+    },
+    {
+      "id": 565,
+      "name": "Уксус виноградный",
+      "reason": "hidden category"
+    },
+    {
+      "id": 571,
+      "name": "Фасоль",
+      "reason": "hidden category"
+    },
+    {
+      "id": 573,
+      "name": "Халапеньо",
+      "reason": "hidden category"
+    },
+    {
+      "id": 572,
+      "name": "Хлопья",
+      "reason": "hidden category"
+    },
+    {
+      "id": 577,
+      "name": "Чеснок",
+      "reason": "hidden category"
+    },
+    {
+      "id": 578,
+      "name": "Чука",
+      "reason": "hidden category"
+    },
+    {
+      "id": 581,
+      "name": "Яичная лапша",
+      "reason": "hidden category"
+    },
+    {
+      "id": 582,
+      "name": "Яйцо",
+      "reason": "hidden category"
+    }
+  ],
+  "duplicatePizzaVariants": [],
+  "sauceItems": [
+    {
+      "id": "saby_177",
+      "title": "Кетчуп",
+      "price": 40
+    },
+    {
+      "id": "saby_525",
+      "title": "Соус барбекю",
+      "price": 40
+    },
+    {
+      "id": "saby_535",
+      "title": "Соус Сальса средне-острый",
+      "price": 50
+    },
+    {
+      "id": "saby_537",
+      "title": "Соус сырный",
+      "price": 40
+    },
+    {
+      "id": "saby_594",
+      "title": "Соус сливочно-чесночный",
+      "price": 40
+    },
+    {
+      "id": "saby_598",
+      "title": "Соус диабло острый",
+      "price": 40
+    }
+  ],
+  "skippedHiddenProducts": 215,
+  "categoriesInGeneratedCatalog": [
+    "Блины",
+    "Бургеры",
+    "Десерты",
+    "Картошечка в фольге",
+    "Напитки",
+    "Паста",
+    "Пироги",
+    "Пицца",
+    "Салаты",
+    "Соусы",
+    "Супы",
+    "Фастфуд",
+    "Шаурма"
+  ]
+}

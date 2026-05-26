@@ -1,0 +1,1324 @@
+{
+  "siteProductsFound": 116,
+  "catalogItemsFound": 126,
+  "matched": 113,
+  "unmatchedSiteProducts": [
+    {
+      "category": "Напитки",
+      "title": "Тестовый товар",
+      "normalizedTitle": "тестовый товар",
+      "matchKeys": [
+        "тестовый товар"
+      ]
+    },
+    {
+      "category": "Десерты",
+      "title": "Чизкейк «Классический»",
+      "normalizedTitle": "чизкейк классический",
+      "matchKeys": [
+        "классический чизкейк",
+        "чизкейк классический"
+      ]
+    },
+    {
+      "category": "Десерты",
+      "title": "Чизкейк",
+      "normalizedTitle": "чизкейк",
+      "matchKeys": [
+        "чизкейк"
+      ]
+    }
+  ],
+  "unmatchedCatalogItems": [
+    {
+      "category": "Десерты",
+      "title": "Чизкейк Клубника",
+      "id": "saby_382",
+      "matchKeys": [
+        "клубника чизкейк",
+        "чизкейк клубника"
+      ]
+    },
+    {
+      "category": "Паста",
+      "title": "Паста  Болоньезе",
+      "id": "saby_171",
+      "matchKeys": [
+        "болоньезе паста",
+        "паста болоньезе"
+      ]
+    },
+    {
+      "category": "Паста",
+      "title": "Паста с лососем",
+      "id": "saby_173",
+      "matchKeys": [
+        "лососем паста",
+        "паста лососем",
+        "паста с лососем"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "50 оттенков сырного",
+      "id": "saby_pizza_194_195_193",
+      "matchKeys": [
+        "50 оттенков сырного"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Гавайская",
+      "id": "saby_pizza_206_207_205",
+      "matchKeys": [
+        "гавайская"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Детская",
+      "id": "saby_pizza_218_219_217",
+      "matchKeys": [
+        "детская"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Дьявольская",
+      "id": "saby_pizza_220_221_222",
+      "matchKeys": [
+        "дьявольская"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Морская",
+      "id": "saby_pizza_242_243_241",
+      "matchKeys": [
+        "морская"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Мясная",
+      "id": "saby_pizza_245_246_244",
+      "matchKeys": [
+        "мясная"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Окей",
+      "id": "saby_pizza_248_249_247",
+      "matchKeys": [
+        "окей"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Пепперони»",
+      "id": "saby_pizza_251_252_250",
+      "matchKeys": [
+        "пепперони",
+        "пицца пепперони"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Просто космос",
+      "id": "saby_pizza_254_255_253",
+      "matchKeys": [
+        "космос просто",
+        "просто космос"
+      ]
+    },
+    {
+      "category": "Пицца",
+      "title": "Фруктовая",
+      "id": "saby_pizza_260_261_259",
+      "matchKeys": [
+        "фруктовая"
+      ]
+    }
+  ],
+  "matchedItems": [
+    {
+      "category": "Пицца",
+      "title": "Пицца Угорь с Унаги",
+      "catalogTitle": "Угорь с Унаги",
+      "ids": [
+        "943",
+        "944"
+      ],
+      "image": "assets/images/pizza/picca_ugor_s_unagi.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Злодейка»",
+      "catalogTitle": "Злодейка",
+      "ids": [
+        "226",
+        "227",
+        "228"
+      ],
+      "image": "assets/images/pizza/picca_zlodeyka.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Фантазия»",
+      "catalogTitle": "Фантазия",
+      "ids": [
+        "890",
+        "891",
+        "892"
+      ],
+      "image": "assets/images/pizza/picca_fantaziya.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "«Пикантный лосось»",
+      "catalogTitle": "Пикантный лосось",
+      "ids": [
+        "909",
+        "910",
+        "911"
+      ],
+      "image": "assets/images/pizza/pikantnyy_losos.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "«Сливочный лосось»",
+      "catalogTitle": "Сливочный лосось",
+      "ids": [
+        "906",
+        "907",
+        "908"
+      ],
+      "image": "assets/images/pizza/slivochnyy_losos.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Морской бриз»",
+      "catalogTitle": "Морской бриз",
+      "ids": [
+        "850",
+        "851",
+        "852"
+      ],
+      "image": "assets/images/pizza/picca_morskoy_briz.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Голодный мясник",
+      "catalogTitle": "Голодный мясник",
+      "ids": [
+        "208",
+        "209",
+        "210"
+      ],
+      "image": "assets/images/pizza/golodnyy_myasnik.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "«Голодный мясник ЧИЛИ»",
+      "catalogTitle": "Голодный мясник ЧИЛИ",
+      "ids": [
+        "928",
+        "929",
+        "930"
+      ],
+      "image": "assets/images/pizza/golodnyy_myasnik_chili.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Маркиза»",
+      "catalogTitle": "Маркиза",
+      "ids": [
+        "855",
+        "856",
+        "857"
+      ],
+      "image": "assets/images/pizza/picca_markiza.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Цыплёнок барбекю»",
+      "catalogTitle": "Цыпленок барбекью",
+      "ids": [
+        "265",
+        "266",
+        "267"
+      ],
+      "image": "assets/images/pizza/picca_cyplenok_barbekyu.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Мистер Бекон»",
+      "catalogTitle": "Мистер Бекон",
+      "ids": [
+        "238",
+        "239",
+        "240"
+      ],
+      "image": "assets/images/pizza/picca_mister_bekon.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Грибная»",
+      "catalogTitle": "Грибная",
+      "ids": [
+        "211",
+        "212",
+        "213"
+      ],
+      "image": "assets/images/pizza/picca_gribnaya.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Жгучая чика»",
+      "catalogTitle": "Жгучая чика",
+      "ids": [
+        "223",
+        "224",
+        "225"
+      ],
+      "image": "assets/images/pizza/picca_zhguchaya_chika.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Прошутто»",
+      "catalogTitle": "Прошутто",
+      "ids": [
+        "256",
+        "257",
+        "258"
+      ],
+      "image": "assets/images/pizza/picca_proshutto.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Деревенская с курицей»",
+      "catalogTitle": "Деревенская с курицей",
+      "ids": [
+        "214",
+        "215",
+        "216"
+      ],
+      "image": "assets/images/pizza/picca_derevenskaya_s_kuricey.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Корона»",
+      "catalogTitle": "Корона",
+      "ids": [
+        "232",
+        "233",
+        "234"
+      ],
+      "image": "assets/images/pizza/picca_korona.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Барбекю»",
+      "catalogTitle": "Барбекью",
+      "ids": [
+        "199",
+        "200",
+        "201"
+      ],
+      "image": "assets/images/pizza/picca_barbekyu.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Карбонара»",
+      "catalogTitle": "Карбонара",
+      "ids": [
+        "229",
+        "230",
+        "231"
+      ],
+      "image": "assets/images/pizza/picca_karbonara.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Цезарь»",
+      "catalogTitle": "Цезарь",
+      "ids": [
+        "262",
+        "263",
+        "264"
+      ],
+      "image": "assets/images/pizza/picca_cezar.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Маргарита»",
+      "catalogTitle": "Маргарита",
+      "ids": [
+        "235",
+        "236",
+        "237"
+      ],
+      "image": "assets/images/pizza/picca_margarita.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Ассорти»",
+      "catalogTitle": "Ассорти",
+      "ids": [
+        "196",
+        "197",
+        "198"
+      ],
+      "image": "assets/images/pizza/picca_assorti.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Вечеринка»",
+      "catalogTitle": "Вечеринка",
+      "ids": [
+        "202",
+        "203",
+        "204"
+      ],
+      "image": "assets/images/pizza/picca_vecherinka.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Чикен»",
+      "catalogTitle": "Чикен",
+      "ids": [
+        "268",
+        "269",
+        "270"
+      ],
+      "image": "assets/images/pizza/picca_chiken.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пицца",
+      "title": "Пицца «Ягодная»",
+      "catalogTitle": "Ягодная",
+      "ids": [
+        "271",
+        "272",
+        "273"
+      ],
+      "image": "assets/images/pizza/picca_yagodnaya.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Кесадилья",
+      "catalogTitle": "Кесадилья",
+      "ids": [
+        "387"
+      ],
+      "image": "assets/images/shaurma/shaurma_kesadilya.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Шашлычная XXL",
+      "catalogTitle": "Шаурма шашл XXL",
+      "ids": [
+        "393"
+      ],
+      "image": "assets/images/shaurma/shaurma_shashlychnaya_xxl.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Шашлычная",
+      "catalogTitle": "Шаурма шашлык",
+      "ids": [
+        "394"
+      ],
+      "image": "assets/images/shaurma/shaurma_shashlychnaya.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Сальса",
+      "catalogTitle": "Шурма Сальса",
+      "ids": [
+        "397"
+      ],
+      "image": "assets/images/shaurma/shaurma_salsa.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма XXL",
+      "catalogTitle": "Шаурма XXL",
+      "ids": [
+        "389"
+      ],
+      "image": "assets/images/shaurma/shaurma_xxl.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Классическая",
+      "catalogTitle": "Шаурма\"Классическая\"",
+      "ids": [
+        "395"
+      ],
+      "image": "assets/images/shaurma/shaurma_klassicheskaya.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Фирменная",
+      "catalogTitle": "Шаурма \"Фирменная\"",
+      "ids": [
+        "388"
+      ],
+      "image": "assets/images/shaurma/shaurma_firmennaya.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Сырная",
+      "catalogTitle": "Шаурма Сырная",
+      "ids": [
+        "392"
+      ],
+      "image": "assets/images/shaurma/shaurma_syrnaya.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Дьябло",
+      "catalogTitle": "Шаурма Дьябло",
+      "ids": [
+        "391"
+      ],
+      "image": "assets/images/shaurma/shaurma_dyablo.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Гирос",
+      "catalogTitle": "Гирос",
+      "ids": [
+        "386"
+      ],
+      "image": "assets/images/shaurma/shaurma_giros.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Шаурма",
+      "title": "Шаурма Барбекю",
+      "catalogTitle": "Шаурма Барбекью",
+      "ids": [
+        "390"
+      ],
+      "image": "assets/images/shaurma/shaurma_barbekyu.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Пироги",
+      "title": "Пирог с картошкой и курицей",
+      "catalogTitle": "Пирог курица + картошка",
+      "ids": [
+        "1092"
+      ],
+      "image": "assets/images/pies/pirog_s_kartoshkoy_i_kuricey.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Пироги",
+      "title": "Пирог с картошкой и грибами",
+      "catalogTitle": "Пирог картошкой и грибами",
+      "ids": [
+        "1101"
+      ],
+      "image": "assets/images/pies/pirog_s_kartoshkoy_i_gribami.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Пироги",
+      "title": "Пиром с мясом и картошкой",
+      "catalogTitle": "Пирог мясо+картошка",
+      "ids": [
+        "1093"
+      ],
+      "image": "assets/images/pies/pirom_s_myasom_i_kartoshkoy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Пироги",
+      "title": "Пирог с фаршем (говядина +свинина)",
+      "catalogTitle": "Пирог с фаршем (говядина+свинина)",
+      "ids": [
+        "1096"
+      ],
+      "image": "assets/images/pies/pirog_s_farshem_govyadina_svinina.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Пироги",
+      "title": "Пирог с фаршем (курица+свинина)",
+      "catalogTitle": "Пирог с фаршем (курица+свинина)",
+      "ids": [
+        "1097"
+      ],
+      "image": "assets/images/pies/pirog_s_farshem_kurica_svinina.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Запеченный картофель",
+      "catalogTitle": "Запечённый картофель",
+      "ids": [
+        "867"
+      ],
+      "image": "assets/images/potato/zapechennyy_kartofel.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 1",
+      "catalogTitle": "Начинка 1 Ветчина+сыр",
+      "ids": [
+        "868"
+      ],
+      "image": "assets/images/potato/nachinka_1.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 2",
+      "catalogTitle": "Начинка 2 Сервелат+помидор",
+      "ids": [
+        "869"
+      ],
+      "image": "assets/images/potato/nachinka_2.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 3",
+      "catalogTitle": "Начинка 3 Баварские колб+огурцы мар",
+      "ids": [
+        "870"
+      ],
+      "image": "assets/images/potato/nachinka_3.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 4",
+      "catalogTitle": "Начинка 4 Курица копч+кор.морковь",
+      "ids": [
+        "871"
+      ],
+      "image": "assets/images/potato/nachinka_4.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 5",
+      "catalogTitle": "Начинка 5 Лосось с/с+сыр",
+      "ids": [
+        "872"
+      ],
+      "image": "assets/images/potato/nachinka_5.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 6",
+      "catalogTitle": "Начинка 6 Грибы+сыр",
+      "ids": [
+        "873"
+      ],
+      "image": "assets/images/potato/nachinka_6.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 7",
+      "catalogTitle": "Начинка 7 Ветчина+грибы",
+      "ids": [
+        "874"
+      ],
+      "image": "assets/images/potato/nachinka_7.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 8",
+      "catalogTitle": "Начинка 8 Сыр+сыр",
+      "ids": [
+        "875"
+      ],
+      "image": "assets/images/potato/nachinka_8.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 9",
+      "catalogTitle": "Начинка 9 Сосиска+помидор",
+      "ids": [
+        "876"
+      ],
+      "image": "assets/images/potato/nachinka_9.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Картошечка в фольге",
+      "title": "Начинка 10",
+      "catalogTitle": "Начинка 10 Бекон+лук жар",
+      "ids": [
+        "877"
+      ],
+      "image": "assets/images/potato/nachinka_10.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Супы",
+      "title": "Суп Брокколи",
+      "catalogTitle": "Крем суп из брокколи",
+      "ids": [
+        "307"
+      ],
+      "image": "assets/images/soups/sup_brokkoli.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Супы",
+      "title": "Грибной суп-крем",
+      "catalogTitle": "Грибной крем суп",
+      "ids": [
+        "306"
+      ],
+      "image": "assets/images/soups/gribnoy_sup_krem.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Супы",
+      "title": "Суп Солянка",
+      "catalogTitle": "Солянка",
+      "ids": [
+        "311"
+      ],
+      "image": "assets/images/soups/sup_solyanka.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Супы",
+      "title": "Суп Уха",
+      "catalogTitle": "Уха",
+      "ids": [
+        "313"
+      ],
+      "image": "assets/images/soups/sup_uha.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Супы",
+      "title": "Крем-суп Сырный",
+      "catalogTitle": "Сырный суп",
+      "ids": [
+        "312"
+      ],
+      "image": "assets/images/soups/krem_sup_syrnyy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Супы",
+      "title": "Суп куриный",
+      "catalogTitle": "Куриный",
+      "ids": [
+        "308"
+      ],
+      "image": "assets/images/soups/sup_kurinyy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Супы",
+      "title": "Суп Борщ",
+      "catalogTitle": "Борщ",
+      "ids": [
+        "305"
+      ],
+      "image": "assets/images/soups/sup_borsch.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с грибами и сыром",
+      "catalogTitle": "Блин грибы+сыр",
+      "ids": [
+        "23"
+      ],
+      "image": "assets/images/pancakes/blin_s_gribami_i_syrom.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с грибами, яйцом и зеленью",
+      "catalogTitle": "Блин грибы+яйцо+зелень",
+      "ids": [
+        "24"
+      ],
+      "image": "assets/images/pancakes/blin_s_gribami_yaycom_i_zelenyu.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с грибами, ветчиной и сыром",
+      "catalogTitle": "Блин с грибами+ветчина+сыр",
+      "ids": [
+        "31"
+      ],
+      "image": "assets/images/pancakes/blin_s_gribami_vetchinoy_i_syrom.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с грибами",
+      "catalogTitle": "Блин с грибами",
+      "ids": [
+        "30"
+      ],
+      "image": "assets/images/pancakes/blin_s_gribami.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с ветчиной",
+      "catalogTitle": "Блин с ветчиной",
+      "ids": [
+        "28"
+      ],
+      "image": "assets/images/pancakes/blin_s_vetchinoy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин Любимый",
+      "catalogTitle": "Блин Любимый",
+      "ids": [
+        "26"
+      ],
+      "image": "assets/images/pancakes/blin_lyubimyy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин Жульен",
+      "catalogTitle": "Блин Жульен",
+      "ids": [
+        "25"
+      ],
+      "image": "assets/images/pancakes/blin_zhulen.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с мёдом",
+      "catalogTitle": "Блин с медом",
+      "ids": [
+        "34"
+      ],
+      "image": "assets/images/pancakes/blin_s_medom.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блинчик Цезарь",
+      "catalogTitle": "Блин Цезарь",
+      "ids": [
+        "40"
+      ],
+      "image": "assets/images/pancakes/blinchik_cezar.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с ветчиной и сыром",
+      "catalogTitle": "Блин с ветчиной и сыром",
+      "ids": [
+        "29"
+      ],
+      "image": "assets/images/pancakes/blin_s_vetchinoy_i_syrom.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с фаршем",
+      "catalogTitle": "Блин с фаршем",
+      "ids": [
+        "37"
+      ],
+      "image": "assets/images/pancakes/blin_s_farshem.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с творогом и изюмом",
+      "catalogTitle": "Блин с творогом и изюмом",
+      "ids": [
+        "36"
+      ],
+      "image": "assets/images/pancakes/blin_s_tvorogom_i_izyumom.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блинчик со сгущёнкой",
+      "catalogTitle": "Блин со сгущенкой",
+      "ids": [
+        "38"
+      ],
+      "image": "assets/images/pancakes/blinchik_so_sguschenkoy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин-дог",
+      "catalogTitle": "Блин-дог",
+      "ids": [
+        "42"
+      ],
+      "image": "assets/images/pancakes/blin_dog.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин-дог двойной",
+      "catalogTitle": "Блин-Дог 2",
+      "ids": [
+        "43"
+      ],
+      "image": "assets/images/pancakes/blin_dog_dvoynoy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с варёной сгущёнкой",
+      "catalogTitle": "Блин с вареной сгущенкой",
+      "ids": [
+        "27"
+      ],
+      "image": "assets/images/pancakes/blin_s_varenoy_sguschenkoy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блинчик с джемом",
+      "catalogTitle": "Блины с джемом",
+      "ids": [
+        "44"
+      ],
+      "image": "assets/images/pancakes/blinchik_s_dzhemom.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин фирменный",
+      "catalogTitle": "Блин фирменный",
+      "ids": [
+        "39"
+      ],
+      "image": "assets/images/pancakes/blin_firmennyy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с маслом",
+      "catalogTitle": "Блин с маслом",
+      "ids": [
+        "33"
+      ],
+      "image": "assets/images/pancakes/blin_s_maslom.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с сыром",
+      "catalogTitle": "Блин с сыром",
+      "ids": [
+        "35"
+      ],
+      "image": "assets/images/pancakes/blin_s_syrom.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Блины",
+      "title": "Блин с курицей",
+      "catalogTitle": "Блин с курицей",
+      "ids": [
+        "32"
+      ],
+      "image": "assets/images/pancakes/blin_s_kuricey.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Фруктовый",
+      "catalogTitle": "Салат Фруктовый",
+      "ids": [
+        "280"
+      ],
+      "image": "assets/images/salads/salat_fruktovyy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Восторг",
+      "catalogTitle": "Салат Восторг",
+      "ids": [
+        "278"
+      ],
+      "image": "assets/images/salads/salat_vostorg.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Цезарь",
+      "catalogTitle": "Цезарь",
+      "ids": [
+        "281"
+      ],
+      "image": "assets/images/salads/salat_cezar.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Нежность",
+      "catalogTitle": "Нежность",
+      "ids": [
+        "276"
+      ],
+      "image": "assets/images/salads/salat_nezhnost.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Пикантный",
+      "catalogTitle": "Пикантный",
+      "ids": [
+        "277"
+      ],
+      "image": "assets/images/salads/salat_pikantnyy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Моника",
+      "catalogTitle": "Моника",
+      "ids": [
+        "275"
+      ],
+      "image": "assets/images/salads/salat_monika.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Салаты",
+      "title": "Салат Верона",
+      "catalogTitle": "Верона",
+      "ids": [
+        "274"
+      ],
+      "image": "assets/images/salads/salat_verona.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Напитки",
+      "title": "Кофе Американо",
+      "catalogTitle": "Американо 200мл",
+      "ids": [
+        "137"
+      ],
+      "image": "assets/images/drinks/kofe_amerikano.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Напитки",
+      "title": "Кофе Эспрессо",
+      "catalogTitle": "Эспрессо 70мл",
+      "ids": [
+        "149"
+      ],
+      "image": "assets/images/drinks/kofe_espresso.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Напитки",
+      "title": "Кофе капучино",
+      "catalogTitle": "Капучино 200мл",
+      "ids": [
+        "138"
+      ],
+      "image": "assets/images/drinks/kofe_kapuchino.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Напитки",
+      "title": "Кофе Латтэ",
+      "catalogTitle": "Латте 200мл",
+      "ids": [
+        "142"
+      ],
+      "image": "assets/images/drinks/kofe_latte.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Соусы",
+      "title": "Соус сливочно-чесночный",
+      "catalogTitle": "Соус сливочно-чесночный",
+      "ids": [
+        "594"
+      ],
+      "image": "assets/images/sauces/sous_slivochno_chesnochnyy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Соусы",
+      "title": "Соус сырный",
+      "catalogTitle": "Соус сырный",
+      "ids": [
+        "537"
+      ],
+      "image": "assets/images/sauces/sous_syrnyy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Соусы",
+      "title": "Кетчуп",
+      "catalogTitle": "Кетчуп",
+      "ids": [
+        "177"
+      ],
+      "image": "assets/images/sauces/ketchup.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Соусы",
+      "title": "Соус Барбекю",
+      "catalogTitle": "Соус барбекю",
+      "ids": [
+        "525"
+      ],
+      "image": "assets/images/sauces/sous_barbekyu.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Соусы",
+      "title": "Соус Диабло острый",
+      "catalogTitle": "Соус диабло острый",
+      "ids": [
+        "598"
+      ],
+      "image": "assets/images/sauces/sous_diablo_ostryy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Соусы",
+      "title": "Соус Сальса средне-острый",
+      "catalogTitle": "Соус Сальса средне-острый",
+      "ids": [
+        "535"
+      ],
+      "image": "assets/images/sauces/sous_salsa_sredne_ostryy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Бургер «Гавайский»",
+      "catalogTitle": "Бургер Гавайский",
+      "ids": [
+        "45"
+      ],
+      "image": "assets/images/burger/burger_gavayskiy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Бургер «Чикен Де Люкс»",
+      "catalogTitle": "Бургер Чикен Де Люкс",
+      "ids": [
+        "51"
+      ],
+      "image": "assets/images/burger/burger_chiken_de_lyuks.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Бургер «Мексиканский»",
+      "catalogTitle": "Бургер «Мексиканский»",
+      "ids": [
+        "47"
+      ],
+      "image": "assets/images/burger/burger_meksikanskiy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Бургер «Цезарь»",
+      "catalogTitle": "Бургер Цезарь",
+      "ids": [
+        "50"
+      ],
+      "image": "assets/images/burger/burger_cezar.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Чикенбургер",
+      "catalogTitle": "Чикенбургер",
+      "ids": [
+        "52"
+      ],
+      "image": "assets/images/burger/chikenburger.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Бургер «Острый»",
+      "catalogTitle": "Бургер Острый",
+      "ids": [
+        "48"
+      ],
+      "image": "assets/images/burger/burger_ostryy.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Бургеры",
+      "title": "Бургер «Классический»",
+      "catalogTitle": "Бургер классик",
+      "ids": [
+        "46"
+      ],
+      "image": "assets/images/burger/burger_klassicheskiy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Фастфуд",
+      "title": "Френч-дог с охотничьей колбаской",
+      "catalogTitle": "Френч дог Охота",
+      "ids": [
+        "336"
+      ],
+      "image": "assets/images/fastfood/french_dog_s_ohotnichey_kolbaskoy.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Фастфуд",
+      "title": "Сырные шарики",
+      "catalogTitle": "Сырные шарики 100г",
+      "ids": [
+        "333"
+      ],
+      "image": "assets/images/fastfood/syrnye_shariki.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Фастфуд",
+      "title": "Куриное филе в хлопьях",
+      "catalogTitle": "Курица Хлопья 100г",
+      "ids": [
+        "329"
+      ],
+      "image": "assets/images/fastfood/kurinoe_file_v_hlopyah.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Фастфуд",
+      "title": "Наггетсы 100 г",
+      "catalogTitle": "Наггетсы 100г",
+      "ids": [
+        "331"
+      ],
+      "image": "assets/images/fastfood/naggetsy_100_g.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Фастфуд",
+      "title": "Картошка Фри",
+      "catalogTitle": "Картофель Фри 100г",
+      "ids": [
+        "327"
+      ],
+      "image": "assets/images/fastfood/kartoshka_fri.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Десерты",
+      "title": "Чизкейк «Шоколад»",
+      "catalogTitle": "Чизкейк шоколад",
+      "ids": [
+        "385"
+      ],
+      "image": "assets/images/desserts/chizkeyk_shokolad.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Десерты",
+      "title": "Чизкейк «Манго - Маракуйя»",
+      "catalogTitle": "Чизкейк Манго Маракуйя",
+      "ids": [
+        "904"
+      ],
+      "image": "assets/images/desserts/chizkeyk_mango_marakuyya.jpg",
+      "matchReason": "key match"
+    },
+    {
+      "category": "Десерты",
+      "title": "Чизкейк «Карамельный с арахисом»",
+      "catalogTitle": "Чизкейк Карамельный арахис",
+      "ids": [
+        "905"
+      ],
+      "image": "assets/images/desserts/chizkeyk_karamelnyy_s_arahisom.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Паста",
+      "title": "Паста «С курицей и грибами»",
+      "catalogTitle": "Паста курица грибы",
+      "ids": [
+        "174"
+      ],
+      "image": "assets/images/pasta/pasta_s_kuricey_i_gribami.jpg",
+      "matchReason": "manual alias"
+    },
+    {
+      "category": "Паста",
+      "title": "Паста «Карбонара»",
+      "catalogTitle": "Паста  с беконом",
+      "ids": [
+        "172"
+      ],
+      "image": "assets/images/pasta/pasta_karbonara.jpg",
+      "matchReason": "manual alias"
+    }
+  ],
+  "overridesFile": "tools\\catalog_overrides.json"
+}

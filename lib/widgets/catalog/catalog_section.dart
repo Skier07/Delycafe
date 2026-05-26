@@ -1,4 +1,4 @@
-import 'package:delycafe/data/mock_catalog.dart';
+import 'package:delycafe/data/generated_catalog.dart';
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class CatalogSection extends StatefulWidget {
-  final Widget banner;
+  final Widget? banner;
 
   const CatalogSection({
     super.key,
-    required this.banner,
+    this.banner,
   });
 
   @override
@@ -19,24 +19,92 @@ class CatalogSection extends StatefulWidget {
 }
 
 class _CatalogSectionState extends State<CatalogSection> {
-  final List<String> _categories = const [
+  String? _selectedCategory;
+
+  final List<String> _categoryOrder = const [
     'Пицца',
     'Шаурма',
     'Бургеры',
+    'Фастфуд',
+    'Картошечка в фольге',
+    'Соусы',
     'Напитки',
+    'Десерты',
+    'Блины',
+    'Паста',
+    'Пироги',
+    'Салаты',
+    'Супы',
   ];
 
-  String _selectedCategory = 'Пицца';
+  List<String> get _categories {
+    final categories =
+        generatedCatalog.map((item) => item.category).toSet().toList();
+
+    categories.sort((a, b) {
+      final indexA = _categoryOrder.indexOf(a);
+      final indexB = _categoryOrder.indexOf(b);
+
+      if (indexA == -1 && indexB == -1) {
+        return a.compareTo(b);
+      }
+
+      if (indexA == -1) return 1;
+      if (indexB == -1) return -1;
+
+      return indexA.compareTo(indexB);
+    });
+
+    return categories;
+  }
+
+  String get _currentCategory {
+    if (_selectedCategory != null && _categories.contains(_selectedCategory)) {
+      return _selectedCategory!;
+    }
+
+    if (_categories.isEmpty) {
+      return '';
+    }
+
+    return _categories.first;
+  }
 
   List<CatalogItem> get _filteredItems {
-    return mockCatalog
-        .where((item) => item.category == _selectedCategory)
+    final currentCategory = _currentCategory;
+
+    final items = generatedCatalog
+        .where((item) => item.category == currentCategory)
         .toList();
+
+    items.sort((a, b) {
+      final sortCompare = a.sortOrder.compareTo(b.sortOrder);
+
+      if (sortCompare != 0) {
+        return sortCompare;
+      }
+
+      return a.title.compareTo(b.title);
+    });
+
+    return items;
+  }
+
+  ProductVariant? _getDefaultVariant(CatalogItem item) {
+    if (item.variants.isEmpty) {
+      return null;
+    }
+
+    for (final variant in item.variants) {
+      if (variant.title == 'Средняя') {
+        return variant;
+      }
+    }
+
+    return item.variants.first;
   }
 
   void _selectCategory(String category) {
-    if (_selectedCategory == category) return;
-
     setState(() {
       _selectedCategory = category;
     });
@@ -44,26 +112,34 @@ class _CatalogSectionState extends State<CatalogSection> {
 
   @override
   Widget build(BuildContext context) {
+    final categories = _categories;
     final items = _filteredItems;
-    final topPadding = MediaQuery.of(context).padding.top;
+
+    if (categories.isEmpty) {
+      return const Center(
+        child: Text('Каталог пуст'),
+      );
+    }
 
     return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(
-          child: widget.banner,
-        ),
+        if (widget.banner != null)
+          SliverToBoxAdapter(
+            child: SizedBox(
+              width: double.infinity,
+              child: widget.banner!,
+            ),
+          ),
         SliverPersistentHeader(
           pinned: true,
           delegate: _CatalogHeaderDelegate(
-            topPadding: topPadding,
-            categories: _categories,
-            selectedCategory: _selectedCategory,
+            categories: categories,
+            selectedCategory: _currentCategory,
             onCategorySelected: _selectCategory,
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           sliver: SliverGrid(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -72,7 +148,12 @@ class _CatalogSectionState extends State<CatalogSection> {
                 return CatalogCard(
                   item: item,
                   onAddToCart: () {
-                    context.read<CartService>().addToCart(item);
+                    final variant = _getDefaultVariant(item);
+
+                    context.read<CartService>().addToCart(
+                          item,
+                          variant: variant,
+                        );
                   },
                 );
               },
@@ -92,23 +173,21 @@ class _CatalogSectionState extends State<CatalogSection> {
 }
 
 class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double topPadding;
   final List<String> categories;
   final String selectedCategory;
   final ValueChanged<String> onCategorySelected;
 
   const _CatalogHeaderDelegate({
-    required this.topPadding,
     required this.categories,
     required this.selectedCategory,
     required this.onCategorySelected,
   });
 
   @override
-  double get minExtent => topPadding + 104;
+  double get minExtent => 116;
 
   @override
-  double get maxExtent => topPadding + 104;
+  double get maxExtent => 116;
 
   @override
   Widget build(
@@ -118,7 +197,7 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
   ) {
     return Container(
       color: const Color(0xFFFEF7FF),
-      padding: EdgeInsets.fromLTRB(16, topPadding + 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -129,53 +208,47 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 44,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final category = categories[index];
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: categories.map((category) {
                 final selected = category == selectedCategory;
 
-                return GestureDetector(
-                  onTap: () => onCategorySelected(category),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.header
-                          : Colors.white.withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      onCategorySelected(category);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
                         color: selected
                             ? AppColors.header
-                            : Colors.black.withValues(alpha: 0.08),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+                            : Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: selected
+                              ? AppColors.header
+                              : Colors.black.withValues(alpha: 0.08),
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      category,
-                      style: TextStyle(
-                        color: selected ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w600,
+                      ),
+                      child: Text(
+                        category,
+                        style: TextStyle(
+                          color: selected ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 );
-              },
+              }).toList(),
             ),
           ),
         ],
@@ -184,9 +257,8 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_CatalogHeaderDelegate oldDelegate) {
-    return oldDelegate.selectedCategory != selectedCategory ||
-        oldDelegate.topPadding != topPadding ||
-        oldDelegate.categories != categories;
+  bool shouldRebuild(covariant _CatalogHeaderDelegate oldDelegate) {
+    return oldDelegate.categories != categories ||
+        oldDelegate.selectedCategory != selectedCategory;
   }
 }
