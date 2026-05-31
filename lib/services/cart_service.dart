@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class CartService extends ChangeNotifier {
   final List<CartItem> _items = [];
 
-  List<CartItem> get items => _items;
+  List<CartItem> get items => List.unmodifiable(_items);
 
   int get totalItems {
     int total = 0;
@@ -26,6 +26,8 @@ class CartService extends ChangeNotifier {
 
     return total;
   }
+
+  bool get isEmpty => _items.isEmpty;
 
   void addToCart(
     CatalogItem product, {
@@ -63,6 +65,25 @@ class CartService extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  List<Map<String, dynamic>> toOrderApiItems() {
+    return _items.map((cartItem) {
+      final product = cartItem.product;
+      final variant = cartItem.variant;
+
+      final price = variant?.price ?? product.price;
+      final sabyId = variant?.sabyId ?? product.sabyId;
+
+      return {
+        'product_title': product.title,
+        'variant_title': variant?.title ?? '',
+        'product_api_id': product.id,
+        'saby_id': sabyId,
+        'quantity': cartItem.quantity,
+        'price': price,
+      };
+    }).toList();
   }
 
   void clearCart() {

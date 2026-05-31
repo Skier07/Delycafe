@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,6 +21,43 @@ enum DeliveryUrgency {
 enum PaymentMethod {
   card,
   sbp,
+}
+
+extension DeliveryTypeApiValue on DeliveryType {
+  String get apiValue {
+    switch (this) {
+      case DeliveryType.ozersk:
+        return 'ozersk';
+      case DeliveryType.prom:
+        return 'promploshadka';
+      case DeliveryType.tatysh:
+        return 'tatysh';
+      case DeliveryType.pickup:
+        return 'pickup';
+    }
+  }
+}
+
+extension DeliveryUrgencyApiValue on DeliveryUrgency {
+  String get apiValue {
+    switch (this) {
+      case DeliveryUrgency.asap:
+        return 'asap';
+      case DeliveryUrgency.byTime:
+        return 'by_time';
+    }
+  }
+}
+
+extension PaymentMethodApiValue on PaymentMethod {
+  String get apiValue {
+    switch (this) {
+      case PaymentMethod.card:
+        return 'card';
+      case PaymentMethod.sbp:
+        return 'sbp';
+    }
+  }
 }
 
 class GuestCheckoutData {
@@ -48,7 +87,7 @@ class GuestCheckoutData {
 class GuestCheckoutForm extends StatefulWidget {
   final int cartTotal;
   final String? initialPhone;
-  final void Function(GuestCheckoutData data) onSubmit;
+  final FutureOr<void> Function(GuestCheckoutData data) onSubmit;
 
   const GuestCheckoutForm({
     super.key,
@@ -67,6 +106,10 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     return digits.length == 10;
   }
 
+  bool get _canSubmit {
+    return _isPhoneComplete && !_isSubmitting;
+  }
+
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -78,6 +121,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   DeliveryType _deliveryType = DeliveryType.ozersk;
   DeliveryUrgency _urgency = DeliveryUrgency.asap;
   PaymentMethod _paymentMethod = PaymentMethod.card;
+  bool _isSubmitting = false;
 
   static const int _promDeliveryPrice = 350;
   static const int _tatyshDeliveryPrice = 450;
@@ -273,9 +317,13 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+
     if (!_formKey.currentState!.validate()) return;
+
     final phoneDigits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+
     if (phoneDigits.length != 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -284,6 +332,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       );
       return;
     }
+
     final fullPhone = '+7$phoneDigits';
 
     final data = GuestCheckoutData(
@@ -300,7 +349,27 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       comment: _commentController.text.trim(),
     );
 
-    widget.onSubmit(data);
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await widget.onSubmit(data);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Не удалось оформить заказ: $error'),
+        ),
+      );
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override
@@ -528,8 +597,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           SafeArea(
             top: false,
             child: AuthButton(
-              text: 'Оформить заказ',
-              onPressed: _isPhoneComplete ? _submit : null,
+              text: _isSubmitting ? 'Оформляем...' : 'Оформить заказ',
+              onPressed: _canSubmit ? _submit : null,
             ),
           ),
         ],

@@ -1,0 +1,706 @@
+:root {
+  --primary: #0c204d;
+  --secondary: #172f6b;
+  --accent: #f4c45f;
+
+  --primary-fg: #ffffff;
+  --body-bg: #f7f4ef;
+  --body-fg: #151515;
+  --body-quiet-color: #6f6f76;
+
+  --header-color: #ffffff;
+  --header-branding-color: #ffffff;
+
+  --link-fg: #0c204d;
+  --link-hover-color: #172f6b;
+
+  --button-bg: #0c204d;
+  --button-hover-bg: #172f6b;
+  --default-button-bg: #0c204d;
+  --default-button-hover-bg: #172f6b;
+
+  --border-color: rgba(12, 32, 77, 0.08);
+}
+
+/* ==========================================================
+   Base
+   ========================================================== */
+
+html,
+body {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(244, 196, 95, 0.28), transparent 290px),
+    radial-gradient(circle at 4% 20%, rgba(12, 32, 77, 0.08), transparent 310px),
+    linear-gradient(180deg, #fffaf2 0%, #f7f4ef 48%, #f3eef6 100%);
+  color: #151515;
+}
+
+a:link,
+a:visited {
+  color: #0c204d;
+  font-weight: 650;
+}
+
+a:hover {
+  color: #172f6b;
+}
+
+/* ==========================================================
+   Header
+   ========================================================== */
+
+#header {
+  min-height: 72px;
+  padding: 12px 40px;
+  background: rgba(12, 32, 77, 0.84);
+  color: #ffffff;
+  backdrop-filter: blur(10px) saturate(125%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 18px 50px rgba(12, 32, 77, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 18px 28px rgba(255, 255, 255, 0.055),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+#branding {
+  display: flex;
+  align-items: center;
+}
+
+.dely-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dely-brand__logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #0c204d;
+  background: linear-gradient(145deg, #ffffff, #f5f2ed);
+
+  font-weight: 950;
+  font-size: 26px;
+  letter-spacing: -1px;
+
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.20),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 -8px 18px rgba(12, 32, 77, 0.06);
+}
+
+.dely-brand__title {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.dely-brand__subtitle {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+#user-tools {
+  color: rgba(255, 255, 255, 0.76);
+  font-weight: 650;
+}
+
+#user-tools a {
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+#user-tools a:hover {
+  color: #f4c45f;
+  border-bottom-color: #f4c45f;
+}
+
+/* ==========================================================
+   Breadcrumbs
+   ========================================================== */
+
+div.breadcrumbs {
+  padding: 13px 40px;
+  background: rgba(12, 32, 77, 0.76);
+  color: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 12px 18px rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+}
+
+div.breadcrumbs a {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+div.breadcrumbs a:hover {
+  color: #f4c45f;
+}
+
+/* ==========================================================
+   Content
+   ========================================================== */
+
+#content {
+  padding: 34px 40px;
+}
+
+#content h1 {
+  margin: 0 0 24px;
+  color: #101015;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -1.3px;
+}
+
+#content h1::after {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 5px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0c204d, #f4c45f);
+}
+
+/* ==========================================================
+   Modules / cards
+   ========================================================== */
+
+.module,
+.inline-group,
+fieldset.module {
+  border: 1px solid rgba(12, 32, 77, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.90);
+  box-shadow:
+    0 18px 44px rgba(12, 32, 77, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(12, 32, 77, 0.035);
+}
+
+.module h2,
+.module caption,
+.inline-group h2,
+#changelist-filter h2,
+.change-form fieldset.module h2,
+.change-form .module h2,
+.change-form .inline-group h2,
+fieldset.collapsed h2,
+fieldset.collapse h2,
+.collapse h2 {
+  padding: 15px 18px;
+  background: rgba(12, 32, 77, 0.86) !important;
+  color: #ffffff !important;
+  font-size: 15px;
+  font-weight: 850;
+  letter-spacing: 0.2px;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 12px 18px rgba(255, 255, 255, 0.045),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+}
+
+.module table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.module table th,
+.module table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(12, 32, 77, 0.06);
+}
+
+.module table tr:last-child th,
+.module table tr:last-child td {
+  border-bottom: none;
+}
+
+.module table tr:hover {
+  background: rgba(12, 32, 77, 0.035);
+}
+
+/* ==========================================================
+   Dashboard
+   ========================================================== */
+
+.dashboard #content-main {
+  max-width: 1080px;
+}
+
+.dashboard .module {
+  margin-bottom: 24px;
+}
+
+.dashboard .module table th a {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.dashboard .module table td a {
+  font-weight: 700;
+}
+
+/* ==========================================================
+   Change list / tables
+   ========================================================== */
+
+#changelist {
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.change-list #content-main {
+  overflow-x: auto;
+}
+
+#changelist-form .results {
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: visible;
+  background: rgba(255, 255, 255, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 18px 44px rgba(12, 32, 77, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(12, 32, 77, 0.035);
+}
+
+#result_list {
+  min-width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+}
+
+#result_list thead th {
+  position: static;
+  overflow: visible;
+  padding: 13px 10px;
+  background: rgba(12, 32, 77, 0.86);
+  color: #ffffff;
+  border-bottom: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    inset 0 12px 18px rgba(255, 255, 255, 0.045),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+}
+
+#result_list thead th:first-child {
+  border-top-left-radius: 8px;
+}
+
+#result_list thead th:last-child {
+  border-top-right-radius: 8px;
+}
+
+#result_list thead th a {
+  color: #ffffff;
+}
+
+#result_list tbody td,
+#result_list tbody th {
+  padding: 13px 10px;
+  border-bottom: 1px solid rgba(12, 32, 77, 0.06);
+}
+
+#result_list tbody tr:hover {
+  background: rgba(244, 196, 95, 0.12);
+}
+
+/* ==========================================================
+   Filters
+   ========================================================== */
+
+#changelist-filter {
+  border-radius: 10px;
+  overflow: visible;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(12, 32, 77, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 18px 44px rgba(12, 32, 77, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(12, 32, 77, 0.035);
+}
+
+#changelist-filter h2 {
+  padding: 15px 18px;
+  background: rgba(12, 32, 77, 0.86) !important;
+  color: #ffffff !important;
+  font-weight: 850;
+}
+
+#changelist-filter h3 {
+  color: #0c204d;
+  font-weight: 850;
+}
+
+#changelist-filter li.selected a {
+  color: #0c204d;
+  font-weight: 900;
+}
+
+/* ==========================================================
+   Forms
+   ========================================================== */
+
+.form-row {
+  padding: 15px 18px;
+  border-bottom: 1px solid rgba(12, 32, 77, 0.06);
+}
+
+.change-form .form-row {
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(12, 32, 77, 0.06) !important;
+}
+
+.aligned label {
+  color: #202026;
+  font-weight: 750;
+}
+
+.help,
+.helptext,
+p.help,
+form p.help {
+  color: #777782;
+  font-size: 12px;
+}
+
+input,
+textarea,
+select,
+.vTextField,
+.change-form input,
+.change-form textarea,
+.change-form select,
+.change-form .vTextField {
+  border-radius: 15px !important;
+  border: 1px solid rgba(12, 32, 77, 0.14) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.vTextField:focus,
+.change-form input:focus,
+.change-form textarea:focus,
+.change-form select:focus,
+.change-form .vTextField:focus {
+  border-color: #0c204d !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(12, 32, 77, 0.12) !important;
+  outline: none !important;
+}
+
+.change-form fieldset.module,
+.change-form .inline-group,
+.change-form .module {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(12, 32, 77, 0.08) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    0 18px 44px rgba(12, 32, 77, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(12, 32, 77, 0.035) !important;
+}
+
+.change-form .related-widget-wrapper-link {
+  color: #0c204d !important;
+}
+
+/* ==========================================================
+   Buttons
+   ========================================================== */
+
+.object-tools a,
+.object-tools a:link,
+.object-tools a:visited,
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input,
+a.button,
+.object-tools a.historylink,
+.object-tools a.viewsitelink,
+.object-tools a.addlink {
+  border: none;
+  border-radius: 14px !important;
+  background: #0c204d !important;
+  color: #ffffff !important;
+  font-weight: 850;
+  box-shadow:
+    0 12px 28px rgba(12, 32, 77, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+}
+
+.object-tools a:hover,
+.button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.submit-row input:hover,
+a.button:hover,
+.object-tools a.historylink:hover,
+.object-tools a.viewsitelink:hover,
+.object-tools a.addlink:hover {
+  background: #172f6b !important;
+  transform: translateY(-1px);
+  box-shadow:
+    0 16px 36px rgba(12, 32, 77, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.button.default,
+input[type="submit"].default,
+.submit-row input.default {
+  background: linear-gradient(135deg, #0c204d 0%, #172f6b 100%) !important;
+}
+
+.deletelink,
+.submit-row a.deletelink {
+  border-radius: 14px !important;
+}
+
+/* ==========================================================
+   Submit row
+   ========================================================== */
+
+.submit-row,
+.change-form .submit-row {
+  border-radius: 14px !important;
+  border: 1px solid rgba(12, 32, 77, 0.08) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow:
+    0 18px 44px rgba(12, 32, 77, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(12, 32, 77, 0.035) !important;
+}
+
+/* ==========================================================
+   Sidebar
+   ========================================================== */
+
+#nav-sidebar,
+#nav-sidebar .module {
+  border-radius: 10px !important;
+  overflow: visible !important;
+}
+
+/* ==========================================================
+   Messages
+   ========================================================== */
+
+.messagelist li {
+  border-radius: 14px;
+  border: 1px solid rgba(12, 32, 77, 0.08);
+  box-shadow: 0 12px 30px rgba(12, 32, 77, 0.08);
+}
+
+/* ==========================================================
+   Login
+   ========================================================== */
+
+.login {
+  background:
+    radial-gradient(circle at 75% 8%, rgba(244, 196, 95, 0.34), transparent 320px),
+    linear-gradient(135deg, #0c204d 0%, #172f6b 48%, #f7f4ef 48%, #fffaf2 100%);
+}
+
+.login #container {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+}
+
+.login #header {
+  box-shadow: none;
+}
+
+.login #content {
+  padding: 34px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+/* ==========================================================
+   Accessibility labels
+   ========================================================== */
+
+.visually-hidden,
+#toolbar label[for="searchbar"],
+#changelist-search label[for="searchbar"],
+.paginator .visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: transparent !important;
+  box-shadow: none !important;
+}
+
+#toolbar label,
+#changelist-search label {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================
+   Safety: no pseudo-elements on admin structural blocks
+   ========================================================== */
+
+#header::before,
+#header::after,
+div.breadcrumbs::before,
+div.breadcrumbs::after,
+.module h2::before,
+.module h2::after,
+.module caption::before,
+.module caption::after,
+.inline-group h2::before,
+.inline-group h2::after,
+#result_list thead th::before,
+#result_list thead th::after,
+#changelist-filter h2::before,
+#changelist-filter h2::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* ==========================================================
+   Responsive
+   ========================================================== */
+
+@media (max-width: 900px) {
+  #header {
+    padding: 12px 18px;
+  }
+
+  div.breadcrumbs {
+    padding: 12px 18px;
+  }
+
+  #content {
+    padding: 24px 16px;
+  }
+
+  #content h1 {
+    font-size: 28px;
+  }
+
+  .dely-brand__subtitle {
+    display: none;
+  }
+}
+
+/* Сужаем колонку WEIGHT в списке товаров */
+#result_list .field-weight,
+#result_list .column-weight {
+  width: 90px !important;
+  max-width: 90px !important;
+  min-width: 90px !important;
+}
+
+#result_list .field-weight input {
+  width: 70px !important;
+  max-width: 70px !important;
+  min-width: 70px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+/* ==========================================================
+   Выравнивание маленьких колонок по центру
+   ========================================================== */
+
+/* Заголовки маленьких колонок */
+#result_list th.column-price,
+#result_list th.column-weight,
+#result_list th.column-source,
+#result_list th.column-needs_review,
+#result_list th.column-is_hit,
+#result_list th.column-is_new,
+#result_list th.column-is_active,
+#result_list th.column-has_variants,
+#result_list th.column-sort_order {
+  text-align: center !important;
+}
+
+/* Ячейки маленьких колонок */
+#result_list td.field-price,
+#result_list td.field-weight,
+#result_list td.field-source,
+#result_list td.field-needs_review,
+#result_list td.field-is_hit,
+#result_list td.field-is_new,
+#result_list td.field-is_active,
+#result_list td.field-has_variants,
+#result_list td.field-sort_order {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Чекбоксы по центру ячейки */
+#result_list td.field-needs_review input[type="checkbox"],
+#result_list td.field-is_hit input[type="checkbox"],
+#result_list td.field-is_new input[type="checkbox"],
+#result_list td.field-is_active input[type="checkbox"],
+#result_list td.field-has_variants input[type="checkbox"] {
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Текстовые input-поля внутри таблицы по центру */
+#result_list td.field-price input,
+#result_list td.field-weight input,
+#result_list td.field-sort_order input {
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}

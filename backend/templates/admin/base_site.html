@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}DelyCafe Control{% endblock %}
+
+{% block branding %}
+<div class="dely-brand">
+  <div class="dely-brand__logo">D</div>
+  <div class="dely-brand__text">
+    <div class="dely-brand__title">DelyCafe</div>
+    <div class="dely-brand__subtitle">control panel</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin_brand/admin_custom.css' %}">
+{% endblock %}

@@ -2,6 +2,7 @@ import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,10 +27,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedVariant = _getInitialVariant();
+  }
 
-    if (widget.item.variants.isNotEmpty) {
-      _selectedVariant = widget.item.variants.first;
+  ProductVariant? _getInitialVariant() {
+    if (widget.item.variants.isEmpty) {
+      return null;
     }
+
+    for (final variant in widget.item.variants) {
+      if (variant.title == 'Средняя') {
+        return variant;
+      }
+    }
+
+    return widget.item.variants.first;
   }
 
   int get _currentPrice {
@@ -37,12 +49,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   String get _currentWeight {
-    return _selectedVariant?.weight ?? widget.item.weight ?? 'за порцию';
+    final variantWeight = _selectedVariant?.weight.trim() ?? '';
+    final itemWeight = widget.item.weight?.trim() ?? '';
+
+    if (variantWeight.isNotEmpty) {
+      return variantWeight;
+    }
+
+    if (itemWeight.isNotEmpty) {
+      return itemWeight;
+    }
+
+    return 'за порцию';
   }
 
   void _addToCart() {
-    if (!widget.item.isAvailable) return;
-
     context.read<CartService>().addToCart(
           widget.item,
           variant: _selectedVariant,
@@ -90,7 +111,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           const SizedBox(width: 8),
                           if (item.isHit)
                             const _StatusChip(
-                              text: 'ХИТ',
+                              text: 'HOT',
                               color: Color(0xFFEE101B),
                             ),
                           if (item.isHit && item.isNew)
@@ -143,123 +164,102 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   isSmallPhone ? 12 : 14;
 
                               return Row(
-                                children: List.generate(item.variants.length,
-                                    (index) {
-                                  final variant = item.variants[index];
-                                  final selected =
-                                      _selectedVariant?.id == variant.id;
+                                children: List.generate(
+                                  item.variants.length,
+                                  (index) {
+                                    final variant = item.variants[index];
+                                    final selected =
+                                        _selectedVariant?.id == variant.id;
 
-                                  return Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                        right: index == item.variants.length - 1
-                                            ? 0
-                                            : gap,
-                                      ),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedVariant = variant;
-                                          });
-                                        },
-                                        child: AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 160),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: horizontalPadding,
-                                            vertical: verticalPadding,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: selected
-                                                ? AppColors.header
-                                                : Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            border: Border.all(
+                                    final variantWeight = variant.weight.trim();
+
+                                    final variantInfo = variantWeight.isNotEmpty
+                                        ? '$variantWeight · ${variant.price} ₽'
+                                        : '${variant.price} ₽';
+
+                                    return Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                          right:
+                                              index == item.variants.length - 1
+                                                  ? 0
+                                                  : gap,
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedVariant = variant;
+                                            });
+                                          },
+                                          child: AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 160,
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: horizontalPadding,
+                                              vertical: verticalPadding,
+                                            ),
+                                            decoration: BoxDecoration(
                                               color: selected
                                                   ? AppColors.header
-                                                  : Colors.black
-                                                      .withValues(alpha: 0.12),
+                                                  : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: selected
+                                                    ? AppColors.header
+                                                    : Colors.black.withValues(
+                                                        alpha: 0.12,
+                                                      ),
+                                              ),
                                             ),
-                                          ),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  variant.title,
-                                                  maxLines: 1,
-                                                  style: TextStyle(
-                                                    color: selected
-                                                        ? Colors.white
-                                                        : Colors.black87,
-                                                    fontSize: titleFontSize,
-                                                    fontWeight: FontWeight.w700,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: Text(
+                                                    variant.title,
+                                                    maxLines: 1,
+                                                    style: TextStyle(
+                                                      color: selected
+                                                          ? Colors.white
+                                                          : Colors.black87,
+                                                      fontSize: titleFontSize,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  '${variant.weight} · ${variant.price} ₽',
-                                                  maxLines: 1,
-                                                  style: TextStyle(
-                                                    color: selected
-                                                        ? Colors.white
-                                                            .withValues(
-                                                                alpha: 0.85)
-                                                        : Colors.black54,
-                                                    fontSize: infoFontSize,
-                                                    fontWeight: FontWeight.w500,
+                                                const SizedBox(height: 4),
+                                                FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: Text(
+                                                    variantInfo,
+                                                    maxLines: 1,
+                                                    style: TextStyle(
+                                                      color: selected
+                                                          ? Colors.white
+                                                              .withValues(
+                                                              alpha: 0.85,
+                                                            )
+                                                          : Colors.black54,
+                                                      fontSize: infoFontSize,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }),
+                                    );
+                                  },
+                                ),
                               );
                             },
-                          ),
-                        ),
-                      ],
-                      if (item.shortDescription != null &&
-                          item.shortDescription!.trim().isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.header.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Коротко о товаре',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.header,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                item.shortDescription!,
-                                style: TextStyle(
-                                  fontSize: 15.5,
-                                  height: 1.55,
-                                  color: Colors.black.withValues(alpha: 0.82),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ],
@@ -267,7 +267,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       _InfoBlock(
                         title: 'Описание',
                         child: Text(
-                          item.description,
+                          item.description.trim().isNotEmpty
+                              ? item.description
+                              : 'Описание товара скоро появится.',
                           style: TextStyle(
                             fontSize: 15.5,
                             height: 1.6,
@@ -301,7 +303,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             _BuildText(
                               text: 'Блюдо готовится после оформления заказа.',
                             ),
-                            SizedBox(height: 8),
                           ],
                         ),
                       ),
@@ -335,7 +336,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: SizedBox(
             height: 76,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(22),
@@ -370,13 +374,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color:
-                              item.isAvailable ? AppColors.header : Colors.grey,
+                          color: AppColors.header,
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: Text(
-                          item.isAvailable ? 'В корзину' : 'Недоступно',
-                          style: const TextStyle(
+                        child: const Text(
+                          'В корзину',
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
@@ -397,18 +400,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String _buildExtendedDescription(CatalogItem item) {
     switch (item.category) {
       case 'Пицца':
-        return 'Это отличный вариант для тех, кто любит насыщенный вкус, тянущийся сыр и сытную подачу. '
-            'Подходит как для одного плотного приёма пищи, так и для компании. '
-            'Хорошо сочетается с холодными напитками и соусами.';
-      case 'Закуски':
-        return 'Хороший выбор, если хочется добавить к заказу что-то хрустящее, горячее и удобное для компании. '
-            'Отлично дополняет основное блюдо и делает заказ более насыщенным.';
+        return 'Отличный вариант для тех, кто любит насыщенный вкус, тянущийся сыр и сытную подачу. Подходит как для одного плотного приёма пищи, так и для компании.';
+      case 'Шаурма':
+        return 'Сытный вариант для быстрого перекуса. Хорошо подойдёт, когда хочется горячее блюдо без долгого ожидания.';
+      case 'Бургеры':
+        return 'Хороший выбор для любителей сочной начинки, мягкой булочки и насыщенного вкуса.';
+      case 'Фастфуд':
+        return 'Удобная позиция к основному заказу или как самостоятельный перекус. Особенно хорошо подходит для компании.';
+      case 'Картошечка в фольге':
+        return 'Сытная горячая позиция, которую можно взять отдельно или дополнить начинкой по вкусу.';
+      case 'Соусы':
+        return 'Подходит как дополнение к картошке, шаурме, бургерам, закускам и другим позициям меню.';
       case 'Напитки':
-        return 'Идеально дополняет заказ и помогает сбалансировать вкус основных блюд. '
-            'Подходит как к пицце, так и к закускам.';
-      case 'Комбо':
-        return 'Удобный вариант, если хочется взять сразу готовое сочетание без долгого выбора. '
-            'Хорошо подходит для быстрого заказа на одного или на компанию.';
+        return 'Хорошо дополняет заказ и помогает сбалансировать вкус основных блюд.';
+      case 'Десерты':
+        return 'Подходит в конце заказа, если хочется добавить что-то сладкое и завершить приём пищи.';
+      case 'Паста':
+        return 'Горячее и сытное блюдо с насыщенным вкусом. Подходит как самостоятельная позиция.';
+      case 'Пироги':
+        return 'Сытная выпечка для одного или нескольких человек. Хороший вариант к обеду или ужину.';
+      case 'Салаты':
+        return 'Лёгкое дополнение к основному блюду или самостоятельная позиция для тех, кто хочет что-то свежее.';
+      case 'Супы':
+        return 'Горячее первое блюдо, которое хорошо подходит для полноценного обеда.';
       default:
         return 'Вкусная позиция из меню, которую можно добавить к основному заказу или взять как самостоятельный вариант.';
     }
@@ -417,7 +431,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
 class _ProductHero extends StatelessWidget {
   final CatalogItem item;
-  const _ProductHero({required this.item});
+
+  const _ProductHero({
+    required this.item,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -427,30 +444,11 @@ class _ProductHero extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            item.image,
+          ProductImage(
+            image: item.image,
+            width: double.infinity,
+            height: 320,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.header.withValues(alpha: 0.95),
-                      const Color(0xFF1E3A8A).withValues(alpha: 0.82),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    _categoryIcon(item.category),
-                    size: 84,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              );
-            },
           ),
           DecoratedBox(
             decoration: BoxDecoration(
@@ -458,8 +456,8 @@ class _ProductHero extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.18),
-                  Colors.black.withValues(alpha: 0.45),
+                  Colors.black.withValues(alpha: 0.10),
+                  Colors.black.withValues(alpha: 0.34),
                 ],
               ),
             ),
@@ -472,7 +470,7 @@ class _ProductHero extends StatelessWidget {
               children: [
                 if (item.isHit)
                   const _StatusChip(
-                    text: 'ХИТ',
+                    text: 'HOT',
                     color: Color(0xFFEE101B),
                   ),
                 if (item.isHit && item.isNew) const SizedBox(width: 8),
@@ -554,6 +552,9 @@ class _StatusChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.22),
+        ),
       ),
       child: Text(
         text,
@@ -570,7 +571,9 @@ class _StatusChip extends StatelessWidget {
 class _CategoryChip extends StatelessWidget {
   final String text;
 
-  const _CategoryChip({required this.text});
+  const _CategoryChip({
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -579,11 +582,18 @@ class _CategoryChip extends StatelessWidget {
         horizontal: 12,
         vertical: 7,
       ),
+      decoration: BoxDecoration(
+        color: AppColors.header.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.header.withValues(alpha: 0.12),
+        ),
+      ),
       child: Text(
         text,
         style: const TextStyle(
           color: AppColors.header,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           fontSize: 13,
         ),
       ),
@@ -593,7 +603,10 @@ class _CategoryChip extends StatelessWidget {
 
 class _BuildText extends StatelessWidget {
   final String text;
-  const _BuildText({required this.text});
+
+  const _BuildText({
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -621,20 +634,5 @@ class _BuildText extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-IconData _categoryIcon(String category) {
-  switch (category) {
-    case 'Пицца':
-      return Icons.local_pizza;
-    case 'Шаурма':
-      return Icons.lunch_dining;
-    case 'Бургеры':
-      return Icons.fastfood;
-    case 'Напитки':
-      return Icons.local_drink;
-    default:
-      return Icons.restaurant_menu;
   }
 }

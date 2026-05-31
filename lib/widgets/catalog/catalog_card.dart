@@ -1,6 +1,7 @@
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/screens/catalog/product_detail_screen.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/material.dart';
 
 class CatalogCard extends StatelessWidget {
@@ -50,24 +51,8 @@ class CatalogCard extends StatelessWidget {
                     children: [
                       AspectRatio(
                         aspectRatio: 1.2,
-                        child: Image.asset(
-                          item.image,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: double.infinity,
-                              color: AppColors.header.withValues(alpha: 0.08),
-                              child: Center(
-                                child: Icon(
-                                  Icons.restaurant_menu,
-                                  size: 44,
-                                  color:
-                                      AppColors.header.withValues(alpha: 0.45),
-                                ),
-                              ),
-                            );
-                          },
+                        child: ProductImage(
+                          image: item.image,
                         ),
                       ),
                       if (item.isHit || item.isNew)
@@ -134,6 +119,7 @@ class CatalogCard extends StatelessWidget {
                               ),
                               const Spacer(),
                               GestureDetector(
+                                behavior: HitTestBehavior.opaque,
                                 onTap: onAddToCart,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -164,8 +150,6 @@ class CatalogCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Тонкая белая стеклянная каёмка поверх всей карточки
           Positioned.fill(
             child: IgnorePointer(
               child: Container(
@@ -179,8 +163,6 @@ class CatalogCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Едва заметная внутренняя тень, чтобы белая каёмка читалась объёмнее
           Positioned.fill(
             child: IgnorePointer(
               child: Padding(

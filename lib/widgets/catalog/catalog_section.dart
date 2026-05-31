@@ -1,6 +1,6 @@
-import 'package:delycafe/data/generated_catalog.dart';
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/catalog_api_service.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/widgets/catalog/catalog_card.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +19,10 @@ class CatalogSection extends StatefulWidget {
 }
 
 class _CatalogSectionState extends State<CatalogSection> {
+  final CatalogApiService _catalogApiService = CatalogApiService();
+
+  late Future<List<CatalogItem>> _catalogFuture;
+
   String? _selectedCategory;
 
   final List<String> _categoryOrder = const [
@@ -37,9 +41,22 @@ class _CatalogSectionState extends State<CatalogSection> {
     'Супы',
   ];
 
-  List<String> get _categories {
-    final categories =
-        generatedCatalog.map((item) => item.category).toSet().toList();
+  @override
+  void initState() {
+    super.initState();
+    _catalogFuture = _catalogApiService.fetchProducts();
+  }
+
+  Future<void> _reloadCatalog() async {
+    setState(() {
+      _catalogFuture = _catalogApiService.fetchProducts();
+    });
+
+    await _catalogFuture;
+  }
+
+  List<String> _getCategories(List<CatalogItem> catalog) {
+    final categories = catalog.map((item) => item.category).toSet().toList();
 
     categories.sort((a, b) {
       final indexA = _categoryOrder.indexOf(a);
@@ -58,24 +75,24 @@ class _CatalogSectionState extends State<CatalogSection> {
     return categories;
   }
 
-  String get _currentCategory {
-    if (_selectedCategory != null && _categories.contains(_selectedCategory)) {
+  String _getCurrentCategory(List<String> categories) {
+    if (_selectedCategory != null && categories.contains(_selectedCategory)) {
       return _selectedCategory!;
     }
 
-    if (_categories.isEmpty) {
+    if (categories.isEmpty) {
       return '';
     }
 
-    return _categories.first;
+    return categories.first;
   }
 
-  List<CatalogItem> get _filteredItems {
-    final currentCategory = _currentCategory;
-
-    final items = generatedCatalog
-        .where((item) => item.category == currentCategory)
-        .toList();
+  List<CatalogItem> _getFilteredItems(
+    List<CatalogItem> catalog,
+    String currentCategory,
+  ) {
+    final items =
+        catalog.where((item) => item.category == currentCategory).toList();
 
     items.sort((a, b) {
       final sortCompare = a.sortOrder.compareTo(b.sortOrder);
@@ -112,62 +129,98 @@ class _CatalogSectionState extends State<CatalogSection> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = _categories;
-    final items = _filteredItems;
+    return FutureBuilder<List<CatalogItem>>(
+      future: _catalogFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const _CatalogLoadingView();
+        }
 
-    if (categories.isEmpty) {
-      return const Center(
-        child: Text('Каталог пуст'),
-      );
-    }
+        if (snapshot.hasError) {
+          return _CatalogErrorView(
+            error: snapshot.error.toString(),
+            onRetry: _reloadCatalog,
+          );
+        }
 
-    return CustomScrollView(
-      slivers: [
-        if (widget.banner != null)
-          SliverToBoxAdapter(
-            child: SizedBox(
-              width: double.infinity,
-              child: widget.banner!,
-            ),
-          ),
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _CatalogHeaderDelegate(
-            categories: categories,
-            selectedCategory: _currentCategory,
-            onCategorySelected: _selectCategory,
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-          sliver: SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = items[index];
+        final catalog = snapshot.data ?? [];
+        final categories = _getCategories(catalog);
 
-                return CatalogCard(
-                  item: item,
-                  onAddToCart: () {
-                    final variant = _getDefaultVariant(item);
+        if (categories.isEmpty) {
+          return const _EmptyCatalogView();
+        }
 
-                    context.read<CartService>().addToCart(
-                          item,
-                          variant: variant,
+        final currentCategory = _getCurrentCategory(categories);
+        final items = _getFilteredItems(catalog, currentCategory);
+
+        return RefreshIndicator(
+          onRefresh: _reloadCatalog,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              if (widget.banner != null)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: widget.banner!,
+                  ),
+                ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _CatalogHeaderDelegate(
+                  categories: categories,
+                  selectedCategory: currentCategory,
+                  onCategorySelected: _selectCategory,
+                ),
+              ),
+              if (items.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      'В этой категории пока нет товаров',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final item = items[index];
+
+                        return CatalogCard(
+                          item: item,
+                          onAddToCart: () {
+                            final variant = _getDefaultVariant(item);
+
+                            context.read<CartService>().addToCart(
+                                  item,
+                                  variant: variant,
+                                );
+                          },
                         );
-                  },
-                );
-              },
-              childCount: items.length,
-            ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.63,
-            ),
+                      },
+                      childCount: items.length,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.63,
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -260,5 +313,103 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant _CatalogHeaderDelegate oldDelegate) {
     return oldDelegate.categories != categories ||
         oldDelegate.selectedCategory != selectedCategory;
+  }
+}
+
+class _CatalogLoadingView extends StatelessWidget {
+  const _CatalogLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(
+        color: AppColors.header,
+      ),
+    );
+  }
+}
+
+class _CatalogErrorView extends StatelessWidget {
+  final String error;
+  final Future<void> Function() onRetry;
+
+  const _CatalogErrorView({
+    required this.error,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.wifi_off_rounded,
+              size: 52,
+              color: AppColors.header,
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Не удалось загрузить каталог',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                color: Colors.black.withValues(alpha: 0.55),
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 46,
+              child: ElevatedButton(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.header,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Повторить',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyCatalogView extends StatelessWidget {
+  const _EmptyCatalogView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        'Каталог пуст',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

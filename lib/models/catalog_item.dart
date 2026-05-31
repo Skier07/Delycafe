@@ -1,11 +1,13 @@
 class ProductVariant {
   final String id;
+  final int? sabyId;
   final String title;
   final int price;
   final String weight;
 
   const ProductVariant({
     required this.id,
+    this.sabyId,
     required this.title,
     required this.price,
     this.weight = '',
@@ -14,6 +16,7 @@ class ProductVariant {
 
 class CatalogItem {
   final String id;
+  final int? sabyId;
   final String title;
   final String category;
   final int price;
@@ -32,6 +35,7 @@ class CatalogItem {
 
   const CatalogItem({
     required this.id,
+    this.sabyId,
     required this.title,
     required this.category,
     required this.price,
