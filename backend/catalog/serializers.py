@@ -18,8 +18,12 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.CharField(source='category.title')
+    category_sort_order = serializers.IntegerField(
+        source='category.sort_order',
+        read_only=True,
+    )
     image = serializers.SerializerMethodField()
-    variants = ProductVariantSerializer(many=True, read_only=True)
+    variants = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -28,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'saby_id',
             'title',
             'category',
+            'category_sort_order',
             'description',
             'image',
             'price',
@@ -49,6 +54,22 @@ class ProductSerializer(serializers.ModelSerializer):
             return product.image.url
 
         return request.build_absolute_uri(product.image.url)
+
+    def get_variants(self, product):
+        active_variants = getattr(product, 'active_variants', None)
+
+        if active_variants is None:
+            active_variants = product.variants.filter(
+                is_active=True,
+            ).order_by(
+                'sort_order',
+                'title',
+            )
+
+        return ProductVariantSerializer(
+            active_variants,
+            many=True,
+        ).data
 
 
 class CategorySerializer(serializers.ModelSerializer):

@@ -47,6 +47,10 @@ class CatalogApiService {
       sabyId: _toNullableInt(json['saby_id']),
       title: json['title']?.toString() ?? '',
       category: json['category']?.toString() ?? 'Другое',
+      categorySortOrder: _toInt(
+        json['category_sort_order'],
+        defaultValue: 500,
+      ),
       price: _toInt(json['price']),
       image: json['image']?.toString() ?? '',
       description: json['description']?.toString() ?? '',

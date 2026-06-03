@@ -33,10 +33,14 @@ class OrderAdmin(admin.ModelAdmin):
         'id',
         'phone',
         'customer_name',
+        'customer',
         'delivery_type',
         'payment_type',
         'products_total',
         'delivery_price',
+        'discount_amount',
+        'bonus_spent',
+        'bonus_earned',
         'total_price',
         'status',
         'created_at',
@@ -55,17 +59,21 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'delivery_type',
         'payment_type',
+        'first_order_discount_applied',
         'created_at',
     )
 
     search_fields = (
         'phone',
         'customer_name',
+        'customer__phone',
+        'customer__name',
         'address',
         'comment',
     )
 
     readonly_fields = (
+        'customer',
         'phone',
         'customer_name',
         'delivery_type',
@@ -76,6 +84,10 @@ class OrderAdmin(admin.ModelAdmin):
         'comment',
         'products_total',
         'delivery_price',
+        'discount_amount',
+        'bonus_spent',
+        'bonus_earned',
+        'first_order_discount_applied',
         'total_price',
         'created_at',
         'updated_at',
@@ -86,6 +98,7 @@ class OrderAdmin(admin.ModelAdmin):
             'Клиент',
             {
                 'fields': (
+                    'customer',
                     'phone',
                     'customer_name',
                 ),
@@ -109,6 +122,10 @@ class OrderAdmin(admin.ModelAdmin):
                     'payment_type',
                     'products_total',
                     'delivery_price',
+                    'discount_amount',
+                    'bonus_spent',
+                    'bonus_earned',
+                    'first_order_discount_applied',
                     'total_price',
                 ),
             },

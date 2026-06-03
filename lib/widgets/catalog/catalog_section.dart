@@ -25,21 +25,42 @@ class _CatalogSectionState extends State<CatalogSection> {
 
   String? _selectedCategory;
 
-  final List<String> _categoryOrder = const [
-    'Пицца',
-    'Шаурма',
-    'Бургеры',
-    'Фастфуд',
-    'Картошечка в фольге',
-    'Соусы',
-    'Напитки',
-    'Десерты',
-    'Блины',
-    'Паста',
-    'Пироги',
-    'Салаты',
-    'Супы',
-  ];
+  List<String> _getCategories(List<CatalogItem> catalog) {
+    final categories = catalog.map((item) => item.category).toSet().toList();
+
+    categories.sort((a, b) {
+      final sortA = _getCategorySortOrder(a, catalog);
+      final sortB = _getCategorySortOrder(b, catalog);
+
+      final sortCompare = sortA.compareTo(sortB);
+
+      if (sortCompare != 0) {
+        return sortCompare;
+      }
+
+      return a.compareTo(b);
+    });
+
+    return categories;
+  }
+
+  int _getCategorySortOrder(
+    String category,
+    List<CatalogItem> catalog,
+  ) {
+    final categoryItems = catalog.where(
+      (item) => item.category == category,
+    );
+
+    if (categoryItems.isEmpty) {
+      return 500;
+    }
+
+    final sortOrders =
+        categoryItems.map((item) => item.categorySortOrder).toList()..sort();
+
+    return sortOrders.first;
+  }
 
   @override
   void initState() {
@@ -55,26 +76,6 @@ class _CatalogSectionState extends State<CatalogSection> {
     await _catalogFuture;
   }
 
-  List<String> _getCategories(List<CatalogItem> catalog) {
-    final categories = catalog.map((item) => item.category).toSet().toList();
-
-    categories.sort((a, b) {
-      final indexA = _categoryOrder.indexOf(a);
-      final indexB = _categoryOrder.indexOf(b);
-
-      if (indexA == -1 && indexB == -1) {
-        return a.compareTo(b);
-      }
-
-      if (indexA == -1) return 1;
-      if (indexB == -1) return -1;
-
-      return indexA.compareTo(indexB);
-    });
-
-    return categories;
-  }
-
   String _getCurrentCategory(List<String> categories) {
     if (_selectedCategory != null && categories.contains(_selectedCategory)) {
       return _selectedCategory!;
@@ -87,6 +88,34 @@ class _CatalogSectionState extends State<CatalogSection> {
     return categories.first;
   }
 
+  int _getProductPriority(CatalogItem item) {
+    if (item.isNew && item.isHit) {
+      return 0;
+    }
+    if (item.isNew) {
+      return 1;
+    }
+
+    if (item.isHit) {
+      return 2;
+    }
+    return 3;
+  }
+
+  int _compareCatalogItems(CatalogItem a, CatalogItem b) {
+    final priorityCompare = _getProductPriority(a).compareTo(
+      _getProductPriority(b),
+    );
+    if (priorityCompare != 0) {
+      return priorityCompare;
+    }
+    final sortCompare = a.sortOrder.compareTo(b.sortOrder);
+    if (sortCompare != 0) {
+      return sortCompare;
+    }
+    return a.title.compareTo(b.title);
+  }
+
   List<CatalogItem> _getFilteredItems(
     List<CatalogItem> catalog,
     String currentCategory,
@@ -94,15 +123,7 @@ class _CatalogSectionState extends State<CatalogSection> {
     final items =
         catalog.where((item) => item.category == currentCategory).toList();
 
-    items.sort((a, b) {
-      final sortCompare = a.sortOrder.compareTo(b.sortOrder);
-
-      if (sortCompare != 0) {
-        return sortCompare;
-      }
-
-      return a.title.compareTo(b.title);
-    });
+    items.sort(_compareCatalogItems);
 
     return items;
   }

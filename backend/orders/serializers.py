@@ -1,7 +1,13 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from customers.models import BonusTransaction, Customer
 from .models import Order, OrderItem
+
+
+FIRST_ORDER_DISCOUNT_PERCENT = 20
+BONUS_EARN_PERCENT = 5
+MAX_BONUS_SPEND_PERCENT = 30
 
 
 def calculate_delivery_price(delivery_type, products_total):
@@ -24,6 +30,22 @@ def calculate_delivery_price(delivery_type, products_total):
         return 0
 
     return 0
+
+
+def normalize_phone(phone):
+    phone = phone.strip()
+    digits = ''.join(char for char in phone if char.isdigit())
+
+    if len(digits) == 11 and digits.startswith('8'):
+        digits = '7' + digits[1:]
+
+    if len(digits) == 10:
+        digits = '7' + digits
+
+    if len(digits) == 11 and digits.startswith('7'):
+        return f'+{digits}'
+
+    return phone
 
 
 class OrderItemCreateSerializer(serializers.Serializer):
@@ -97,10 +119,16 @@ class OrderCreateSerializer(serializers.Serializer):
         allow_blank=True,
     )
 
+    bonus_spent = serializers.IntegerField(
+        required=False,
+        default=0,
+        min_value=0,
+    )
+
     items = OrderItemCreateSerializer(many=True)
 
     def validate_phone(self, value):
-        phone = value.strip()
+        phone = normalize_phone(value)
         digits = ''.join(char for char in phone if char.isdigit())
 
         if len(digits) < 10:
@@ -154,6 +182,42 @@ class OrderCreateSerializer(serializers.Serializer):
     @transaction.atomic
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        requested_bonus_spent = validated_data.pop('bonus_spent', 0)
+
+        phone = validated_data['phone']
+        customer_name = validated_data.get('customer_name', '').strip()
+        order_address = (validated_data.get('address') or '').strip()
+        delivery_type = validated_data.get('delivery_type')
+
+        customer, created = Customer.objects.get_or_create(
+            phone=phone,
+            defaults={
+                'name': customer_name,
+                'default_address': order_address
+                if delivery_type != Order.DeliveryType.PICKUP
+                else '',
+                'first_order_discount_available': True,
+                'first_order_discount_used': False,
+            },
+        )
+
+        customer_update_fields = []
+
+        if customer_name and customer.name != customer_name:
+            customer.name = customer_name
+            customer_update_fields.append('name')
+
+        if (
+            delivery_type != Order.DeliveryType.PICKUP
+            and order_address
+            and customer.default_address != order_address
+        ):
+            customer.default_address = order_address
+            customer_update_fields.append('default_address')
+
+        if customer_update_fields:
+            customer_update_fields.append('updated_at')
+            customer.save(update_fields=customer_update_fields)
 
         products_total = 0
 
@@ -162,19 +226,57 @@ class OrderCreateSerializer(serializers.Serializer):
             price = item_data['price']
             products_total += quantity * price
 
-        delivery_type = validated_data['delivery_type']
-
         delivery_price = calculate_delivery_price(
             delivery_type,
             products_total,
         )
 
-        total_price = products_total + delivery_price
+        discount_amount = 0
+        first_order_discount_applied = False
+
+        can_use_first_order_discount = (
+            customer.first_order_discount_available
+            and not customer.first_order_discount_used
+        )
+
+        if can_use_first_order_discount:
+            discount_amount = (
+                products_total * FIRST_ORDER_DISCOUNT_PERCENT // 100
+            )
+            first_order_discount_applied = True
+
+        bonus_spent = 0
+
+        if not first_order_discount_applied and requested_bonus_spent > 0:
+            max_bonus_spend = (
+                products_total * MAX_BONUS_SPEND_PERCENT // 100
+            )
+
+            bonus_spent = min(
+                requested_bonus_spent,
+                customer.bonus_balance,
+                max_bonus_spend,
+                products_total,
+            )
+
+        paid_products_total = max(
+            products_total - discount_amount - bonus_spent,
+            0,
+        )
+
+        bonus_earned = paid_products_total * BONUS_EARN_PERCENT // 100
+
+        total_price = paid_products_total + delivery_price
 
         order = Order.objects.create(
             **validated_data,
+            customer=customer,
             products_total=products_total,
             delivery_price=delivery_price,
+            discount_amount=discount_amount,
+            bonus_spent=bonus_spent,
+            bonus_earned=bonus_earned,
+            first_order_discount_applied=first_order_discount_applied,
             total_price=total_price,
         )
 
@@ -199,6 +301,47 @@ class OrderCreateSerializer(serializers.Serializer):
 
         OrderItem.objects.bulk_create(order_items)
 
+        customer_bonus_update_fields = []
+
+        if first_order_discount_applied:
+            customer.first_order_discount_available = False
+            customer.first_order_discount_used = True
+            customer_bonus_update_fields.extend([
+                'first_order_discount_available',
+                'first_order_discount_used',
+            ])
+
+        if bonus_spent > 0:
+            customer.bonus_balance -= bonus_spent
+
+            BonusTransaction.objects.create(
+                customer=customer,
+                transaction_type=BonusTransaction.TransactionType.SPEND,
+                amount=-bonus_spent,
+                order_id=order.id,
+                comment=f'Списание бонусов по заказу #{order.id}',
+            )
+
+        if bonus_earned > 0:
+            customer.bonus_balance += bonus_earned
+
+            BonusTransaction.objects.create(
+                customer=customer,
+                transaction_type=BonusTransaction.TransactionType.EARN,
+                amount=bonus_earned,
+                order_id=order.id,
+                comment=f'Начисление бонусов по заказу #{order.id}',
+            )
+
+        if bonus_spent > 0 or bonus_earned > 0:
+            customer_bonus_update_fields.append('bonus_balance')
+
+        if customer_bonus_update_fields:
+            customer_bonus_update_fields.append('updated_at')
+            customer.save(
+                update_fields=list(set(customer_bonus_update_fields)),
+            )
+
         return order
 
 
@@ -219,11 +362,17 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    customer_id = serializers.IntegerField(
+        source='customer.id',
+        read_only=True,
+        allow_null=True,
+    )
 
     class Meta:
         model = Order
         fields = (
             'id',
+            'customer_id',
             'phone',
             'customer_name',
             'delivery_type',
@@ -234,6 +383,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'comment',
             'products_total',
             'delivery_price',
+            'discount_amount',
+            'bonus_spent',
+            'bonus_earned',
+            'first_order_discount_applied',
             'total_price',
             'status',
             'created_at',

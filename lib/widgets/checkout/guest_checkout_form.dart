@@ -70,6 +70,7 @@ class GuestCheckoutData {
   final String? deliveryTime;
   final PaymentMethod paymentMethod;
   final String comment;
+  final int bonusSpent;
 
   const GuestCheckoutData({
     required this.name,
@@ -81,18 +82,27 @@ class GuestCheckoutData {
     required this.deliveryTime,
     required this.paymentMethod,
     required this.comment,
+    required this.bonusSpent,
   });
 }
 
 class GuestCheckoutForm extends StatefulWidget {
   final int cartTotal;
+  final String? initialName;
+  final String? initialAddress;
   final String? initialPhone;
+  final int availableBonuses;
+  final bool firstOrderDiscountAvailable;
   final FutureOr<void> Function(GuestCheckoutData data) onSubmit;
 
   const GuestCheckoutForm({
     super.key,
     required this.cartTotal,
+    this.initialName,
+    this.initialAddress,
     this.initialPhone,
+    this.availableBonuses = 0,
+    this.firstOrderDiscountAvailable = false,
     required this.onSubmit,
   });
 
@@ -101,15 +111,6 @@ class GuestCheckoutForm extends StatefulWidget {
 }
 
 class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
-  bool get _isPhoneComplete {
-    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    return digits.length == 10;
-  }
-
-  bool get _canSubmit {
-    return _isPhoneComplete && !_isSubmitting;
-  }
-
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -121,30 +122,28 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   DeliveryType _deliveryType = DeliveryType.ozersk;
   DeliveryUrgency _urgency = DeliveryUrgency.asap;
   PaymentMethod _paymentMethod = PaymentMethod.card;
+
+  bool _useBonuses = false;
   bool _isSubmitting = false;
 
   static const int _promDeliveryPrice = 350;
   static const int _tatyshDeliveryPrice = 450;
 
-  @override
-  void initState() {
-    super.initState();
-
-    if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
-      _phoneController.text = PhoneInputFormatter.formatDigits(
-        widget.initialPhone!,
-      );
-    }
+  bool get _isPhoneComplete {
+    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    return digits.length == 10;
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _commentController.dispose();
-    _timeController.dispose();
-    super.dispose();
+  bool get _canSubmit {
+    return _isPhoneComplete && !_isSubmitting;
+  }
+
+  bool get _needsAddress {
+    return _deliveryType != DeliveryType.pickup;
+  }
+
+  bool get _hasAutomaticFirstOrderDiscount {
+    return widget.firstOrderDiscountAvailable;
   }
 
   int get _deliveryPrice {
@@ -165,12 +164,39 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     }
   }
 
-  int get _totalWithDelivery {
-    return widget.cartTotal + _deliveryPrice;
+  int get _firstOrderDiscount {
+    if (!_hasAutomaticFirstOrderDiscount) return 0;
+
+    return widget.cartTotal * 20 ~/ 100;
   }
 
-  bool get _needsAddress {
-    return _deliveryType != DeliveryType.pickup;
+  int get _maxBonusSpend {
+    if (_hasAutomaticFirstOrderDiscount) return 0;
+
+    final maxByPercent = widget.cartTotal * 30 ~/ 100;
+
+    final values = [
+      widget.availableBonuses,
+      maxByPercent,
+      widget.cartTotal,
+    ];
+
+    return values.reduce((a, b) => a < b ? a : b);
+  }
+
+  int get _bonusSpent {
+    if (!_useBonuses) return 0;
+
+    return _maxBonusSpend;
+  }
+
+  int get _totalWithDelivery {
+    final total =
+        widget.cartTotal - _firstOrderDiscount - _bonusSpent + _deliveryPrice;
+
+    if (total < 0) return 0;
+
+    return total;
   }
 
   String get _deliveryInfo {
@@ -187,6 +213,36 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       case DeliveryType.pickup:
         return 'Самовывоз: заберите заказ самостоятельно из кафе';
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
+      _phoneController.text = PhoneInputFormatter.formatDigits(
+        widget.initialPhone!,
+      );
+    }
+
+    if (widget.initialName != null && widget.initialName!.trim().isNotEmpty) {
+      _nameController.text = widget.initialName!.trim();
+    }
+
+    if (widget.initialAddress != null &&
+        widget.initialAddress!.trim().isNotEmpty) {
+      _addressController.text = widget.initialAddress!.trim();
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _commentController.dispose();
+    _timeController.dispose();
+    super.dispose();
   }
 
   String _deliveryTitle(DeliveryType type) {
@@ -347,6 +403,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           : null,
       paymentMethod: _paymentMethod,
       comment: _commentController.text.trim(),
+      bonusSpent: _bonusSpent,
     );
 
     setState(() {
@@ -473,6 +530,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                 if (value == null || value.trim().isEmpty) {
                   return 'Введите адрес доставки';
                 }
+
                 return null;
               },
             ),
@@ -520,6 +578,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                     (value == null || value.trim().isEmpty)) {
                   return 'Выберите время';
                 }
+
                 return null;
               },
             ),
@@ -555,6 +614,26 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             ],
           ),
           const SizedBox(height: 24),
+          const _BlockTitle('Скидки и бонусы'),
+          const SizedBox(height: 12),
+          if (_hasAutomaticFirstOrderDiscount)
+            _DiscountInfoCard(
+              discountAmount: _firstOrderDiscount,
+            )
+          else
+            _BonusSpendCard(
+              availableBonuses: widget.availableBonuses,
+              bonusSpent: _bonusSpent,
+              useBonuses: _useBonuses,
+              onChanged: widget.availableBonuses > 0 && _maxBonusSpend > 0
+                  ? (value) {
+                      setState(() {
+                        _useBonuses = value;
+                      });
+                    }
+                  : null,
+            ),
+          const SizedBox(height: 24),
           const _BlockTitle('Комментарий'),
           const SizedBox(height: 12),
           TextFormField(
@@ -579,6 +658,25 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             ),
             child: Column(
               children: [
+                _PriceRow(
+                  title: 'Товары',
+                  value: '${widget.cartTotal} ₽',
+                ),
+                const SizedBox(height: 10),
+                if (_firstOrderDiscount > 0) ...[
+                  _PriceRow(
+                    title: 'Скидка первого заказа',
+                    value: '-$_firstOrderDiscount ₽',
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (_bonusSpent > 0) ...[
+                  _PriceRow(
+                    title: 'Списано бонусов',
+                    value: '-$_bonusSpent ₽',
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 _PriceRow(
                   title: 'Доставка',
                   value:
@@ -635,6 +733,153 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           color: AppColors.header,
           width: 1.4,
         ),
+      ),
+    );
+  }
+}
+
+class _DiscountInfoCard extends StatelessWidget {
+  final int discountAmount;
+
+  const _DiscountInfoCard({
+    required this.discountAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.header.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.header.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.local_offer_rounded,
+            color: AppColors.header,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Скидка 20% на первый заказ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.header,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Применится автоматически. Скидка: $discountAmount ₽',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: Colors.black.withValues(alpha: 0.65),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Бонусы за этот заказ начислятся после оформления.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.35,
+                    color: Colors.black.withValues(alpha: 0.50),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BonusSpendCard extends StatelessWidget {
+  final int availableBonuses;
+  final int bonusSpent;
+  final bool useBonuses;
+  final ValueChanged<bool>? onChanged;
+
+  const _BonusSpendCard({
+    required this.availableBonuses,
+    required this.bonusSpent,
+    required this.useBonuses,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasBonuses = availableBonuses > 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.stars_rounded,
+            color: AppColors.header,
+            size: 25,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Списать бонусы',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasBonuses
+                      ? useBonuses
+                          ? 'Будет списано: $bonusSpent бонусов'
+                          : 'Доступно: $availableBonuses бонусов'
+                      : 'Бонусов пока нет',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black.withValues(alpha: 0.58),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: useBonuses,
+            activeThumbColor: AppColors.header,
+            activeTrackColor: AppColors.header.withValues(alpha: 0.35),
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

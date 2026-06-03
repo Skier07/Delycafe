@@ -18,6 +18,7 @@ class OrderApiService {
     required String paymentType,
     required String comment,
     required List<Map<String, dynamic>> items,
+    int bonusSpent = 0,
   }) async {
     final uri = Uri.parse('$baseUrl/api/orders/');
 
@@ -30,6 +31,7 @@ class OrderApiService {
       'delivery_time': deliveryTime,
       'payment_type': paymentType,
       'comment': comment,
+      'bonus_spent': bonusSpent,
       'items': items,
     };
 
@@ -43,7 +45,7 @@ class OrderApiService {
 
     if (response.statusCode != 201) {
       throw Exception(
-        'Ошибка оформления заказа: ${response.statusCode}\n${response.body}',
+        'Ошибка оформления заказа: ${response.statusCode}\n${utf8.decode(response.bodyBytes)}',
       );
     }
 
