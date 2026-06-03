@@ -19,6 +19,7 @@ class CatalogItem {
   final int? sabyId;
   final String title;
   final String category;
+  final int categorySortOrder;
   final int price;
   final String image;
   final String description;
@@ -38,6 +39,7 @@ class CatalogItem {
     this.sabyId,
     required this.title,
     required this.category,
+    this.categorySortOrder = 500,
     required this.price,
     required this.image,
     required this.description,

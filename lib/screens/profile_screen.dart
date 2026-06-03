@@ -1,15 +1,29 @@
-import 'package:delycafe/data/mock_profile.dart';
+import 'package:delycafe/models/user.dart';
+import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final profile = mockProfile;
+    final auth = context.watch<AuthService>();
+    final user = auth.currentUser;
+
+    final name = _getName(user);
+    final phone = _formatPhone(user?.phone ?? '');
+    final bonuses = user?.bonusBalance ?? 0;
+    final address = user?.defaultAddress.trim() ?? '';
+
+    final discountText = user == null
+        ? 'Войдите в аккаунт, чтобы получить скидку'
+        : user.firstOrderDiscountAvailable
+            ? 'Доступна скидка 20% на первый заказ'
+            : 'Скидка первого заказа уже использована';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -43,106 +57,151 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _ProfileHeaderCard(profile: profile),
-          const SizedBox(height: 16),
-          _InfoCard(
-            icon: CupertinoIcons.phone,
-            title: 'Телефон',
-            child: Text(
-              profile.phone,
-              style: _valueStyle,
+      body: RefreshIndicator(
+        color: AppColors.header,
+        onRefresh: () async {
+          await context.read<AuthService>().refreshCurrentUser();
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
+            _ProfileHeaderCard(
+              name: name,
+              subtitle: user == null
+                  ? 'Гость'
+                  : user.firstOrderDiscountAvailable
+                      ? 'Новый клиент'
+                      : 'Постоянный клиент',
             ),
-          ),
-          const SizedBox(height: 12),
-          _InfoCard(
-            icon: CupertinoIcons.star_fill,
-            title: 'Бонусы',
-            child: Text(
-              '${profile.points}',
-              style: _bigValueStyle.copyWith(
-                color: AppColors.header,
+            const SizedBox(height: 16),
+            _InfoCard(
+              icon: CupertinoIcons.phone,
+              title: 'Телефон',
+              child: Text(
+                phone,
+                style: _valueStyle,
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          _InfoCard(
-            icon: CupertinoIcons.location,
-            title: 'Адрес доставки',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final address in profile.addresses) ...[
-                  _BulletText(text: address),
-                  if (address != profile.addresses.last)
-                    const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: CupertinoIcons.star_fill,
+              title: 'Бонусы',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$bonuses',
+                    style: _bigValueStyle.copyWith(
+                      color: AppColors.header,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '1 бонус = 1 ₽',
+                    style: _subtleStyle,
+                  ),
                 ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          _InfoCard(
-            icon: CupertinoIcons.cart,
-            title: 'История заказов',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Всего заказов: ${profile.ordersCount}',
-                  style: _valueStyle,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Последний заказ: ${profile.lastOrderDate}',
-                  style: _subtleStyle,
-                ),
-              ],
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: CupertinoIcons.tag_fill,
+              title: 'Скидка первого заказа',
+              child: Text(
+                discountText,
+                style: _valueStyle,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          _InfoCard(
-            icon: CupertinoIcons.heart_fill,
-            title: 'Любимый товар ',
-            child: Text(
-              profile.favoriteItem,
-              style: _valueStyle,
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: CupertinoIcons.location,
+              title: 'Адрес доставки',
+              child: address.isNotEmpty
+                  ? _BulletText(text: address)
+                  : Text(
+                      'Адрес не указан',
+                      style: _subtleStyle,
+                    ),
             ),
-          ),
-          const SizedBox(height: 20),
-          SafeArea(
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Готово',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: CupertinoIcons.cart,
+              title: 'История заказов',
+              child: Text(
+                'История заказов скоро появится здесь',
+                style: _subtleStyle,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SafeArea(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Готово',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  String _getName(User? user) {
+    if (user == null) {
+      return 'Гость';
+    }
+
+    if (user.name.trim().isNotEmpty) {
+      return user.name.trim();
+    }
+
+    return 'Клиент';
+  }
+
+  String _formatPhone(String value) {
+    final phone = value.trim();
+
+    if (phone.isEmpty) {
+      return 'Не указан';
+    }
+
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length == 11 && digits.startsWith('7')) {
+      return '+7 (${digits.substring(1, 4)}) '
+          '${digits.substring(4, 7)} '
+          '${digits.substring(7, 9)} '
+          '${digits.substring(9, 11)}';
+    }
+
+    return phone;
   }
 }
 
 class _ProfileHeaderCard extends StatelessWidget {
-  final dynamic profile;
+  final String name;
+  final String subtitle;
 
-  const _ProfileHeaderCard({required this.profile});
+  const _ProfileHeaderCard({
+    required this.name,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +239,7 @@ class _ProfileHeaderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  profile.name,
+                  name,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -188,7 +247,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Постоянный клиент',
+                  subtitle,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.black.withValues(alpha: 0.58),
@@ -207,6 +266,7 @@ class _InfoCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final Widget child;
+
   const _InfoCard({
     required this.icon,
     required this.title,
@@ -271,7 +331,9 @@ class _InfoCard extends StatelessWidget {
 class _BulletText extends StatelessWidget {
   final String text;
 
-  const _BulletText({required this.text});
+  const _BulletText({
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {

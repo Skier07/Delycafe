@@ -1,5 +1,7 @@
 from django.db import models
 
+from customers.models import Customer
+
 
 class Order(models.Model):
     class DeliveryType(models.TextChoices):
@@ -23,6 +25,15 @@ class Order(models.Model):
         DELIVERY = 'delivery', 'В доставке'
         DONE = 'done', 'Завершён'
         CANCELED = 'canceled', 'Отменён'
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders',
+        verbose_name='Клиент',
+    )
 
     phone = models.CharField(max_length=30)
     customer_name = models.CharField(max_length=120, blank=True)
@@ -51,6 +62,27 @@ class Order(models.Model):
 
     products_total = models.PositiveIntegerField(default=0)
     delivery_price = models.PositiveIntegerField(default=0)
+
+    discount_amount = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Скидка',
+    )
+
+    bonus_spent = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Списано бонусов',
+    )
+
+    bonus_earned = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Начислено бонусов',
+    )
+
+    first_order_discount_applied = models.BooleanField(
+        default=False,
+        verbose_name='Применена скидка первого заказа',
+    )
+
     total_price = models.PositiveIntegerField(default=0)
 
     status = models.CharField(

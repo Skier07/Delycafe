@@ -1,3 +1,4 @@
+import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/order_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
@@ -13,6 +14,8 @@ class CheckoutScreens extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
+    final auth = context.watch<AuthService>();
+    final user = auth.currentUser;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -63,6 +66,12 @@ class CheckoutScreens extends StatelessWidget {
                 const SizedBox(height: 24),
                 GuestCheckoutForm(
                   cartTotal: cart.totalPrice,
+                  initialName: user?.name,
+                  initialAddress: user?.defaultAddress,
+                  initialPhone: user?.phone,
+                  availableBonuses: user?.bonusBalance ?? 0,
+                  firstOrderDiscountAvailable:
+                      user?.firstOrderDiscountAvailable ?? false,
                   onSubmit: (data) async {
                     final cartService = context.read<CartService>();
 
@@ -80,9 +89,14 @@ class CheckoutScreens extends StatelessWidget {
                       paymentType: data.paymentMethod.apiValue,
                       comment: data.comment,
                       items: cartService.toOrderApiItems(),
+                      bonusSpent: data.bonusSpent,
                     );
 
                     cartService.clearCart();
+
+                    if (!context.mounted) return;
+
+                    await context.read<AuthService>().refreshCurrentUser();
 
                     if (!context.mounted) return;
 
@@ -177,8 +191,6 @@ class _CartSummaryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-
-                  // Кнопка -
                   GestureDetector(
                     onTap: () {
                       context.read<CartService>().decreaseCartItem(item);
@@ -189,12 +201,13 @@ class _CartSummaryCard extends StatelessWidget {
                         color: Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.remove, size: 20),
+                      child: const Icon(
+                        Icons.remove,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-
-                  // Количество
                   Text(
                     '${item.quantity}',
                     style: const TextStyle(
@@ -203,8 +216,6 @@ class _CartSummaryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-
-                  // Кнопка +
                   GestureDetector(
                     onTap: () {
                       context.read<CartService>().increaseCartItem(item);
@@ -223,7 +234,6 @@ class _CartSummaryCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-
                   SizedBox(
                     width: 70,
                     child: Text(
