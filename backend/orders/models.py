@@ -18,6 +18,12 @@ class Order(models.Model):
         CARD = 'card', 'Картой'
         SBP = 'sbp', 'СБП'
 
+    class PaymentStatus(models.TextChoices):
+        UNPAID = 'unpaid', 'Ожидает оплаты'
+        PAID = 'paid', 'Оплачен'
+        FAILED = 'failed', 'Ошибка оплаты'
+        REFUNDED = 'refunded', 'Возврат'
+
     class Status(models.TextChoices):
         NEW = 'new', 'Новый'
         ACCEPTED = 'accepted', 'Принят'
@@ -35,33 +41,98 @@ class Order(models.Model):
         verbose_name='Клиент',
     )
 
-    phone = models.CharField(max_length=30)
-    customer_name = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(
+        max_length=30,
+        verbose_name='Телефон',
+    )
+
+    customer_name = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name='Имя клиента',
+    )
 
     delivery_type = models.CharField(
         max_length=30,
         choices=DeliveryType.choices,
         default=DeliveryType.OZERSK,
+        verbose_name='Тип доставки',
     )
-    address = models.TextField(blank=True)
+
+    address = models.TextField(
+        blank=True,
+        verbose_name='Адрес',
+    )
 
     delivery_time_type = models.CharField(
         max_length=30,
         choices=DeliveryTimeType.choices,
         default=DeliveryTimeType.ASAP,
+        verbose_name='Тип времени доставки',
     )
-    delivery_time = models.CharField(max_length=20, blank=True)
+
+    delivery_time = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Время доставки',
+    )
 
     payment_type = models.CharField(
         max_length=20,
         choices=PaymentType.choices,
         default=PaymentType.CARD,
+        verbose_name='Способ оплаты',
     )
 
-    comment = models.TextField(blank=True)
+    payment_status = models.CharField(
+        max_length=30,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.UNPAID,
+        verbose_name='Статус оплаты',
+    )
 
-    products_total = models.PositiveIntegerField(default=0)
-    delivery_price = models.PositiveIntegerField(default=0)
+    payment_amount = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Сумма к оплате',
+    )
+
+    payment_provider = models.CharField(
+        max_length=60,
+        blank=True,
+        verbose_name='Платёжный провайдер',
+    )
+
+    payment_external_id = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name='ID платежа у провайдера',
+    )
+
+    payment_url = models.URLField(
+        blank=True,
+        verbose_name='Ссылка на оплату',
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата оплаты',
+    )
+
+    comment = models.TextField(
+        blank=True,
+        verbose_name='Комментарий',
+    )
+
+    products_total = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Сумма товаров',
+    )
+
+    delivery_price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Стоимость доставки',
+    )
 
     discount_amount = models.PositiveIntegerField(
         default=0,
@@ -83,16 +154,27 @@ class Order(models.Model):
         verbose_name='Применена скидка первого заказа',
     )
 
-    total_price = models.PositiveIntegerField(default=0)
+    total_price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Итого',
+    )
 
     status = models.CharField(
         max_length=30,
         choices=Status.choices,
         default=Status.NEW,
+        verbose_name='Статус заказа',
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания',
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления',
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -108,17 +190,46 @@ class OrderItem(models.Model):
         Order,
         on_delete=models.CASCADE,
         related_name='items',
+        verbose_name='Заказ',
     )
 
-    product_title = models.CharField(max_length=180)
-    variant_title = models.CharField(max_length=80, blank=True)
+    product_title = models.CharField(
+        max_length=180,
+        verbose_name='Товар',
+    )
 
-    product_api_id = models.CharField(max_length=80, blank=True)
-    saby_id = models.PositiveIntegerField(null=True, blank=True)
+    variant_title = models.CharField(
+        max_length=80,
+        blank=True,
+        verbose_name='Вариант',
+    )
 
-    quantity = models.PositiveIntegerField(default=1)
-    price = models.PositiveIntegerField(default=0)
-    total_price = models.PositiveIntegerField(default=0)
+    product_api_id = models.CharField(
+        max_length=80,
+        blank=True,
+        verbose_name='ID товара в API',
+    )
+
+    saby_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Saby ID',
+    )
+
+    quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name='Количество',
+    )
+
+    price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Цена',
+    )
+
+    total_price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Сумма',
+    )
 
     class Meta:
         verbose_name = 'Позиция заказа'

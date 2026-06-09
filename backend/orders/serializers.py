@@ -278,6 +278,8 @@ class OrderCreateSerializer(serializers.Serializer):
             bonus_earned=bonus_earned,
             first_order_discount_applied=first_order_discount_applied,
             total_price=total_price,
+            payment_status=Order.PaymentStatus.UNPAID,
+            payment_amount=total_price,
         )
 
         order_items = []
@@ -379,7 +381,13 @@ class OrderSerializer(serializers.ModelSerializer):
             'address',
             'delivery_time_type',
             'delivery_time',
-            'payment_type',
+            'payment_type',            
+            'payment_status',
+            'payment_amount',
+            'payment_provider',
+            'payment_external_id',
+            'payment_url',
+            'paid_at',
             'comment',
             'products_total',
             'delivery_price',

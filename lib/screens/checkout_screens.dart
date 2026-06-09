@@ -79,7 +79,7 @@ class CheckoutScreens extends StatelessWidget {
                       throw Exception('Корзина пуста');
                     }
 
-                    final orderId = await OrderApiService().createOrder(
+                    final order = await OrderApiService().createOrder(
                       phone: data.phone,
                       customerName: data.name,
                       deliveryType: data.deliveryType.apiValue,
@@ -102,7 +102,9 @@ class CheckoutScreens extends StatelessWidget {
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Заказ №$orderId успешно оформлен'),
+                        content: Text(
+                          'Заказ №${order.id} оформлен. К оплате: ${order.paymentAmount} ₽',
+                        ),
                       ),
                     );
 

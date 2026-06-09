@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 
 from .models import Order, OrderItem
 
@@ -36,6 +37,8 @@ class OrderAdmin(admin.ModelAdmin):
         'customer',
         'delivery_type',
         'payment_type',
+        'payment_status',
+        'payment_amount',
         'products_total',
         'delivery_price',
         'discount_amount',
@@ -52,11 +55,13 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     list_editable = (
+        'payment_status',
         'status',
     )
 
     list_filter = (
         'status',
+        'payment_status',
         'delivery_type',
         'payment_type',
         'first_order_discount_applied',
@@ -70,6 +75,7 @@ class OrderAdmin(admin.ModelAdmin):
         'customer__name',
         'address',
         'comment',
+        'payment_external_id',
     )
 
     readonly_fields = (
@@ -81,6 +87,11 @@ class OrderAdmin(admin.ModelAdmin):
         'delivery_time_type',
         'delivery_time',
         'payment_type',
+        'payment_amount',
+        'payment_provider',
+        'payment_external_id',
+        'payment_url',
+        'paid_at',
         'comment',
         'products_total',
         'delivery_price',
@@ -120,6 +131,12 @@ class OrderAdmin(admin.ModelAdmin):
             {
                 'fields': (
                     'payment_type',
+                    'payment_status',
+                    'payment_amount',
+                    'payment_provider',
+                    'payment_external_id',
+                    'payment_url',
+                    'paid_at',
                     'products_total',
                     'delivery_price',
                     'discount_amount',
@@ -131,7 +148,7 @@ class OrderAdmin(admin.ModelAdmin):
             },
         ),
         (
-            'Статус',
+            'Статус заказа',
             {
                 'fields': (
                     'status',
@@ -157,9 +174,81 @@ class OrderAdmin(admin.ModelAdmin):
         ),
     )
 
+    actions = (
+        'mark_as_paid',
+        'mark_as_unpaid',
+        'mark_as_failed',
+        'mark_as_refunded',
+    )
+
     inlines = [
         OrderItemInline,
     ]
+
+    list_select_related = (
+        'customer',
+    )
+
+    date_hierarchy = 'created_at'
+
+    @admin.action(description='Пометить выбранные заказы как оплаченные')
+    def mark_as_paid(self, request, queryset):
+        updated_count = queryset.update(
+            payment_status=Order.PaymentStatus.PAID,
+            paid_at=timezone.now(),
+        )
+
+        self.message_user(
+            request,
+            f'Оплачено заказов: {updated_count}',
+        )
+
+    @admin.action(description='Пометить выбранные заказы как ожидающие оплаты')
+    def mark_as_unpaid(self, request, queryset):
+        updated_count = queryset.update(
+            payment_status=Order.PaymentStatus.UNPAID,
+            paid_at=None,
+        )
+
+        self.message_user(
+            request,
+            f'Заказов ожидают оплату: {updated_count}',
+        )
+
+    @admin.action(description='Пометить выбранные заказы как ошибка оплаты')
+    def mark_as_failed(self, request, queryset):
+        updated_count = queryset.update(
+            payment_status=Order.PaymentStatus.FAILED,
+            paid_at=None,
+        )
+
+        self.message_user(
+            request,
+            f'Заказов с ошибкой оплаты: {updated_count}',
+        )
+
+    @admin.action(description='Пометить выбранные заказы как возврат')
+    def mark_as_refunded(self, request, queryset):
+        updated_count = queryset.update(
+            payment_status=Order.PaymentStatus.REFUNDED,
+        )
+
+        self.message_user(
+            request,
+            f'Заказов с возвратом: {updated_count}',
+        )
+
+    def save_model(self, request, obj, form, change):
+        if obj.payment_status == Order.PaymentStatus.PAID and obj.paid_at is None:
+            obj.paid_at = timezone.now()
+
+        if obj.payment_status in (
+            Order.PaymentStatus.UNPAID,
+            Order.PaymentStatus.FAILED,
+        ):
+            obj.paid_at = None
+
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(OrderItem)
@@ -184,4 +273,9 @@ class OrderItemAdmin(admin.ModelAdmin):
 
     list_filter = (
         'order__status',
+        'order__payment_status',
+    )
+
+    list_select_related = (
+        'order',
     )

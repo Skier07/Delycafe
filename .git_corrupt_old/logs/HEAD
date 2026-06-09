@@ -1,0 +1,38 @@
+0000000000000000000000000000000000000000 2021e5d8da68bd0fb4c4d18aa41fbbd89fccb89a Roman <Skier07@mail.ru> 1778184475 +0500	commit (initial): alfa version
+2021e5d8da68bd0fb4c4d18aa41fbbd89fccb89a 0000000000000000000000000000000000000000 Roman <Skier07@mail.ru> 1778184545 +0500	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 2021e5d8da68bd0fb4c4d18aa41fbbd89fccb89a Roman <Skier07@mail.ru> 1778184545 +0500	Branch: renamed refs/heads/master to refs/heads/main
+2021e5d8da68bd0fb4c4d18aa41fbbd89fccb89a 4f93fee11c1bc1ea9d56896bbc3a498349274c8f Roman <Skier07@mail.ru> 1778185541 +0500	commit: alfa version
+4f93fee11c1bc1ea9d56896bbc3a498349274c8f bf023cf218f0f86945374deb9e428e6e9e451e2a Roman <Skier07@mail.ru> 1778188307 +0500	commit: alfa version
+bf023cf218f0f86945374deb9e428e6e9e451e2a 37588e8f6a5aca861f605dfc9e7753d596377f52 Roman <Skier07@mail.ru> 1778188905 +0500	commit: alfa version
+37588e8f6a5aca861f605dfc9e7753d596377f52 4d811bfd5ec1d1cf33b9ac9b481a423c387f4057 Roman <Skier07@mail.ru> 1778191010 +0500	commit: alfa version
+4d811bfd5ec1d1cf33b9ac9b481a423c387f4057 d8ed3e99303f45938a4c37edd9d04ff28689255f Roman <Skier07@mail.ru> 1778191047 +0500	commit: alfa version
+d8ed3e99303f45938a4c37edd9d04ff28689255f 095e3a6e606eea369a2a978724793c67c8ab067b Roman <Skier07@mail.ru> 1778345793 +0500	commit: alfa
+095e3a6e606eea369a2a978724793c67c8ab067b 55150828eecd20bed9ea75d6a93a07eb9ef758fe Roman <Skier07@mail.ru> 1778351708 +0500	commit: Alfa
+55150828eecd20bed9ea75d6a93a07eb9ef758fe 42be975e89a734479d2548e165dc489f26082cba Roman <Skier07@mail.ru> 1778354450 +0500	commit: Alfa
+42be975e89a734479d2548e165dc489f26082cba cd8f46396f0779ed176d07daa3c5329d6b818b77 Roman <Skier07@mail.ru> 1778354467 +0500	pull --tags origin main: Merge made by the 'ort' strategy.
+cd8f46396f0779ed176d07daa3c5329d6b818b77 98d619a3f14ccddcb12f266bc3fbd9fdc08fdd1a Roman <Skier07@mail.ru> 1778355629 +0500	commit: Alfa
+98d619a3f14ccddcb12f266bc3fbd9fdc08fdd1a 8e6f77a2b1b27976fa3a56ed00d7e22fc62ae9db Roman <Skier07@mail.ru> 1778355640 +0500	pull --tags origin main: Merge made by the 'ort' strategy.
+8e6f77a2b1b27976fa3a56ed00d7e22fc62ae9db b1b3cb124e625d7d9ea4531dac39a0c97cb7b026 Roman <Skier07@mail.ru> 1778355825 +0500	commit: Alfa
+b1b3cb124e625d7d9ea4531dac39a0c97cb7b026 223ff9c453b1cb792d1c325cbffa7bfe0e38128b Roman <Skier07@mail.ru> 1778356692 +0500	commit: Alfa
+223ff9c453b1cb792d1c325cbffa7bfe0e38128b b7704efb98d278508c34026eb25efbb56922d5ca Roman <Skier07@mail.ru> 1778356694 +0500	pull --tags origin main: Merge made by the 'ort' strategy.
+b7704efb98d278508c34026eb25efbb56922d5ca 65abd709057c57d1556f2efebbf92b3f6d807d9d Roman <Skier07@mail.ru> 1778357071 +0500	commit: 0.0.2
+65abd709057c57d1556f2efebbf92b3f6d807d9d 3a5fea468ae6abb0c0ee5d84dd5aaaa56f16f132 Roman <Skier07@mail.ru> 1778357442 +0500	commit: v0.0.2
+3a5fea468ae6abb0c0ee5d84dd5aaaa56f16f132 08d0936f6dde6b2ed5fccce3507bebc4b10faf1a Roman <Skier07@mail.ru> 1778508959 +0500	commit: Alfa
+08d0936f6dde6b2ed5fccce3507bebc4b10faf1a c4fce81546be23bcdc698d3829412b674b731360 Roman <Skier07@mail.ru> 1778603310 +0500	commit: Alfa
+c4fce81546be23bcdc698d3829412b674b731360 72262c3d99bfcf987d46d7af0fbf991eccdc0a93 Roman <Skier07@mail.ru> 1778606751 +0500	commit: Alfa v0.0.3
+72262c3d99bfcf987d46d7af0fbf991eccdc0a93 c8d92d02c8d05854b3a14337af5ad7522b4761e4 Roman <Skier07@mail.ru> 1778799124 +0500	commit: Alfa v0.0.4
+c8d92d02c8d05854b3a14337af5ad7522b4761e4 2450e6d78a4b9c94cb99850cb57d44f9026bfed9 Roman <Skier07@mail.ru> 1778845480 +0500	commit: Alfa v0.0.5
+2450e6d78a4b9c94cb99850cb57d44f9026bfed9 27c65bcdc4140caad8346d8522a6b37b72c9e6bc Roman <Skier07@mail.ru> 1778845568 +0500	commit: Alfa v0.0.5
+27c65bcdc4140caad8346d8522a6b37b72c9e6bc a83765df8a07cd533d15fd04c28dc576aaa15c2b Roman <Skier07@mail.ru> 1778850679 +0500	commit: Alfa v0.0.6
+a83765df8a07cd533d15fd04c28dc576aaa15c2b 68e73611c33fab1eb76832d09bbde30fdc8114e3 Roman <Skier07@mail.ru> 1778851158 +0500	commit: Alfa v0.0.6
+68e73611c33fab1eb76832d09bbde30fdc8114e3 f36c21616b8aff9162a7e529cbebc4f71b84d6d4 Roman <Skier07@mail.ru> 1779228996 +0500	commit: Alfa v0.0.7
+f36c21616b8aff9162a7e529cbebc4f71b84d6d4 6952cea076f277639ce9183f59d0d7c4b035cf2c Roman <Skier07@mail.ru> 1779280220 +0500	commit: Alfa v0.0.7
+6952cea076f277639ce9183f59d0d7c4b035cf2c 527b7f0fa022b2d44dde0cf585ddfc6865f572c6 Roman <Skier07@mail.ru> 1779282998 +0500	commit: Alfa v0.0.7
+527b7f0fa022b2d44dde0cf585ddfc6865f572c6 bf4983815b3ccd6bf5c023666b3904b5541920c7 Roman <Skier07@mail.ru> 1779791873 +0500	commit: Alfa v0.0.8
+bf4983815b3ccd6bf5c023666b3904b5541920c7 4b1cc1a5dcbc85d4c52f657d013415904f90d92a Roman <Skier07@mail.ru> 1780246970 +0500	commit: Alfa v0.1.0
+4b1cc1a5dcbc85d4c52f657d013415904f90d92a c9240129858ae382ef622e97906150fe0233333f Roman <Skier07@mail.ru> 1780519331 +0500	commit: Release v0.1.0
+c9240129858ae382ef622e97906150fe0233333f 291641f9125f65abe9b6e5f93ebf22a8ecc30801 Roman <Skier07@mail.ru> 1780519873 +0500	pull --tags origin main: Merge made by the 'ort' strategy.
+291641f9125f65abe9b6e5f93ebf22a8ecc30801 2f14350e8740c1f99b5ca904838990b1a857196e Roman <Skier07@mail.ru> 1780575488 +0500	commit: Release v0.1.0
+2f14350e8740c1f99b5ca904838990b1a857196e edbc0de7b6fd33b83b6c7e5b8fa640ab6cdcc08c Roman <Skier07@mail.ru> 1780575620 +0500	commit: Release v0.1.0
+edbc0de7b6fd33b83b6c7e5b8fa640ab6cdcc08c cb0e2cbada8f1776a477bb219ba31934f752d9aa Roman <Skier07@mail.ru> 1781035995 +0500	commit: Release v0.1.5
+cb0e2cbada8f1776a477bb219ba31934f752d9aa 5fb0ae0fd437736dab413a8f5f5d4188a473c234 Roman <Skier07@mail.ru> 1781036035 +0500	commit: Release v0.1.5

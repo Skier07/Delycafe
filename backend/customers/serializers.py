@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Customer
+from .models import BonusTransaction, Customer
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
@@ -17,4 +17,23 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
             'is_active',
             'created_at',
             'updated_at',
+        )
+
+
+class BonusTransactionSerializer(serializers.ModelSerializer):
+    transaction_type_label = serializers.CharField(
+        source='get_transaction_type_display',
+        read_only=True,
+    )
+
+    class Meta:
+        model = BonusTransaction
+        fields = (
+            'id',
+            'transaction_type',
+            'transaction_type_label',
+            'amount',
+            'comment',
+            'order_id',
+            'created_at',
         )

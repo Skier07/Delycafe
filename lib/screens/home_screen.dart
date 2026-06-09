@@ -1,6 +1,7 @@
 import 'package:delycafe/features/auth/auth_screen.dart';
 import 'package:delycafe/screens/about_screen.dart';
 import 'package:delycafe/screens/addresses_screen.dart';
+import 'package:delycafe/screens/bonuses_screen.dart';
 import 'package:delycafe/screens/checkout_screens.dart';
 import 'package:delycafe/screens/contacts_screen.dart';
 import 'package:delycafe/screens/delivery_screen.dart';
@@ -195,7 +196,15 @@ class _HomeScreenState extends State<HomeScreen> {
             const DarkGlassSheetDivider(),
             DarkGlassSheetItem(
               title: 'Бонусы',
-              onTap: _closeOverlay,
+              onTap: () {
+                _closeOverlay();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BonusesScreen(),
+                  ),
+                );
+              },
             ),
             const DarkGlassSheetDivider(),
             DarkGlassSheetItem(
@@ -400,8 +409,11 @@ class HomeBanner extends StatelessWidget {
               alignment: Alignment.bottomLeft,
               child: ShaderGlassContainer(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Бонусы (позже)')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BonusesScreen(),
+                    ),
                   );
                 },
                 child: Row(
