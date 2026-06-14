@@ -96,8 +96,12 @@ class CheckoutScreens extends StatelessWidget {
 
                     if (!context.mounted) return;
 
-                    await context.read<AuthService>().refreshCurrentUser();
-
+                    try {
+                      await context.read<AuthService>().refreshCurrentUser();
+                    } catch (error) {
+                      debugPrint(
+                          'Не удалось обновить профиль после заказа: $error');
+                    }
                     if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(
