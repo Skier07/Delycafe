@@ -67,7 +67,7 @@ class CheckoutScreens extends StatelessWidget {
                 GuestCheckoutForm(
                   cartTotal: cart.totalPrice,
                   initialName: user?.name,
-                  initialAddress: user?.defaultAddress,
+                  initialAddress: user?.checkoutAddress,
                   initialPhone: user?.phone,
                   availableBonuses: user?.bonusBalance ?? 0,
                   firstOrderDiscountAvailable:

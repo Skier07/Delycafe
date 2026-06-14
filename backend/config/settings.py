@@ -165,3 +165,41 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
 }
+
+import os
+
+
+ALFA_PAYMENT_ENABLED = os.getenv(
+    'ALFA_PAYMENT_ENABLED',
+    'False',
+).lower() == 'true'
+
+ALFA_API_BASE_URL = os.getenv(
+    'ALFA_API_BASE_URL',
+    'https://payment.alfabank.ru/payment/rest',
+)
+
+ALFA_API_LOGIN = os.getenv(
+    'ALFA_API_LOGIN',
+    '',
+)
+
+ALFA_API_PASSWORD = os.getenv(
+    'ALFA_API_PASSWORD',
+    '',
+)
+
+ALFA_RETURN_URL = os.getenv(
+    'ALFA_RETURN_URL',
+    'http://127.0.0.1:8000/api/payments/success/',
+)
+
+ALFA_FAIL_URL = os.getenv(
+    'ALFA_FAIL_URL',
+    'http://127.0.0.1:8000/api/payments/fail/',
+)
+
+ALFA_CALLBACK_URL = os.getenv(
+    'ALFA_CALLBACK_URL',
+    '',
+)

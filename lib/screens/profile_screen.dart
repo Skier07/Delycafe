@@ -1,5 +1,6 @@
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
@@ -73,6 +74,11 @@ class ProfileScreen extends StatelessWidget {
                   : user.firstOrderDiscountAvailable
                       ? 'Новый клиент'
                       : 'Постоянный клиент',
+              onEditName: user == null
+                  ? null
+                  : () {
+                      _openEditNameSheet(context, user);
+                    },
             ),
             const SizedBox(height: 16),
             _InfoCard(
@@ -97,7 +103,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  const Text(
                     '1 бонус = 1 ₽',
                     style: _subtleStyle,
                   ),
@@ -119,13 +125,13 @@ class ProfileScreen extends StatelessWidget {
               title: 'Адрес доставки',
               child: address.isNotEmpty
                   ? _BulletText(text: address)
-                  : Text(
+                  : const Text(
                       'Адрес не указан',
                       style: _subtleStyle,
                     ),
             ),
             const SizedBox(height: 12),
-            _InfoCard(
+            const _InfoCard(
               icon: CupertinoIcons.cart,
               title: 'История заказов',
               child: Text(
@@ -162,6 +168,22 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _openEditNameSheet(BuildContext context, User user) async {
+    final auth = context.read<AuthService>();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) {
+        return _EditNameSheet(
+          initialName: user.name.trim(),
+          onSubmit: auth.updateProfileName,
+        );
+      },
+    );
+  }
+
   String _getName(User? user) {
     if (user == null) {
       return 'Гость';
@@ -194,13 +216,134 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
+class _EditNameSheet extends StatefulWidget {
+  final String initialName;
+  final Future<void> Function(String name) onSubmit;
+
+  const _EditNameSheet({
+    required this.initialName,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_EditNameSheet> createState() => _EditNameSheetState();
+}
+
+class _EditNameSheetState extends State<_EditNameSheet> {
+  late final TextEditingController _nameController;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _nameController = TextEditingController(
+      text: widget.initialName,
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveName() async {
+    final newName = _nameController.text.trim();
+
+    if (newName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Введите имя'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await widget.onSubmit(newName);
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Не удалось сохранить имя: $error'),
+        ),
+      );
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: bottomInset + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Редактировать имя',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _nameController,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              if (!_isSaving) {
+                _saveName();
+              }
+            },
+            decoration: const InputDecoration(
+              labelText: 'Имя',
+              hintText: 'Например, Роман',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          AuthButton(
+            text: _isSaving ? 'Сохраняем...' : 'Сохранить',
+            onPressed: _isSaving ? null : _saveName,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProfileHeaderCard extends StatelessWidget {
   final String name;
   final String subtitle;
+  final VoidCallback? onEditName;
 
   const _ProfileHeaderCard({
     required this.name,
     required this.subtitle,
+    required this.onEditName,
   });
 
   @override
@@ -238,12 +381,27 @@ class _ProfileHeaderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    if (onEditName != null)
+                      IconButton(
+                        onPressed: onEditName,
+                        icon: const Icon(
+                          CupertinoIcons.pencil,
+                          color: AppColors.header,
+                          size: 22,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(

@@ -21,7 +21,7 @@ class AuthButton extends StatelessWidget {
           foregroundColor: AppColors.onPrimary,
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.circular(AppRadius.button),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
         ),
         child: Text(

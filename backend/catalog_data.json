@@ -1,0 +1,4444 @@
+[
+{
+  "model": "catalog.category",
+  "pk": 1,
+  "fields": {
+    "title": "Блины",
+    "slug": "bliny",
+    "sort_order": 90,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 2,
+  "fields": {
+    "title": "Бургеры",
+    "slug": "burgery",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 3,
+  "fields": {
+    "title": "Десерты",
+    "slug": "deserty",
+    "sort_order": 80,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 4,
+  "fields": {
+    "title": "Картошечка в фольге",
+    "slug": "kartoshechka-v-folge",
+    "sort_order": 50,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 5,
+  "fields": {
+    "title": "Напитки",
+    "slug": "napitki",
+    "sort_order": 70,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 6,
+  "fields": {
+    "title": "Паста",
+    "slug": "pasta",
+    "sort_order": 100,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 7,
+  "fields": {
+    "title": "Пироги",
+    "slug": "pirogi",
+    "sort_order": 110,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 8,
+  "fields": {
+    "title": "Пицца",
+    "slug": "picca",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 9,
+  "fields": {
+    "title": "Салаты",
+    "slug": "salaty",
+    "sort_order": 120,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 10,
+  "fields": {
+    "title": "Соусы",
+    "slug": "sousy",
+    "sort_order": 60,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 11,
+  "fields": {
+    "title": "Супы",
+    "slug": "supy",
+    "sort_order": 130,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 12,
+  "fields": {
+    "title": "Фастфуд",
+    "slug": "fastfud",
+    "sort_order": 40,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.category",
+  "pk": 13,
+  "fields": {
+    "title": "Шаурма",
+    "slug": "shaurma",
+    "sort_order": 19,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 1,
+  "fields": {
+    "category": 1,
+    "saby_id": 23,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин грибы+сыр",
+    "description": "Вкусный блин с начинкой из свежих грибов и расплавленного сыра. Идеально подходит для быстрого перекуса или как основное блюдо. Легко готовится и отлично сочетается с различными соусами. Подойдёт как для завтрака, так и для ужина, порадует любителей сытной и ароматной еды.",
+    "image": "products/bliny/blin_s_gribami_i_syrom.jpg",
+    "price": 150,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 22001,
+    "created_at": "2026-05-27T09:53:10.347Z",
+    "updated_at": "2026-06-02T21:52:55.085Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 2,
+  "fields": {
+    "category": 1,
+    "saby_id": 24,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин грибы+яйцо+зелень",
+    "description": "Блин грибы+яйцо+зелень из меню DelyCafe.",
+    "image": "products/bliny/blin_s_gribami_yaycom_i_zelenyu.jpg",
+    "price": 140,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 23001,
+    "created_at": "2026-05-27T09:53:10.352Z",
+    "updated_at": "2026-06-02T21:52:55.085Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 3,
+  "fields": {
+    "category": 1,
+    "saby_id": 25,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин Жульен",
+    "description": "Блин Жульен из меню DelyCafe.",
+    "image": "products/bliny/blin_zhulen.jpg",
+    "price": 180,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 24001,
+    "created_at": "2026-05-27T09:53:10.358Z",
+    "updated_at": "2026-06-02T21:52:55.086Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 4,
+  "fields": {
+    "category": 1,
+    "saby_id": 26,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин Любимый",
+    "description": "Блин Любимый из меню DelyCafe.",
+    "image": "products/bliny/blin_lyubimyy.jpg",
+    "price": 185,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 25001,
+    "created_at": "2026-05-27T09:53:10.363Z",
+    "updated_at": "2026-06-02T21:52:55.086Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 5,
+  "fields": {
+    "category": 1,
+    "saby_id": 27,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с вареной сгущенкой",
+    "description": "Блин с вареной сгущенкой из меню DelyCafe.",
+    "image": "products/bliny/blin_s_varenoy_sguschenkoy.jpg",
+    "price": 95,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 26001,
+    "created_at": "2026-05-27T09:53:10.369Z",
+    "updated_at": "2026-06-02T21:52:55.086Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 6,
+  "fields": {
+    "category": 1,
+    "saby_id": 28,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с ветчиной",
+    "description": "Состав: ветчина, молоко, мука, яйцо, сахар, соль.",
+    "image": "products/bliny/blin_s_vetchinoy.jpg",
+    "price": 120,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 27001,
+    "created_at": "2026-05-27T09:53:10.374Z",
+    "updated_at": "2026-06-02T21:52:55.087Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 7,
+  "fields": {
+    "category": 1,
+    "saby_id": 29,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с ветчиной и сыром",
+    "description": "Блин с ветчиной и сыром из меню DelyCafe.",
+    "image": "products/bliny/blin_s_vetchinoy_i_syrom.jpg",
+    "price": 135,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 28001,
+    "created_at": "2026-05-27T09:53:10.379Z",
+    "updated_at": "2026-06-02T21:52:55.087Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 8,
+  "fields": {
+    "category": 1,
+    "saby_id": 30,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с грибами",
+    "description": "Блин с грибами из меню DelyCafe.",
+    "image": "products/bliny/blin_s_gribami.jpg",
+    "price": 130,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 29001,
+    "created_at": "2026-05-27T09:53:10.385Z",
+    "updated_at": "2026-06-02T21:52:55.087Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 9,
+  "fields": {
+    "category": 1,
+    "saby_id": 31,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с грибами+ветчина+сыр",
+    "description": "Блин с грибами+ветчина+сыр из меню DelyCafe.",
+    "image": "products/bliny/blin_s_gribami_vetchinoy_i_syrom.jpg",
+    "price": 170,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 30001,
+    "created_at": "2026-05-27T09:53:10.390Z",
+    "updated_at": "2026-06-02T21:52:55.087Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 10,
+  "fields": {
+    "category": 1,
+    "saby_id": 32,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с курицей",
+    "description": "Блин с курицей из меню DelyCafe.",
+    "image": "products/bliny/blin_s_kuricey.jpg",
+    "price": 130,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 31001,
+    "created_at": "2026-05-27T09:53:10.395Z",
+    "updated_at": "2026-05-27T09:53:10.395Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 11,
+  "fields": {
+    "category": 1,
+    "saby_id": 33,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с маслом",
+    "description": "Блин с маслом из меню DelyCafe.",
+    "image": "products/bliny/blin_s_maslom.jpg",
+    "price": 50,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 32001,
+    "created_at": "2026-05-27T09:53:10.400Z",
+    "updated_at": "2026-06-02T21:52:55.088Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 12,
+  "fields": {
+    "category": 1,
+    "saby_id": 34,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с медом",
+    "description": "Блин с медом из меню DelyCafe.",
+    "image": "products/bliny/blin_s_medom.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 33001,
+    "created_at": "2026-05-27T09:53:10.406Z",
+    "updated_at": "2026-05-27T09:53:10.406Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 13,
+  "fields": {
+    "category": 1,
+    "saby_id": 35,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с сыром",
+    "description": "Блин с сыром из меню DelyCafe.",
+    "image": "products/bliny/blin_s_syrom.jpg",
+    "price": 120,
+    "weight": "150 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 34001,
+    "created_at": "2026-05-27T09:53:10.411Z",
+    "updated_at": "2026-06-02T21:52:55.088Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 14,
+  "fields": {
+    "category": 1,
+    "saby_id": 36,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с творогом и изюмом",
+    "description": "Блин с творогом и изюмом из меню DelyCafe.",
+    "image": "products/bliny/blin_s_tvorogom_i_izyumom.jpg",
+    "price": 115,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 35001,
+    "created_at": "2026-05-27T09:53:10.416Z",
+    "updated_at": "2026-05-27T09:53:10.416Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 15,
+  "fields": {
+    "category": 1,
+    "saby_id": 37,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин с фаршем",
+    "description": "Блин с фаршем из меню DelyCafe.",
+    "image": "products/bliny/blin_s_farshem.jpg",
+    "price": 145,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 36001,
+    "created_at": "2026-05-27T09:53:10.421Z",
+    "updated_at": "2026-05-27T09:53:10.421Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 16,
+  "fields": {
+    "category": 1,
+    "saby_id": 38,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин со сгущенкой",
+    "description": "Блин со сгущенкой из меню DelyCafe.",
+    "image": "products/bliny/blinchik_so_sguschenkoy.jpg",
+    "price": 90,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 37001,
+    "created_at": "2026-05-27T09:53:10.426Z",
+    "updated_at": "2026-05-27T09:53:10.426Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 17,
+  "fields": {
+    "category": 1,
+    "saby_id": 39,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин фирменный",
+    "description": "Блин фирменный из меню DelyCafe.",
+    "image": "products/bliny/blin_firmennyy.jpg",
+    "price": 155,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 38001,
+    "created_at": "2026-05-27T09:53:10.432Z",
+    "updated_at": "2026-05-27T09:53:10.432Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 18,
+  "fields": {
+    "category": 1,
+    "saby_id": 40,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин Цезарь",
+    "description": "Блин Цезарь из меню DelyCafe.",
+    "image": "products/bliny/blinchik_cezar.jpg",
+    "price": 165,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 39001,
+    "created_at": "2026-05-27T09:53:10.437Z",
+    "updated_at": "2026-05-27T09:53:10.437Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 19,
+  "fields": {
+    "category": 1,
+    "saby_id": 42,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин-дог",
+    "description": "Блин-дог из меню DelyCafe.",
+    "image": "products/bliny/blin_dog.jpg",
+    "price": 115,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 41001,
+    "created_at": "2026-05-27T09:53:10.442Z",
+    "updated_at": "2026-05-27T09:53:10.442Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 20,
+  "fields": {
+    "category": 1,
+    "saby_id": 43,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блин-Дог 2",
+    "description": "Блин-Дог 2 из меню DelyCafe.",
+    "image": "products/bliny/blin_dog_dvoynoy.jpg",
+    "price": 155,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 42001,
+    "created_at": "2026-05-27T09:53:10.447Z",
+    "updated_at": "2026-05-27T09:53:10.447Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 21,
+  "fields": {
+    "category": 1,
+    "saby_id": 44,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Блины с джемом",
+    "description": "Блины с джемом из меню DelyCafe.",
+    "image": "products/bliny/blinchik_s_dzhemom.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 43001,
+    "created_at": "2026-05-27T09:53:10.453Z",
+    "updated_at": "2026-05-27T09:53:10.453Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 22,
+  "fields": {
+    "category": 2,
+    "saby_id": 45,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Бургер Гавайский",
+    "description": "Бургер Гавайский из меню DelyCafe.",
+    "image": "products/burgery/burger_gavayskiy.jpg",
+    "price": 430,
+    "weight": "270 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 44001,
+    "created_at": "2026-05-27T09:53:10.462Z",
+    "updated_at": "2026-06-02T21:52:55.080Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 23,
+  "fields": {
+    "category": 2,
+    "saby_id": 46,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Бургер классик",
+    "description": "Бургер классик из меню DelyCafe.",
+    "image": "products/burgery/burger_klassicheskiy.jpg",
+    "price": 470,
+    "weight": "280 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 45001,
+    "created_at": "2026-05-27T09:53:10.467Z",
+    "updated_at": "2026-06-02T21:52:55.081Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 24,
+  "fields": {
+    "category": 2,
+    "saby_id": 47,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Бургер «Мексиканский»",
+    "description": "Бургер «Мексиканский» из меню DelyCafe.",
+    "image": "products/burgery/burger_meksikanskiy.jpg",
+    "price": 470,
+    "weight": "280 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 46001,
+    "created_at": "2026-05-27T09:53:10.473Z",
+    "updated_at": "2026-06-02T21:52:55.081Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 25,
+  "fields": {
+    "category": 2,
+    "saby_id": 48,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Бургер Острый",
+    "description": "Бургер Острый из меню DelyCafe.",
+    "image": "products/burgery/burger_ostryy.jpg",
+    "price": 470,
+    "weight": "280 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 47001,
+    "created_at": "2026-05-27T09:53:10.479Z",
+    "updated_at": "2026-06-02T21:52:55.081Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 26,
+  "fields": {
+    "category": 2,
+    "saby_id": 50,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Бургер Цезарь",
+    "description": "Бургер Цезарь из меню DelyCafe.",
+    "image": "products/burgery/burger_cezar.jpg",
+    "price": 430,
+    "weight": "280 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 49001,
+    "created_at": "2026-05-27T09:53:10.483Z",
+    "updated_at": "2026-06-02T21:52:55.081Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 27,
+  "fields": {
+    "category": 2,
+    "saby_id": 51,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Бургер Чикен Де Люкс",
+    "description": "Бургер Чикен Де Люкс из меню DelyCafe.",
+    "image": "products/burgery/burger_chiken_de_lyuks.jpg",
+    "price": 500,
+    "weight": "260 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 50001,
+    "created_at": "2026-05-27T09:53:10.489Z",
+    "updated_at": "2026-06-02T21:52:55.082Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 28,
+  "fields": {
+    "category": 2,
+    "saby_id": 52,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Чикенбургер",
+    "description": "Чикенбургер из меню DelyCafe.",
+    "image": "products/burgery/chikenburger.jpg",
+    "price": 420,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 51001,
+    "created_at": "2026-05-27T09:53:10.494Z",
+    "updated_at": "2026-05-27T09:53:10.494Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 29,
+  "fields": {
+    "category": 3,
+    "saby_id": 382,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Чизкейк Клубника",
+    "description": "Чизкейк Клубника из меню DelyCafe.",
+    "image": "products/deserty/chizkeyk_klubnika.jpg",
+    "price": 260,
+    "weight": "1 шт",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 381001,
+    "created_at": "2026-05-27T09:53:10.503Z",
+    "updated_at": "2026-05-27T09:53:10.503Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 30,
+  "fields": {
+    "category": 3,
+    "saby_id": 385,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Чизкейк шоколад",
+    "description": "Чизкейк шоколад из меню DelyCafe.",
+    "image": "products/deserty/chizkeyk_shokolad.jpg",
+    "price": 260,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 384001,
+    "created_at": "2026-05-27T09:53:10.508Z",
+    "updated_at": "2026-05-27T09:53:10.508Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 31,
+  "fields": {
+    "category": 3,
+    "saby_id": 904,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Чизкейк Манго Маракуйя",
+    "description": "Чизкейк Манго Маракуйя из меню DelyCafe.",
+    "image": "products/deserty/chizkeyk_mango_marakuyya.jpg",
+    "price": 260,
+    "weight": "100 г.",
+    "is_new": true,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 903001,
+    "created_at": "2026-05-27T09:53:10.514Z",
+    "updated_at": "2026-06-02T21:52:55.085Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 32,
+  "fields": {
+    "category": 3,
+    "saby_id": 905,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Чизкейк Карамельный арахис",
+    "description": "Чизкейк Карамельный арахис из меню DelyCafe.",
+    "image": "products/deserty/chizkeyk_karamelnyy_s_arahisom.jpg",
+    "price": 260,
+    "weight": "100 г.",
+    "is_new": true,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 904001,
+    "created_at": "2026-05-27T09:53:10.519Z",
+    "updated_at": "2026-06-02T21:52:55.085Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 33,
+  "fields": {
+    "category": 4,
+    "saby_id": 867,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Запечённый картофель",
+    "description": "Запечённый картофель из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/zapechennyy_kartofel.jpg",
+    "price": 200,
+    "weight": "350 г.",
+    "is_new": true,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 866001,
+    "created_at": "2026-05-27T09:53:10.528Z",
+    "updated_at": "2026-06-02T21:52:55.083Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 34,
+  "fields": {
+    "category": 4,
+    "saby_id": 868,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 1 Ветчина+сыр",
+    "description": "Начинка 1 Ветчина+сыр из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_1.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 867001,
+    "created_at": "2026-05-27T09:53:10.533Z",
+    "updated_at": "2026-05-27T09:53:10.533Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 35,
+  "fields": {
+    "category": 4,
+    "saby_id": 869,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 2 Сервелат+помидор",
+    "description": "Начинка 2 Сервелат+помидор из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_2.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 868001,
+    "created_at": "2026-05-27T09:53:10.538Z",
+    "updated_at": "2026-05-27T09:53:10.538Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 36,
+  "fields": {
+    "category": 4,
+    "saby_id": 870,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 3 Баварские колб+огурцы мар",
+    "description": "Начинка 3 Баварские колб+огурцы мар из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_3.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 869001,
+    "created_at": "2026-05-27T09:53:10.544Z",
+    "updated_at": "2026-05-27T09:53:10.544Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 37,
+  "fields": {
+    "category": 4,
+    "saby_id": 871,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 4 Курица копч+кор.морковь",
+    "description": "Начинка 4 Курица копч+кор.морковь из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_4.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 870001,
+    "created_at": "2026-05-27T09:53:10.548Z",
+    "updated_at": "2026-05-27T09:53:10.548Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 38,
+  "fields": {
+    "category": 4,
+    "saby_id": 872,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 5 Лосось с/с+сыр",
+    "description": "Начинка 5 Лосось с/с+сыр из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_5.jpg",
+    "price": 170,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 871001,
+    "created_at": "2026-05-27T09:53:10.554Z",
+    "updated_at": "2026-05-27T09:53:10.554Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 39,
+  "fields": {
+    "category": 4,
+    "saby_id": 873,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 6 Грибы+сыр",
+    "description": "Начинка 6 Грибы+сыр из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_6.jpg",
+    "price": 120,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 872001,
+    "created_at": "2026-05-27T09:53:10.559Z",
+    "updated_at": "2026-05-27T09:53:10.559Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 40,
+  "fields": {
+    "category": 4,
+    "saby_id": 874,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 7 Ветчина+грибы",
+    "description": "Начинка 7 Ветчина+грибы из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_7.jpg",
+    "price": 120,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 873001,
+    "created_at": "2026-05-27T09:53:10.564Z",
+    "updated_at": "2026-05-27T09:53:10.564Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 41,
+  "fields": {
+    "category": 4,
+    "saby_id": 875,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 8 Сыр+сыр",
+    "description": "Начинка 8 Сыр+сыр из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_8.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 874001,
+    "created_at": "2026-05-27T09:53:10.569Z",
+    "updated_at": "2026-05-27T09:53:10.569Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 42,
+  "fields": {
+    "category": 4,
+    "saby_id": 876,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 9 Сосиска+помидор",
+    "description": "Начинка 9 Сосиска+помидор из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_9.jpg",
+    "price": 95,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 875001,
+    "created_at": "2026-05-27T09:53:10.575Z",
+    "updated_at": "2026-05-27T09:53:10.575Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 43,
+  "fields": {
+    "category": 4,
+    "saby_id": 877,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Начинка 10 Бекон+лук жар",
+    "description": "Начинка 10 Бекон+лук жар из меню DelyCafe.",
+    "image": "products/kartoshechka-v-folge/nachinka_10.jpg",
+    "price": 105,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 876001,
+    "created_at": "2026-05-27T09:53:10.581Z",
+    "updated_at": "2026-05-27T09:53:10.581Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 44,
+  "fields": {
+    "category": 5,
+    "saby_id": 137,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Американо 200мл",
+    "description": "Американо 200мл из меню DelyCafe.",
+    "image": "products/napitki/kofe_amerikano.jpg",
+    "price": 100,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 136001,
+    "created_at": "2026-05-27T09:53:10.590Z",
+    "updated_at": "2026-05-27T09:53:10.590Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 45,
+  "fields": {
+    "category": 5,
+    "saby_id": 138,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Капучино 200мл",
+    "description": "Капучино 200мл из меню DelyCafe.",
+    "image": "products/napitki/kofe_kapuchino.jpg",
+    "price": 140,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 137001,
+    "created_at": "2026-05-27T09:53:10.597Z",
+    "updated_at": "2026-05-27T09:53:10.597Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 46,
+  "fields": {
+    "category": 5,
+    "saby_id": 142,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Латте 200мл",
+    "description": "Латте 200мл из меню DelyCafe.",
+    "image": "products/napitki/kofe_latte.jpg",
+    "price": 160,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 141001,
+    "created_at": "2026-05-27T09:53:10.602Z",
+    "updated_at": "2026-05-27T09:53:10.602Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 47,
+  "fields": {
+    "category": 5,
+    "saby_id": 149,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Эспрессо 70мл",
+    "description": "Эспрессо 70мл из меню DelyCafe.",
+    "image": "products/napitki/kofe_espresso.jpg",
+    "price": 60,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 148001,
+    "created_at": "2026-05-27T09:53:10.607Z",
+    "updated_at": "2026-05-27T09:53:10.607Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 48,
+  "fields": {
+    "category": 6,
+    "saby_id": 171,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Паста Болоньезе",
+    "description": "Итальянские спагетти, фарш мясной, морковь, лук, сельдерей, соус томатный, прованские травы.",
+    "image": "products/pasta_boloneze.jpg",
+    "price": 380,
+    "weight": "270 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 170001,
+    "created_at": "2026-05-27T09:53:10.618Z",
+    "updated_at": "2026-06-08T19:45:30.388Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 49,
+  "fields": {
+    "category": 6,
+    "saby_id": 172,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Паста «Карбонара»",
+    "description": "Итальянские спагетти, бекон, помидоры, сливки, масло сливочное, сыр «Пармезан».",
+    "image": "products/pasta/pasta_karbonara.jpg",
+    "price": 380,
+    "weight": "270 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 171001,
+    "created_at": "2026-05-27T09:53:10.624Z",
+    "updated_at": "2026-06-08T19:43:17.707Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 50,
+  "fields": {
+    "category": 6,
+    "saby_id": 173,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Паста с лососем",
+    "description": "Итальянские спагетти, красная рыба Лосось, лук, сливки, масло сливочное, сыр «Пармезан»",
+    "image": "products/pasta_ketoj.jpg",
+    "price": 400,
+    "weight": "260 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 172001,
+    "created_at": "2026-05-27T09:53:10.629Z",
+    "updated_at": "2026-06-08T19:45:30.390Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 51,
+  "fields": {
+    "category": 6,
+    "saby_id": 174,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Паста «С курицей и грибами»",
+    "description": "Итальянские спагетти, курица, шампиньоны, сливки, масло сливочное, сыр «Пармезан».",
+    "image": "products/pasta/pasta_s_kuricey_i_gribami.jpg",
+    "price": 380,
+    "weight": "280 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 173001,
+    "created_at": "2026-05-27T09:53:10.634Z",
+    "updated_at": "2026-06-08T19:44:33.171Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 52,
+  "fields": {
+    "category": 7,
+    "saby_id": 1092,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пирог курица + картошка",
+    "description": "Пирог курица + картошка из меню DelyCafe.",
+    "image": "products/pirogi/pirog_s_kartoshkoy_i_kuricey.jpg",
+    "price": 790,
+    "weight": "1 000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 1091001,
+    "created_at": "2026-05-27T09:53:10.645Z",
+    "updated_at": "2026-06-02T21:53:31.329Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 53,
+  "fields": {
+    "category": 7,
+    "saby_id": 1093,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пирог мясо+картошка",
+    "description": "Пирог мясо+картошка из меню DelyCafe.",
+    "image": "products/pirogi/pirom_s_myasom_i_kartoshkoy.jpg",
+    "price": 800,
+    "weight": "1 000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 1092001,
+    "created_at": "2026-05-27T09:53:10.650Z",
+    "updated_at": "2026-06-02T21:53:31.329Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 54,
+  "fields": {
+    "category": 7,
+    "saby_id": 1096,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пирог с фаршем (говядина+свинина)",
+    "description": "Пирог с фаршем (говядина+свинина) из меню DelyCafe.",
+    "image": "products/pirogi/pirog_s_farshem_govyadina_svinina.jpg",
+    "price": 800,
+    "weight": "1 000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 1095001,
+    "created_at": "2026-05-27T09:53:10.656Z",
+    "updated_at": "2026-06-02T21:53:31.330Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 55,
+  "fields": {
+    "category": 7,
+    "saby_id": 1097,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пирог с фаршем (курица+свинина)",
+    "description": "Пирог с фаршем (курица+свинина) из меню DelyCafe.",
+    "image": "products/pirogi/pirog_s_farshem_kurica_svinina.jpg",
+    "price": 800,
+    "weight": "1 000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 1096001,
+    "created_at": "2026-05-27T09:53:10.661Z",
+    "updated_at": "2026-06-02T21:53:31.330Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 56,
+  "fields": {
+    "category": 7,
+    "saby_id": 1101,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пирог картошкой и грибами",
+    "description": "Пирог картошкой и грибами из меню DelyCafe.",
+    "image": "products/pirogi/pirog_s_kartoshkoy_i_gribami.jpg",
+    "price": 800,
+    "weight": "1 000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 1100001,
+    "created_at": "2026-05-27T09:53:10.667Z",
+    "updated_at": "2026-06-02T21:53:31.330Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 57,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "50 оттенков сырного",
+    "description": "Пицца 50 оттенков сырного.",
+    "image": "products/pizza-cheese-min.jpg",
+    "price": 830,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 192001,
+    "created_at": "2026-05-27T09:53:10.677Z",
+    "updated_at": "2026-06-02T21:48:55.529Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 58,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Ассорти",
+    "description": "Пицца Ассорти.",
+    "image": "products/picca/picca_assorti.jpg",
+    "price": 810,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 195001,
+    "created_at": "2026-05-27T09:53:10.695Z",
+    "updated_at": "2026-06-02T21:50:30.036Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 59,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Барбекью",
+    "description": "Пицца Барбекью.",
+    "image": "products/picca/picca_barbekyu.jpg",
+    "price": 800,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 197501,
+    "created_at": "2026-05-27T09:53:10.713Z",
+    "updated_at": "2026-06-02T21:57:35.763Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 60,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Вечеринка",
+    "description": "Пицца Вечеринка.",
+    "image": "products/picca/picca_vecherinka.jpg",
+    "price": 795,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 201001,
+    "created_at": "2026-05-27T09:53:10.731Z",
+    "updated_at": "2026-06-02T21:58:46.579Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 61,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Гавайская",
+    "description": "Пицца Гавайская.",
+    "image": "products/piczcza-gavajskaya.jpg",
+    "price": 795,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 204001,
+    "created_at": "2026-05-27T09:53:10.749Z",
+    "updated_at": "2026-06-02T21:58:59.179Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 62,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Голодный мясник ЧИЛИ",
+    "description": "Пицца Голодный мясник ЧИЛИ.",
+    "image": "products/picca/golodnyy_myasnik_chili.jpg",
+    "price": 830,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 205501,
+    "created_at": "2026-05-27T09:53:10.767Z",
+    "updated_at": "2026-06-02T21:59:15.561Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 63,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Голодный мясник",
+    "description": "Пицца Голодный мясник.",
+    "image": "products/picca/golodnyy_myasnik.jpg",
+    "price": 830,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 207001,
+    "created_at": "2026-05-27T09:53:10.785Z",
+    "updated_at": "2026-06-02T21:59:26.428Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 64,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Грибная",
+    "description": "Пицца Грибная.",
+    "image": "products/picca/picca_gribnaya.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 210001,
+    "created_at": "2026-05-27T09:53:10.804Z",
+    "updated_at": "2026-06-02T22:00:12.961Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 65,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Деревенская с курицей",
+    "description": "Пицца Деревенская с курицей.",
+    "image": "products/picca/picca_derevenskaya_s_kuricey.jpg",
+    "price": 770,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 213001,
+    "created_at": "2026-05-27T09:53:10.821Z",
+    "updated_at": "2026-06-02T22:00:21.976Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 66,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Детская",
+    "description": "Пицца Детская.",
+    "image": "products/piczcza-detskaya.jpg",
+    "price": 720,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 216001,
+    "created_at": "2026-05-27T09:53:10.839Z",
+    "updated_at": "2026-06-02T21:28:29.664Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 67,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Дьявольская",
+    "description": "Пицца Дьявольская.",
+    "image": "products/piczcza-dyavolskaya.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 219001,
+    "created_at": "2026-05-27T09:53:10.858Z",
+    "updated_at": "2026-06-02T21:32:24.411Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 68,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Жгучая чика",
+    "description": "Пицца Жгучая чика.",
+    "image": "products/picca/picca_zhguchaya_chika.jpg",
+    "price": 810,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 222001,
+    "created_at": "2026-05-27T09:53:10.876Z",
+    "updated_at": "2026-06-02T22:00:44.427Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 69,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Злодейка",
+    "description": "Пицца Злодейка.",
+    "image": "products/picca/picca_zlodeyka.jpg",
+    "price": 825,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 225001,
+    "created_at": "2026-05-27T09:53:10.893Z",
+    "updated_at": "2026-06-02T22:00:56.560Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 70,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Карбонара",
+    "description": "Пицца Карбонара.",
+    "image": "products/picca/picca_karbonara.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 228001,
+    "created_at": "2026-05-27T09:53:10.912Z",
+    "updated_at": "2026-06-02T22:01:05.695Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 71,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Корона",
+    "description": "Пицца Корона.",
+    "image": "products/picca/picca_korona.jpg",
+    "price": 790,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 231001,
+    "created_at": "2026-05-27T09:53:10.929Z",
+    "updated_at": "2026-06-02T22:01:16.042Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 72,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Маргарита",
+    "description": "Пицца Маргарита.",
+    "image": "products/picca/picca_margarita.jpg",
+    "price": 770,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 234001,
+    "created_at": "2026-05-27T09:53:10.948Z",
+    "updated_at": "2026-06-02T22:01:25.548Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 73,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Мистер Бекон",
+    "description": "Пицца Мистер Бекон.",
+    "image": "products/picca/picca_mister_bekon.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 237001,
+    "created_at": "2026-05-27T09:53:10.965Z",
+    "updated_at": "2026-06-02T22:01:41.825Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 74,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Морская",
+    "description": "Пицца Морская.",
+    "image": "products/piczcza-morskaya.jpg",
+    "price": 1150,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 240001,
+    "created_at": "2026-05-27T09:53:10.983Z",
+    "updated_at": "2026-06-02T21:34:20.677Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 75,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Мясная",
+    "description": "Пицца Мясная.",
+    "image": "products/picca/delycafe.jpg",
+    "price": 800,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 243001,
+    "created_at": "2026-05-27T09:53:11.004Z",
+    "updated_at": "2026-06-02T21:37:30.172Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 76,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Окей",
+    "description": "Пицца Окей.",
+    "image": "products/piczcza-okej.jpg",
+    "price": 790,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 246001,
+    "created_at": "2026-05-27T09:53:11.022Z",
+    "updated_at": "2026-06-02T21:40:26.570Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 77,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пицца «Пепперони»",
+    "description": "Пицца Пицца «Пепперони».",
+    "image": "products/pizza-pepperoni-min.jpg",
+    "price": 800,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 249001,
+    "created_at": "2026-05-27T09:53:11.039Z",
+    "updated_at": "2026-06-02T21:44:47.226Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 78,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Просто космос",
+    "description": "Пицца Просто космос.",
+    "image": "products/pizza-kosmos.jpg",
+    "price": 795,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 252001,
+    "created_at": "2026-05-27T09:53:11.057Z",
+    "updated_at": "2026-06-02T21:44:27.698Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 79,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Прошутто",
+    "description": "Пицца Прошутто.",
+    "image": "products/picca/picca_proshutto.jpg",
+    "price": 795,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 255001,
+    "created_at": "2026-05-27T09:53:11.074Z",
+    "updated_at": "2026-06-02T22:02:30.041Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 80,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Фруктовая",
+    "description": "Пицца Фруктовая.",
+    "image": "products/piczcza-fruktovaya.jpg",
+    "price": 700,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 258001,
+    "created_at": "2026-05-27T09:53:11.093Z",
+    "updated_at": "2026-06-02T21:47:10.441Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 81,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Цезарь",
+    "description": "Пицца Цезарь.",
+    "image": "products/picca/picca_cezar.jpg",
+    "price": 800,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 261001,
+    "created_at": "2026-05-27T09:53:11.111Z",
+    "updated_at": "2026-06-02T22:03:46.324Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 82,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Цыпленок барбекью",
+    "description": "Пицца Цыпленок барбекью.",
+    "image": "products/picca/picca_cyplenok_barbekyu.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 264001,
+    "created_at": "2026-05-27T09:53:11.129Z",
+    "updated_at": "2026-06-02T21:55:38.848Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 83,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Чикен",
+    "description": "Пицца Чикен.",
+    "image": "products/picca/picca_chiken.jpg",
+    "price": 795,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 267001,
+    "created_at": "2026-05-27T09:53:11.147Z",
+    "updated_at": "2026-06-02T22:04:02.044Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 84,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Ягодная",
+    "description": "Пицца Ягодная.",
+    "image": "products/picca/picca_yagodnaya.jpg",
+    "price": 780,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 270001,
+    "created_at": "2026-05-27T09:53:11.165Z",
+    "updated_at": "2026-06-02T22:04:11.627Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 85,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Морской бриз",
+    "description": "Пицца Морской бриз.",
+    "image": "products/picca/picca_morskoy_briz.jpg",
+    "price": 1100,
+    "weight": "700 г.",
+    "is_new": true,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 849001,
+    "created_at": "2026-05-27T09:53:11.183Z",
+    "updated_at": "2026-06-03T18:32:53.564Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 86,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Маркиза",
+    "description": "Пицца Маркиза.",
+    "image": "products/picca/picca_markiza.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": true,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 854001,
+    "created_at": "2026-05-27T09:53:11.201Z",
+    "updated_at": "2026-06-02T22:04:54.192Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 87,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Фантазия",
+    "description": "Пицца Фантазия.",
+    "image": "products/picca/picca_fantaziya.jpg",
+    "price": 820,
+    "weight": "700 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 889001,
+    "created_at": "2026-05-27T09:53:11.219Z",
+    "updated_at": "2026-06-02T22:05:03.625Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 88,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Сливочный лосось",
+    "description": "Пицца Сливочный лосось.",
+    "image": "products/picca/slivochnyy_losos.jpg",
+    "price": 1120,
+    "weight": "700 г.",
+    "is_new": true,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 905001,
+    "created_at": "2026-05-27T09:53:11.237Z",
+    "updated_at": "2026-06-02T22:05:54.041Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 89,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пикантный лосось",
+    "description": "Пицца Пикантный лосось.",
+    "image": "products/picca/pikantnyy_losos.jpg",
+    "price": 1130,
+    "weight": "700 г.",
+    "is_new": true,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 908001,
+    "created_at": "2026-05-27T09:53:11.255Z",
+    "updated_at": "2026-06-02T22:06:59.173Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 90,
+  "fields": {
+    "category": 8,
+    "saby_id": null,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Угорь с Унаги",
+    "description": "Пицца Угорь с Унаги.",
+    "image": "products/picca/picca_ugor_s_unagi.jpg",
+    "price": 1120,
+    "weight": "750 г.",
+    "is_new": true,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": true,
+    "sort_order": 942001,
+    "created_at": "2026-05-27T09:53:11.272Z",
+    "updated_at": "2026-06-02T22:07:45.388Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 91,
+  "fields": {
+    "category": 9,
+    "saby_id": 274,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Верона",
+    "description": "Верона из меню DelyCafe.",
+    "image": "products/salaty/salat_verona.jpg",
+    "price": 180,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 273001,
+    "created_at": "2026-05-27T09:53:11.291Z",
+    "updated_at": "2026-06-02T21:53:31.331Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 92,
+  "fields": {
+    "category": 9,
+    "saby_id": 275,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Моника",
+    "description": "Моника из меню DelyCafe.",
+    "image": "products/salaty/salat_monika.jpg",
+    "price": 180,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 274001,
+    "created_at": "2026-05-27T09:53:11.296Z",
+    "updated_at": "2026-06-02T21:53:31.331Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 93,
+  "fields": {
+    "category": 9,
+    "saby_id": 276,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Нежность",
+    "description": "Нежность из меню DelyCafe.",
+    "image": "products/salaty/salat_nezhnost.jpg",
+    "price": 180,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 275001,
+    "created_at": "2026-05-27T09:53:11.301Z",
+    "updated_at": "2026-06-02T21:53:31.331Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 94,
+  "fields": {
+    "category": 9,
+    "saby_id": 277,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Пикантный",
+    "description": "Пикантный из меню DelyCafe.",
+    "image": "products/salaty/salat_pikantnyy.jpg",
+    "price": 180,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 276001,
+    "created_at": "2026-05-27T09:53:11.306Z",
+    "updated_at": "2026-06-02T21:53:31.332Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 95,
+  "fields": {
+    "category": 9,
+    "saby_id": 278,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Салат Восторг",
+    "description": "Салат Восторг из меню DelyCafe.",
+    "image": "products/salaty/salat_vostorg.jpg",
+    "price": 190,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 277001,
+    "created_at": "2026-05-27T09:53:11.311Z",
+    "updated_at": "2026-05-27T09:53:11.311Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 96,
+  "fields": {
+    "category": 9,
+    "saby_id": 280,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Салат Фруктовый",
+    "description": "Салат Фруктовый из меню DelyCafe.",
+    "image": "products/salaty/salat_fruktovyy.jpg",
+    "price": 180,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 279001,
+    "created_at": "2026-05-27T09:53:11.316Z",
+    "updated_at": "2026-05-27T09:53:11.316Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 97,
+  "fields": {
+    "category": 9,
+    "saby_id": 281,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Цезарь",
+    "description": "Цезарь из меню DelyCafe.",
+    "image": "products/salaty/salat_cezar.jpg",
+    "price": 230,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 280001,
+    "created_at": "2026-05-27T09:53:11.322Z",
+    "updated_at": "2026-06-02T21:53:31.332Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 98,
+  "fields": {
+    "category": 10,
+    "saby_id": 177,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Кетчуп",
+    "description": "Кетчуп из меню DelyCafe.",
+    "image": "products/sousy/ketchup.jpg",
+    "price": 40,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 176001,
+    "created_at": "2026-05-27T09:53:11.331Z",
+    "updated_at": "2026-05-27T09:53:11.331Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 99,
+  "fields": {
+    "category": 10,
+    "saby_id": 525,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Соус барбекю",
+    "description": "Соус барбекю из меню DelyCafe.",
+    "image": "products/sousy/sous_barbekyu.jpg",
+    "price": 40,
+    "weight": "1000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 524001,
+    "created_at": "2026-05-27T09:53:11.337Z",
+    "updated_at": "2026-06-02T21:52:55.083Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 100,
+  "fields": {
+    "category": 10,
+    "saby_id": 535,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Соус Сальса средне-острый",
+    "description": "Соус Сальса средне-острый из меню DelyCafe.",
+    "image": "products/sousy/sous_salsa_sredne_ostryy.jpg",
+    "price": 50,
+    "weight": "1000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 534001,
+    "created_at": "2026-05-27T09:53:11.342Z",
+    "updated_at": "2026-06-02T21:52:55.084Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 101,
+  "fields": {
+    "category": 10,
+    "saby_id": 537,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Соус сырный",
+    "description": "Соус сырный из меню DelyCafe.",
+    "image": "products/sousy/sous_syrnyy.jpg",
+    "price": 40,
+    "weight": "1 шт",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 536001,
+    "created_at": "2026-05-27T09:53:11.347Z",
+    "updated_at": "2026-05-27T09:53:11.347Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 102,
+  "fields": {
+    "category": 10,
+    "saby_id": 594,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Соус сливочно-чесночный",
+    "description": "Соус сливочно-чесночный из меню DelyCafe.",
+    "image": "products/sousy/sous_slivochno_chesnochnyy.jpg",
+    "price": 40,
+    "weight": "1000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 593001,
+    "created_at": "2026-05-27T09:53:11.353Z",
+    "updated_at": "2026-06-02T21:52:55.084Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 103,
+  "fields": {
+    "category": 10,
+    "saby_id": 598,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Соус диабло острый",
+    "description": "Соус диабло острый из меню DelyCafe.",
+    "image": "products/sousy/sous_diablo_ostryy.jpg",
+    "price": 40,
+    "weight": "1000 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 597001,
+    "created_at": "2026-05-27T09:53:11.358Z",
+    "updated_at": "2026-06-02T21:52:55.084Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 104,
+  "fields": {
+    "category": 11,
+    "saby_id": 305,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Борщ",
+    "description": "Борщ из меню DelyCafe.",
+    "image": "products/supy/sup_borsch.jpg",
+    "price": 240,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 304001,
+    "created_at": "2026-05-27T09:53:11.367Z",
+    "updated_at": "2026-06-02T21:53:31.332Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 105,
+  "fields": {
+    "category": 11,
+    "saby_id": 306,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Грибной крем суп",
+    "description": "Грибной крем суп из меню DelyCafe.",
+    "image": "products/supy/gribnoy_sup_krem.jpg",
+    "price": 280,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 305001,
+    "created_at": "2026-05-27T09:53:11.372Z",
+    "updated_at": "2026-06-02T21:53:31.332Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 106,
+  "fields": {
+    "category": 11,
+    "saby_id": 307,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Крем суп из брокколи",
+    "description": "Крем суп из брокколи из меню DelyCafe.",
+    "image": "products/supy/sup_brokkoli.jpg",
+    "price": 260,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 306001,
+    "created_at": "2026-05-27T09:53:11.378Z",
+    "updated_at": "2026-06-02T21:53:31.333Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 107,
+  "fields": {
+    "category": 11,
+    "saby_id": 308,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Куриный",
+    "description": "Куриный из меню DelyCafe.",
+    "image": "products/supy/sup_kurinyy.jpg",
+    "price": 210,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 307001,
+    "created_at": "2026-05-27T09:53:11.383Z",
+    "updated_at": "2026-06-02T21:53:31.333Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 108,
+  "fields": {
+    "category": 11,
+    "saby_id": 311,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Солянка",
+    "description": "Солянка из меню DelyCafe.",
+    "image": "products/supy/sup_solyanka.jpg",
+    "price": 310,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 310001,
+    "created_at": "2026-05-27T09:53:11.388Z",
+    "updated_at": "2026-06-02T21:53:31.333Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 109,
+  "fields": {
+    "category": 11,
+    "saby_id": 312,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Сырный суп",
+    "description": "Сырный суп из меню DelyCafe.",
+    "image": "products/supy/krem_sup_syrnyy.jpg",
+    "price": 310,
+    "weight": "270 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 311001,
+    "created_at": "2026-05-27T09:53:11.393Z",
+    "updated_at": "2026-06-02T21:53:31.334Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 110,
+  "fields": {
+    "category": 11,
+    "saby_id": 313,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Уха",
+    "description": "Уха из меню DelyCafe.",
+    "image": "products/supy/sup_uha.jpg",
+    "price": 260,
+    "weight": "250 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 312001,
+    "created_at": "2026-05-27T09:53:11.398Z",
+    "updated_at": "2026-06-02T21:53:31.334Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 111,
+  "fields": {
+    "category": 12,
+    "saby_id": 327,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Картофель Фри 100г",
+    "description": "Картофель Фри 100г из меню DelyCafe.",
+    "image": "products/fastfud/kartoshka_fri.jpg",
+    "price": 200,
+    "weight": "100 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 326001,
+    "created_at": "2026-05-27T09:53:11.408Z",
+    "updated_at": "2026-06-02T21:52:55.082Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 112,
+  "fields": {
+    "category": 12,
+    "saby_id": 329,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Курица Хлопья 100г",
+    "description": "Курица Хлопья 100г из меню DelyCafe.",
+    "image": "products/fastfud/kurinoe_file_v_hlopyah.jpg",
+    "price": 250,
+    "weight": "100 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 328001,
+    "created_at": "2026-05-27T09:53:11.413Z",
+    "updated_at": "2026-06-02T21:52:55.082Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 113,
+  "fields": {
+    "category": 12,
+    "saby_id": 331,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Наггетсы 100г",
+    "description": "Наггетсы 100г из меню DelyCafe.",
+    "image": "products/fastfud/naggetsy_100_g.jpg",
+    "price": 200,
+    "weight": "100 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 330001,
+    "created_at": "2026-05-27T09:53:11.418Z",
+    "updated_at": "2026-06-02T21:52:55.083Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 114,
+  "fields": {
+    "category": 12,
+    "saby_id": 333,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Сырные шарики 100г",
+    "description": "Сырные шарики 100г из меню DelyCafe.",
+    "image": "products/fastfud/syrnye_shariki.jpg",
+    "price": 270,
+    "weight": "100 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 332001,
+    "created_at": "2026-05-27T09:53:11.423Z",
+    "updated_at": "2026-06-02T21:52:55.083Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 115,
+  "fields": {
+    "category": 12,
+    "saby_id": 336,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Френч дог Охота",
+    "description": "Френч дог Охота из меню DelyCafe.",
+    "image": "products/fastfud/french_dog_s_ohotnichey_kolbaskoy.jpg",
+    "price": 250,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 335001,
+    "created_at": "2026-05-27T09:53:11.428Z",
+    "updated_at": "2026-05-27T09:53:11.428Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 116,
+  "fields": {
+    "category": 13,
+    "saby_id": 386,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Гирос",
+    "description": "Гирос из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_giros.jpg",
+    "price": 270,
+    "weight": "350 г.",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 385001,
+    "created_at": "2026-05-27T09:53:11.438Z",
+    "updated_at": "2026-06-02T22:08:38.353Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 117,
+  "fields": {
+    "category": 13,
+    "saby_id": 387,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Кесадилья",
+    "description": "Кесадилья из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_kesadilya.jpg",
+    "price": 280,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 386001,
+    "created_at": "2026-05-27T09:53:11.443Z",
+    "updated_at": "2026-06-02T22:10:56.066Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 118,
+  "fields": {
+    "category": 13,
+    "saby_id": 388,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма \"Фирменная\"",
+    "description": "Шаурма \"Фирменная\" из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_firmennaya.jpg",
+    "price": 260,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 387001,
+    "created_at": "2026-05-27T09:53:11.448Z",
+    "updated_at": "2026-05-27T09:53:11.448Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 119,
+  "fields": {
+    "category": 13,
+    "saby_id": 389,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма XXL",
+    "description": "Шаурма XXL из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_xxl.jpg",
+    "price": 330,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 388001,
+    "created_at": "2026-05-27T09:53:11.454Z",
+    "updated_at": "2026-05-27T09:53:11.454Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 120,
+  "fields": {
+    "category": 13,
+    "saby_id": 390,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма Барбекью",
+    "description": "Шаурма Барбекью из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_barbekyu.jpg",
+    "price": 260,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 389001,
+    "created_at": "2026-05-27T09:53:11.459Z",
+    "updated_at": "2026-05-27T09:53:11.459Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 121,
+  "fields": {
+    "category": 13,
+    "saby_id": 391,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма Дьябло",
+    "description": "Шаурма Дьябло из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_dyablo.jpg",
+    "price": 260,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 390001,
+    "created_at": "2026-05-27T09:53:11.464Z",
+    "updated_at": "2026-05-27T09:53:11.464Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 122,
+  "fields": {
+    "category": 13,
+    "saby_id": 392,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма Сырная",
+    "description": "Шаурма Сырная из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_syrnaya.jpg",
+    "price": 300,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 391001,
+    "created_at": "2026-05-27T09:53:11.469Z",
+    "updated_at": "2026-05-27T09:53:11.469Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 123,
+  "fields": {
+    "category": 13,
+    "saby_id": 393,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма шашл XXL",
+    "description": "Шаурма шашл XXL из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_shashlychnaya_xxl.jpg",
+    "price": 420,
+    "weight": "430 г.",
+    "is_new": true,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 392001,
+    "created_at": "2026-05-27T09:53:11.475Z",
+    "updated_at": "2026-06-02T21:52:55.080Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 124,
+  "fields": {
+    "category": 13,
+    "saby_id": 394,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма шашлык",
+    "description": "Шаурма шашлык из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_shashlychnaya.jpg",
+    "price": 340,
+    "weight": "",
+    "is_new": false,
+    "is_hit": true,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 393001,
+    "created_at": "2026-05-27T09:53:11.480Z",
+    "updated_at": "2026-05-27T09:53:11.480Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 125,
+  "fields": {
+    "category": 13,
+    "saby_id": 395,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шаурма\"Классическая\"",
+    "description": "Шаурма\"Классическая\" из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_klassicheskaya.jpg",
+    "price": 260,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 394001,
+    "created_at": "2026-05-27T09:53:11.486Z",
+    "updated_at": "2026-05-27T09:53:11.486Z"
+  }
+},
+{
+  "model": "catalog.product",
+  "pk": 126,
+  "fields": {
+    "category": 13,
+    "saby_id": 397,
+    "saby_name": "",
+    "source": "manual",
+    "needs_review": false,
+    "title": "Шурма Сальса",
+    "description": "Шурма Сальса из меню DelyCafe.",
+    "image": "products/shaurma/shaurma_salsa.jpg",
+    "price": 290,
+    "weight": "",
+    "is_new": false,
+    "is_hit": false,
+    "is_active": true,
+    "has_variants": false,
+    "sort_order": 396001,
+    "created_at": "2026-05-27T09:53:11.491Z",
+    "updated_at": "2026-05-27T09:53:11.491Z"
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 1,
+  "fields": {
+    "product": 57,
+    "saby_id": 194,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 2,
+  "fields": {
+    "product": 57,
+    "saby_id": 195,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 830,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 3,
+  "fields": {
+    "product": 57,
+    "saby_id": 193,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1150,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 4,
+  "fields": {
+    "product": 58,
+    "saby_id": 196,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 5,
+  "fields": {
+    "product": 58,
+    "saby_id": 198,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 810,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 6,
+  "fields": {
+    "product": 58,
+    "saby_id": 197,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 7,
+  "fields": {
+    "product": 59,
+    "saby_id": 200,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 8,
+  "fields": {
+    "product": 59,
+    "saby_id": 201,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 800,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 9,
+  "fields": {
+    "product": 59,
+    "saby_id": 199,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 10,
+  "fields": {
+    "product": 60,
+    "saby_id": 203,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 480,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 11,
+  "fields": {
+    "product": 60,
+    "saby_id": 204,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 795,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 12,
+  "fields": {
+    "product": 60,
+    "saby_id": 202,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1065,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 13,
+  "fields": {
+    "product": 61,
+    "saby_id": 206,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 495,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 14,
+  "fields": {
+    "product": 61,
+    "saby_id": 207,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 795,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 15,
+  "fields": {
+    "product": 61,
+    "saby_id": 205,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1070,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 16,
+  "fields": {
+    "product": 62,
+    "saby_id": 928,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 510,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 17,
+  "fields": {
+    "product": 62,
+    "saby_id": 929,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 830,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 18,
+  "fields": {
+    "product": 62,
+    "saby_id": 930,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1130,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 19,
+  "fields": {
+    "product": 63,
+    "saby_id": 209,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 510,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 20,
+  "fields": {
+    "product": 63,
+    "saby_id": 210,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 830,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 21,
+  "fields": {
+    "product": 63,
+    "saby_id": 208,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1130,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 22,
+  "fields": {
+    "product": 64,
+    "saby_id": 212,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 510,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 23,
+  "fields": {
+    "product": 64,
+    "saby_id": 213,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 24,
+  "fields": {
+    "product": 64,
+    "saby_id": 211,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 25,
+  "fields": {
+    "product": 65,
+    "saby_id": 215,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 470,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 26,
+  "fields": {
+    "product": 65,
+    "saby_id": 216,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 770,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 27,
+  "fields": {
+    "product": 65,
+    "saby_id": 214,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1060,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 28,
+  "fields": {
+    "product": 66,
+    "saby_id": 218,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 460,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 29,
+  "fields": {
+    "product": 66,
+    "saby_id": 219,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 720,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 30,
+  "fields": {
+    "product": 66,
+    "saby_id": 217,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1000,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 31,
+  "fields": {
+    "product": 67,
+    "saby_id": 220,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 490,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 32,
+  "fields": {
+    "product": 67,
+    "saby_id": 221,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 33,
+  "fields": {
+    "product": 67,
+    "saby_id": 222,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1085,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 34,
+  "fields": {
+    "product": 68,
+    "saby_id": 224,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 490,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 35,
+  "fields": {
+    "product": 68,
+    "saby_id": 225,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 810,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 36,
+  "fields": {
+    "product": 68,
+    "saby_id": 223,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1080,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 37,
+  "fields": {
+    "product": 69,
+    "saby_id": 227,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 495,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 38,
+  "fields": {
+    "product": 69,
+    "saby_id": 228,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 825,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 39,
+  "fields": {
+    "product": 69,
+    "saby_id": 226,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 40,
+  "fields": {
+    "product": 70,
+    "saby_id": 230,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 495,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 41,
+  "fields": {
+    "product": 70,
+    "saby_id": 231,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 42,
+  "fields": {
+    "product": 70,
+    "saby_id": 229,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 43,
+  "fields": {
+    "product": 71,
+    "saby_id": 233,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 485,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 44,
+  "fields": {
+    "product": 71,
+    "saby_id": 234,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 790,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 45,
+  "fields": {
+    "product": 71,
+    "saby_id": 232,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1050,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 46,
+  "fields": {
+    "product": 72,
+    "saby_id": 236,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 460,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 47,
+  "fields": {
+    "product": 72,
+    "saby_id": 237,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 770,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 48,
+  "fields": {
+    "product": 72,
+    "saby_id": 235,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 950,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 49,
+  "fields": {
+    "product": 73,
+    "saby_id": 239,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 50,
+  "fields": {
+    "product": 73,
+    "saby_id": 240,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 51,
+  "fields": {
+    "product": 73,
+    "saby_id": 238,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 52,
+  "fields": {
+    "product": 74,
+    "saby_id": 242,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 680,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 53,
+  "fields": {
+    "product": 74,
+    "saby_id": 243,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 1150,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 54,
+  "fields": {
+    "product": 74,
+    "saby_id": 241,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1500,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 55,
+  "fields": {
+    "product": 75,
+    "saby_id": 245,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 56,
+  "fields": {
+    "product": 75,
+    "saby_id": 246,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 800,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 57,
+  "fields": {
+    "product": 75,
+    "saby_id": 244,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 58,
+  "fields": {
+    "product": 76,
+    "saby_id": 248,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 495,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 59,
+  "fields": {
+    "product": 76,
+    "saby_id": 249,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 790,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 60,
+  "fields": {
+    "product": 76,
+    "saby_id": 247,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1070,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 61,
+  "fields": {
+    "product": 77,
+    "saby_id": 251,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 490,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 62,
+  "fields": {
+    "product": 77,
+    "saby_id": 252,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 800,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 63,
+  "fields": {
+    "product": 77,
+    "saby_id": 250,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 64,
+  "fields": {
+    "product": 78,
+    "saby_id": 254,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 65,
+  "fields": {
+    "product": 78,
+    "saby_id": 255,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 795,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 66,
+  "fields": {
+    "product": 78,
+    "saby_id": 253,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1070,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 67,
+  "fields": {
+    "product": 79,
+    "saby_id": 257,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 68,
+  "fields": {
+    "product": 79,
+    "saby_id": 258,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 795,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 69,
+  "fields": {
+    "product": 79,
+    "saby_id": 256,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1075,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 70,
+  "fields": {
+    "product": 80,
+    "saby_id": 260,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 420,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 71,
+  "fields": {
+    "product": 80,
+    "saby_id": 261,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 700,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 72,
+  "fields": {
+    "product": 80,
+    "saby_id": 259,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 950,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 73,
+  "fields": {
+    "product": 81,
+    "saby_id": 263,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 485,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 74,
+  "fields": {
+    "product": 81,
+    "saby_id": 264,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 800,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 75,
+  "fields": {
+    "product": 81,
+    "saby_id": 262,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1080,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 76,
+  "fields": {
+    "product": 82,
+    "saby_id": 265,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 490,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 77,
+  "fields": {
+    "product": 82,
+    "saby_id": 266,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 78,
+  "fields": {
+    "product": 82,
+    "saby_id": 267,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 79,
+  "fields": {
+    "product": 83,
+    "saby_id": 269,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 495,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 80,
+  "fields": {
+    "product": 83,
+    "saby_id": 270,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 795,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 81,
+  "fields": {
+    "product": 83,
+    "saby_id": 268,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1070,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 82,
+  "fields": {
+    "product": 84,
+    "saby_id": 272,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 495,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 83,
+  "fields": {
+    "product": 84,
+    "saby_id": 273,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 780,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 84,
+  "fields": {
+    "product": 84,
+    "saby_id": 271,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 990,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 85,
+  "fields": {
+    "product": 85,
+    "saby_id": 850,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 660,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 86,
+  "fields": {
+    "product": 85,
+    "saby_id": 851,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 1100,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 87,
+  "fields": {
+    "product": 85,
+    "saby_id": 852,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1450,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 88,
+  "fields": {
+    "product": 86,
+    "saby_id": 855,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 89,
+  "fields": {
+    "product": 86,
+    "saby_id": 856,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 90,
+  "fields": {
+    "product": 86,
+    "saby_id": 857,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 91,
+  "fields": {
+    "product": 87,
+    "saby_id": 890,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 500,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 92,
+  "fields": {
+    "product": 87,
+    "saby_id": 891,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 820,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 93,
+  "fields": {
+    "product": 87,
+    "saby_id": 892,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1100,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 94,
+  "fields": {
+    "product": 88,
+    "saby_id": 906,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 680,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 95,
+  "fields": {
+    "product": 88,
+    "saby_id": 907,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 1120,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 96,
+  "fields": {
+    "product": 88,
+    "saby_id": 908,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1500,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 97,
+  "fields": {
+    "product": 89,
+    "saby_id": 911,
+    "saby_name": "",
+    "title": "Маленькая",
+    "price": 690,
+    "weight": "400 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 98,
+  "fields": {
+    "product": 89,
+    "saby_id": 910,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 1130,
+    "weight": "700 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 99,
+  "fields": {
+    "product": 89,
+    "saby_id": 909,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1500,
+    "weight": "1050 г.",
+    "sort_order": 30,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 100,
+  "fields": {
+    "product": 90,
+    "saby_id": 943,
+    "saby_name": "",
+    "title": "Средняя",
+    "price": 1120,
+    "weight": "750 г.",
+    "sort_order": 10,
+    "is_active": true
+  }
+},
+{
+  "model": "catalog.productvariant",
+  "pk": 101,
+  "fields": {
+    "product": 90,
+    "saby_id": 944,
+    "saby_name": "",
+    "title": "Большая",
+    "price": 1500,
+    "weight": "1100 г.",
+    "sort_order": 20,
+    "is_active": true
+  }
+}
+]

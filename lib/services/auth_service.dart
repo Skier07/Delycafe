@@ -66,6 +66,22 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProfileName(String name) async {
+    final user = _currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    final updatedUser = await _customerApiService.updateProfile(
+      phone: user.phone,
+      name: name,
+    );
+
+    _currentUser = updatedUser;
+    notifyListeners();
+  }
+
   Future<void> refreshCurrentUser() async {
     final user = _currentUser;
 
