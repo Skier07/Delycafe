@@ -325,9 +325,11 @@ class _EditNameSheetState extends State<_EditNameSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          AuthButton(
-            text: _isSaving ? 'Сохраняем...' : 'Сохранить',
-            onPressed: _isSaving ? null : _saveName,
+          SafeArea(
+            child: AuthButton(
+              text: _isSaving ? 'Сохраняем...' : 'Сохранить',
+              onPressed: _isSaving ? null : _saveName,
+            ),
           ),
         ],
       ),

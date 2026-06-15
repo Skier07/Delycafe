@@ -618,9 +618,11 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                 title: const Text('Использовать по умолчанию'),
               ),
               const SizedBox(height: 12),
-              AuthButton(
-                onPressed: _isSaving ? null : _submit,
-                text: _isSaving ? 'Сохраняем...' : 'Сохранить адрес',
+              SafeArea(
+                child: AuthButton(
+                  onPressed: _isSaving ? null : _submit,
+                  text: _isSaving ? 'Сохраняем...' : 'Сохранить адрес',
+                ),
               ),
             ],
           ),
