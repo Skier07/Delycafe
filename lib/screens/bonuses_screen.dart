@@ -112,7 +112,12 @@ class _BonusesScreenState extends State<BonusesScreen> {
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                MediaQuery.of(context).padding.bottom + 24,
+              ),
               children: [
                 _BalanceCard(summary: summary),
                 const SizedBox(height: 14),
