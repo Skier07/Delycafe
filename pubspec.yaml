@@ -48,18 +48,30 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.3
   flutter_native_splash: ^2.4.0
 
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
   image_path: assets/icon.png
+  remove_alpha_ios: true
+
+    # Android: заполнить всю «кнопку»
+  adaptive_icon_background: "#0C204D"  #FF0C204D - цвет дизайна
+  adaptive_icon_foreground: assets/icon.png
+  adaptive_icon_foreground_inset: 12   # было 16% по умолчанию — убираем
 
 flutter_native_splash:
   color: "#0C204D"
-  image: assets/icon.png
+  # image: assets/icon.png
   android: true
+  ios: true
+
+  android_12:
+    color: "#0C204D"
+    # image: assets/splash_android12.png
+    # icon_background_color: "#0C204D"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
