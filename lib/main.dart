@@ -1,3 +1,4 @@
+import 'package:delycafe/data/hive/hive_init.dart';
 import 'package:delycafe/screens/home_screen.dart';
 import 'package:delycafe/services/address_service.dart';
 import 'package:delycafe/services/auth_service.dart';
@@ -7,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initHive();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

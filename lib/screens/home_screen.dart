@@ -36,6 +36,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   HomeOverlayType _activeOverlay = HomeOverlayType.none;
+  final GlobalKey _cartIconKey = GlobalKey();
 
   @override
   void initState() {
@@ -72,8 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
           CatalogSection(
+            cartIconKey: _cartIconKey,
             banner: HomeBanner(
               screenHeight: screenHeight,
+              cartIconKey: _cartIconKey,
               onMenuPressed: () => _openOverlay(HomeOverlayType.menu),
               onAccountPressed: () => _openOverlay(HomeOverlayType.account),
             ),
@@ -239,12 +242,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class HomeBanner extends StatelessWidget {
   final double screenHeight;
+  final GlobalKey cartIconKey;
   final VoidCallback onMenuPressed;
   final VoidCallback onAccountPressed;
 
   const HomeBanner({
     super.key,
     required this.screenHeight,
+    required this.cartIconKey,
     required this.onMenuPressed,
     required this.onAccountPressed,
   });
@@ -310,6 +315,7 @@ class HomeBanner extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       ShaderGlassContainer(
+                        key: cartIconKey,
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -443,6 +449,7 @@ class HomeBanner extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   ShaderGlassContainer(
+                    key: cartIconKey,
                     onPressed: () {
                       Navigator.push(
                         context,

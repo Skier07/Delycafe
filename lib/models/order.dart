@@ -2,6 +2,8 @@ class OrderItem {
   final int id;
   final String productTitle;
   final String variantTitle;
+  final String productApiId;
+  final int? sabyId;
   final int quantity;
   final int price;
   final int totalPrice;
@@ -10,6 +12,8 @@ class OrderItem {
     required this.id,
     required this.productTitle,
     required this.variantTitle,
+    this.productApiId = '',
+    this.sabyId,
     required this.quantity,
     required this.price,
     required this.totalPrice,
@@ -20,6 +24,8 @@ class OrderItem {
       id: _toInt(json['id']),
       productTitle: json['product_title']?.toString() ?? '',
       variantTitle: json['variant_title']?.toString() ?? '',
+      productApiId: json['product_api_id']?.toString() ?? '',
+      sabyId: _toNullableInt(json['saby_id']),
       quantity: _toInt(json['quantity']),
       price: _toInt(json['price']),
       totalPrice: _toInt(json['total_price']),
@@ -41,6 +47,15 @@ class OrderItem {
     }
 
     return 0;
+  }
+
+  static int? _toNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+
+    return null;
   }
 }
 

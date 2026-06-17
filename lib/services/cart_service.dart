@@ -32,19 +32,25 @@ class CartService extends ChangeNotifier {
   void addToCart(
     CatalogItem product, {
     ProductVariant? variant,
+    int quantity = 1,
   }) {
+    if (quantity < 1) {
+      return;
+    }
+
     final index = _items.indexWhere(
       (item) =>
           item.product.id == product.id && item.variant?.id == variant?.id,
     );
 
     if (index != -1) {
-      _items[index].quantity++;
+      _items[index].quantity += quantity;
     } else {
       _items.add(
         CartItem(
           product: product,
           variant: variant,
+          quantity: quantity,
         ),
       );
     }

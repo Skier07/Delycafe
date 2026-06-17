@@ -1,12 +1,17 @@
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/screens/catalog/product_detail_screen.dart';
+import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/material.dart';
 
-class CatalogCard extends StatelessWidget {
+typedef CatalogAddToCartCallback = void Function({
+  AddToCartDropletOrigin? origin,
+});
+
+class CatalogCard extends StatefulWidget {
   final CatalogItem item;
-  final VoidCallback? onAddToCart;
+  final CatalogAddToCartCallback? onAddToCart;
 
   const CatalogCard({
     super.key,
@@ -15,20 +20,64 @@ class CatalogCard extends StatelessWidget {
   });
 
   @override
+  State<CatalogCard> createState() => _CatalogCardState();
+}
+
+class _CatalogCardState extends State<CatalogCard> {
+  final GlobalKey _cartButtonKey = GlobalKey();
+  bool _hideCartButton = false;
+
+  void _openProductDetail() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(
+          item: widget.item,
+          onAddToCart: widget.onAddToCart == null
+              ? null
+              : () => widget.onAddToCart!.call(),
+        ),
+      ),
+    );
+  }
+
+  void _handleAddToCart() {
+    if (widget.onAddToCart == null) {
+      return;
+    }
+
+    final renderBox =
+        _cartButtonKey.currentContext?.findRenderObject() as RenderBox?;
+
+    AddToCartDropletOrigin? origin;
+
+    if (renderBox != null && renderBox.hasSize) {
+      final topLeft = renderBox.localToGlobal(Offset.zero);
+
+      origin = AddToCartDropletOrigin(
+        globalCenter: topLeft + renderBox.size.center(Offset.zero),
+        buttonSize: renderBox.size,
+        color: AppColors.header,
+        borderRadius: 14,
+      );
+    }
+
+    setState(() => _hideCartButton = true);
+    widget.onAddToCart!(origin: origin);
+
+    Future<void>.delayed(AddToCartDropletAnimation.duration, () {
+      if (mounted) {
+        setState(() => _hideCartButton = false);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProductDetailScreen(
-              item: item,
-              onAddToCart: onAddToCart,
-            ),
-          ),
-        );
-      },
+      onTap: _openProductDetail,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Container(
             decoration: BoxDecoration(
@@ -52,24 +101,24 @@ class CatalogCard extends StatelessWidget {
                       AspectRatio(
                         aspectRatio: 1.2,
                         child: ProductImage(
-                          image: item.image,
+                          image: widget.item.image,
                         ),
                       ),
-                      if (item.isHit || item.isNew)
+                      if (widget.item.isHit || widget.item.isNew)
                         Positioned(
                           top: 10,
                           left: 10,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (item.isHit)
+                              if (widget.item.isHit)
                                 const _StatusBadge(
                                   text: 'HOT',
                                   color: Color(0xFFEE101B),
                                 ),
-                              if (item.isHit && item.isNew)
+                              if (widget.item.isHit && widget.item.isNew)
                                 const SizedBox(height: 8),
-                              if (item.isNew)
+                              if (widget.item.isNew)
                                 const _StatusBadge(
                                   text: 'New',
                                   color: Color(0xFF7BEE10),
@@ -86,7 +135,7 @@ class CatalogCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.title,
+                            widget.item.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -97,7 +146,7 @@ class CatalogCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            item.description,
+                            widget.item.description,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -110,7 +159,7 @@ class CatalogCard extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                '${item.price} ₽',
+                                '${widget.item.price} ₽',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
@@ -120,22 +169,26 @@ class CatalogCard extends StatelessWidget {
                               const Spacer(),
                               GestureDetector(
                                 behavior: HitTestBehavior.opaque,
-                                onTap: onAddToCart,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.header,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: const Text(
-                                    'В корзину',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 12,
+                                onTap: _handleAddToCart,
+                                child: Opacity(
+                                  opacity: _hideCartButton ? 0 : 1,
+                                  child: Container(
+                                    key: _cartButtonKey,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.header,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Text(
+                                      'В корзину',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                 ),

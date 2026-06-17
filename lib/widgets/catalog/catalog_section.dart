@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
-import 'package:delycafe/services/catalog_api_service.dart';
+import 'package:delycafe/services/catalog_repository.dart';
+import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/widgets/catalog/catalog_card.dart';
 import 'package:flutter/material.dart';
@@ -8,10 +11,12 @@ import 'package:provider/provider.dart';
 
 class CatalogSection extends StatefulWidget {
   final Widget? banner;
+  final GlobalKey? cartIconKey;
 
   const CatalogSection({
     super.key,
     this.banner,
+    this.cartIconKey,
   });
 
   @override
@@ -19,61 +24,74 @@ class CatalogSection extends StatefulWidget {
 }
 
 class _CatalogSectionState extends State<CatalogSection> {
-  final CatalogApiService _catalogApiService = CatalogApiService();
+  final CatalogRepository _catalogRepository = CatalogRepository();
+  final ScrollController _scrollController = ScrollController();
+  final ScrollController _categoriesScrollController = ScrollController();
 
-  late Future<List<CatalogItem>> _catalogFuture;
+  List<CatalogItem>? _catalog;
+  List<String>? _categories;
+  String? _loadError;
+  bool _isLoading = true;
 
   String? _selectedCategory;
-
-  List<String> _getCategories(List<CatalogItem> catalog) {
-    final categories = catalog.map((item) => item.category).toSet().toList();
-
-    categories.sort((a, b) {
-      final sortA = _getCategorySortOrder(a, catalog);
-      final sortB = _getCategorySortOrder(b, catalog);
-
-      final sortCompare = sortA.compareTo(sortB);
-
-      if (sortCompare != 0) {
-        return sortCompare;
-      }
-
-      return a.compareTo(b);
-    });
-
-    return categories;
-  }
-
-  int _getCategorySortOrder(
-    String category,
-    List<CatalogItem> catalog,
-  ) {
-    final categoryItems = catalog.where(
-      (item) => item.category == category,
-    );
-
-    if (categoryItems.isEmpty) {
-      return 500;
-    }
-
-    final sortOrders =
-        categoryItems.map((item) => item.categorySortOrder).toList()..sort();
-
-    return sortOrders.first;
-  }
 
   @override
   void initState() {
     super.initState();
-    _catalogFuture = _catalogApiService.fetchProducts();
+    _loadCatalog();
   }
 
-  Future<void> _reloadCatalog() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _categoriesScrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCatalog() async {
+    final cached = _catalogRepository.readCached();
+
+    if (cached != null) {
+      setState(() {
+        _catalog = cached.products;
+        _categories = cached.categoryTitles;
+        _isLoading = false;
+        _loadError = null;
+      });
+      unawaited(_refreshFromServer());
+      return;
+    }
+
     setState(() {
-      _catalogFuture = _catalogApiService.fetchProducts();
+      _isLoading = true;
+      _loadError = null;
     });
 
-    await _catalogFuture;
+    await _refreshFromServer();
+  }
+
+  Future<void> _refreshFromServer() async {
+    try {
+      final snapshot = await _catalogRepository.fetchFromApiAndCache();
+
+      if (!mounted) return;
+
+      setState(() {
+        _catalog = snapshot.products;
+        _categories = snapshot.categoryTitles;
+        _isLoading = false;
+        _loadError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      if (_catalog == null) {
+        setState(() {
+          _loadError = error.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   String _getCurrentCategory(List<String> categories) {
@@ -143,105 +161,129 @@ class _CatalogSectionState extends State<CatalogSection> {
   }
 
   void _selectCategory(String category) {
+    if (_selectedCategory == category) return;
+
     setState(() {
       _selectedCategory = category;
     });
   }
 
+  Future<void> _handleAddToCart(
+    CatalogItem item, {
+    AddToCartDropletOrigin? origin,
+  }) async {
+    final variant = _getDefaultVariant(item);
+
+    if (origin != null) {
+      final end = CartAnimationTarget.resolve(context, widget.cartIconKey);
+
+      unawaited(
+        AddToCartDropletAnimation.play(
+          context: context,
+          origin: origin,
+          end: end,
+        ),
+      );
+    }
+
+    context.read<CartService>().addToCart(
+          item,
+          variant: variant,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<CatalogItem>>(
-      future: _catalogFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _CatalogLoadingView();
-        }
+    if (_isLoading && _catalog == null) {
+      return const _CatalogLoadingView();
+    }
 
-        if (snapshot.hasError) {
-          return _CatalogErrorView(
-            error: snapshot.error.toString(),
-            onRetry: _reloadCatalog,
-          );
-        }
+    if (_loadError != null && _catalog == null) {
+      return _CatalogErrorView(
+        error: _loadError!,
+        onRetry: _loadCatalog,
+      );
+    }
 
-        final catalog = snapshot.data ?? [];
-        final categories = _getCategories(catalog);
+    final catalog = _catalog ?? [];
+    final categories = _categories ?? [];
 
-        if (categories.isEmpty) {
-          return const _EmptyCatalogView();
-        }
+    if (categories.isEmpty) {
+      return const _EmptyCatalogView();
+    }
 
-        final currentCategory = _getCurrentCategory(categories);
-        final items = _getFilteredItems(catalog, currentCategory);
+    final currentCategory = _getCurrentCategory(categories);
+    final items = _getFilteredItems(catalog, currentCategory);
 
-        return RefreshIndicator(
-          onRefresh: _reloadCatalog,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              if (widget.banner != null)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: widget.banner!,
-                  ),
-                ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _CatalogHeaderDelegate(
-                  categories: categories,
-                  selectedCategory: currentCategory,
-                  onCategorySelected: _selectCategory,
+    return RefreshIndicator(
+      onRefresh: _refreshFromServer,
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          if (widget.banner != null)
+            SliverToBoxAdapter(
+              child: RepaintBoundary(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: widget.banner!,
                 ),
               ),
-              if (items.isEmpty)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Text(
-                      'В этой категории пока нет товаров',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = items[index];
-
-                        return CatalogCard(
-                          item: item,
-                          onAddToCart: () {
-                            final variant = _getDefaultVariant(item);
-
-                            context.read<CartService>().addToCart(
-                                  item,
-                                  variant: variant,
-                                );
-                          },
-                        );
-                      },
-                      childCount: items.length,
-                    ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.63,
-                    ),
+            ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _CatalogHeaderDelegate(
+              categories: categories,
+              selectedCategory: currentCategory,
+              onCategorySelected: _selectCategory,
+              scrollController: _categoriesScrollController,
+            ),
+          ),
+          if (items.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text(
+                  'В этой категории пока нет товаров',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-            ],
-          ),
-        );
-      },
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+              sliver: SliverGrid(
+                key: ValueKey(currentCategory),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = items[index];
+
+                    return CatalogCard(
+                      key: ValueKey(item.id),
+                      item: item,
+                      onAddToCart: ({origin}) {
+                        _handleAddToCart(
+                          item,
+                          origin: origin,
+                        );
+                      },
+                    );
+                  },
+                  childCount: items.length,
+                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.63,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -250,11 +292,13 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
   final List<String> categories;
   final String selectedCategory;
   final ValueChanged<String> onCategorySelected;
+  final ScrollController scrollController;
 
-  const _CatalogHeaderDelegate({
+  _CatalogHeaderDelegate({
     required this.categories,
     required this.selectedCategory,
     required this.onCategorySelected,
+    required this.scrollController,
   });
 
   @override
@@ -284,6 +328,7 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
+            controller: scrollController,
             scrollDirection: Axis.horizontal,
             child: Row(
               children: categories.map((category) {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:delycafe/models/catalog_item.dart';
+import 'package:delycafe/models/category.dart';
 import 'package:http/http.dart' as http;
 
 class CatalogApiService {
@@ -93,5 +94,31 @@ class CatalogApiService {
     if (value is String) return int.tryParse(value);
 
     return null;
+  }
+
+  Future<List<Category>> fetchCategories() async {
+    final uri = Uri.parse(
+      '$baseUrl/api/catalog/categories/',
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Ошибка загрузки категорий: ${response.statusCode}',
+      );
+    }
+
+    final decoded = jsonDecode(
+      utf8.decode(response.bodyBytes),
+    ) as List;
+
+    return decoded
+        .map(
+          (e) => Category.fromJson(
+            e as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 }
