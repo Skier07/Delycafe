@@ -1,9 +1,39 @@
 from rest_framework import serializers
 
-from .models import BonusTransaction, Customer
+from .models import BonusTransaction, Customer, CustomerAddress
+
+
+class CustomerAddressSerializer(serializers.ModelSerializer):
+    full_address = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = CustomerAddress
+        fields = (
+            'id',
+            'title',
+            'address',
+            'entrance',
+            'floor',
+            'apartment',
+            'comment',
+            'is_default',
+            'full_address',
+            'created_at',
+            'updated_at',
+        )
+
+    def validate_address(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError('Адрес не может быть пустым.')
+
+        return value
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
+    addresses = CustomerAddressSerializer(many=True, read_only=True)
+
     class Meta:
         model = Customer
         fields = (
@@ -15,6 +45,7 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
             'first_order_discount_available',
             'first_order_discount_used',
             'is_active',
+            'addresses',
             'created_at',
             'updated_at',
         )

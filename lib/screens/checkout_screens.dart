@@ -1,3 +1,4 @@
+import 'package:delycafe/screens/order_payment_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/order_api_service.dart';
@@ -84,6 +85,10 @@ class CheckoutScreens extends StatelessWidget {
                       customerName: data.name,
                       deliveryType: data.deliveryType.apiValue,
                       address: data.address,
+                      addressLocality: data.addressLocality,
+                      addressEntrance: data.addressEntrance,
+                      addressFloor: data.addressFloor,
+                      addressApartment: data.addressApartment,
                       deliveryTimeType: data.urgency.apiValue,
                       deliveryTime: data.deliveryTime ?? '',
                       paymentType: data.paymentMethod.apiValue,
@@ -91,6 +96,38 @@ class CheckoutScreens extends StatelessWidget {
                       items: cartService.toOrderApiItems(),
                       bonusSpent: data.bonusSpent,
                     );
+
+                    if (!context.mounted) return;
+
+                    final paymentUrl = order.paymentUrl.trim();
+
+                    if (paymentUrl.isNotEmpty) {
+                      final paid = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OrderPaymentScreen(
+                            orderId: order.id,
+                            paymentUrl: paymentUrl,
+                            paymentAmount: order.paymentAmount,
+                          ),
+                        ),
+                      );
+
+                      if (!context.mounted) return;
+
+                      if (paid != true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Заказ №${order.id} создан, но оплата не завершена. '
+                              'Его можно оплатить позже из истории заказов.',
+                            ),
+                          ),
+                        );
+                        Navigator.pop(context);
+                        return;
+                      }
+                    }
 
                     cartService.clearCart();
 
@@ -107,7 +144,10 @@ class CheckoutScreens extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Заказ №${order.id} оформлен. К оплате: ${order.paymentAmount} ₽',
+                          paymentUrl.isNotEmpty
+                              ? 'Заказ №${order.id} оплачен и принят в работу'
+                              : 'Заказ №${order.id} оформлен. '
+                                  'К оплате: ${order.paymentAmount} ₽',
                         ),
                       ),
                     );

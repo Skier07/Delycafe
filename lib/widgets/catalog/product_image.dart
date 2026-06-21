@@ -1,3 +1,4 @@
+import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -57,22 +58,7 @@ class ProductImage extends StatelessWidget {
   }
 
   String _normalizedImageUrl(String value) {
-    final imagePath = value.trim();
-
-    if (imagePath.startsWith('http://127.0.0.1:8000')) {
-      return imagePath.replaceFirst(
-        'http://127.0.0.1:8000',
-        'http://10.0.2.2:8000',
-      );
-    }
-
-    if (imagePath.startsWith('http://localhost:8000')) {
-      return imagePath.replaceFirst(
-        'http://localhost:8000',
-        'http://10.0.2.2:8000',
-      );
-    }
-    return imagePath;
+    return ApiConfig.normalizeMediaUrl(value);
   }
 }
 

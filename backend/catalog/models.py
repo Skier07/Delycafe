@@ -4,8 +4,22 @@ from django.db import models
 class Category(models.Model):
     title = models.CharField(max_length=120)
     slug = models.SlugField(max_length=140, unique=True)
+
+    saby_category_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        unique=True,
+    )
+
+
     sort_order = models.PositiveIntegerField(default=500)
     is_active = models.BooleanField(default=True)
+
+    show_in_app = models.BooleanField(
+        default=False,
+        verbose_name='Показывать в приложении',
+    )
 
     class Meta:
         ordering = ['sort_order', 'title']
@@ -20,6 +34,11 @@ class Product(models.Model):
     class Source(models.TextChoices):
         MANUAL = 'manual', 'Создан вручную'
         SABY = 'saby', 'Saby'
+
+    manual_category = models.BooleanField(
+        default=False,
+        verbose_name='Категория назначена вручную',
+    )
 
     category = models.ForeignKey(
         Category,
@@ -65,7 +84,13 @@ class Product(models.Model):
 
     is_new = models.BooleanField(default=False)
     is_hit = models.BooleanField(default=False)
+    sort_order = models.PositiveIntegerField(default=500)
     is_active = models.BooleanField(default=True)
+
+    show_in_app = models.BooleanField(
+        default=False,
+        verbose_name='Показывать в приложении',
+    )
 
     has_variants = models.BooleanField(default=False)
     sort_order = models.PositiveIntegerField(default=500)

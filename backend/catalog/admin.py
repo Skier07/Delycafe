@@ -21,25 +21,59 @@ class ProductVariantInline(admin.TabularInline):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = (
         'title',
+        'saby_category_id',
         'slug',
         'sort_order',
+        'show_in_app',
         'is_active',
     )
+
     list_editable = (
         'sort_order',
+        'show_in_app',
         'is_active',
     )
+
+    list_filter = (
+        'show_in_app',
+        'is_active',
+    )
+
     search_fields = (
         'title',
         'slug',
+        'saby_category_id',
     )
 
+    actions = (
+        'enable_in_app',
+        'disable_in_app',
+    )
+
+    @admin.action(description='Показывать в приложении')
+    def enable_in_app(self, request, queryset):
+        updated = queryset.update(show_in_app=True)
+
+        self.message_user(
+            request,
+            f'Включено категорий: {updated}',
+        )
+
+    @admin.action(description='Скрыть из приложения')
+    def disable_in_app(self, request, queryset):
+        updated = queryset.update(show_in_app=False)
+
+        self.message_user(
+            request,
+            f'Скрыто категорий: {updated}',
+        )
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'category',
+        'manual_category',
         'saby_id',
         'price',
         'weight',
@@ -64,6 +98,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     list_filter = (
         'category',
+        'manual_category',
         'source',
         'needs_review',
         'is_active',
@@ -85,6 +120,7 @@ class ProductAdmin(admin.ModelAdmin):
             {
                 'fields': (
                     'category',
+                    'manual_category',
                     'title',
                     'description',
                     'image',
@@ -129,12 +165,12 @@ class ProductAdmin(admin.ModelAdmin):
         ProductVariantInline,
     ]
 
-
 @admin.register(NewSabyProduct)
 class NewSabyProductAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'category',
+        'manual_category',
         'saby_id',
         'price',
         'weight',
@@ -145,6 +181,7 @@ class NewSabyProductAdmin(admin.ModelAdmin):
 
     list_filter = (
         'category',
+        'manual_category',
         'is_active',
         'needs_review',
         'created_at',
@@ -158,6 +195,7 @@ class NewSabyProductAdmin(admin.ModelAdmin):
 
     fields = (
         'category',
+        'manual_category',
         'title',
         'description',
         'image',
@@ -193,6 +231,33 @@ class NewSabyProductAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .filter(needs_review=True)
+            .exclude(
+                category__title__in=[
+                    'Вода',
+                    'Сырье',
+                    'Колбаса',
+                    'Мясо',
+                    'Овощи, Фрукты',
+                    'Пластиковая посуда',
+                    'Мойка',
+                    'Химия',
+                    'Экспресс',
+                    'Грузовые',
+                    'Европа',
+                    'Столовая',
+                    'Бар',
+                    'Пиццерия',
+                    'Приправы',
+                    'Соус Япония',
+                    'Япония',
+                    'Темпура',
+                    'Холодные роллы',
+                    'Запеченые роллы',
+                    'Сеты',
+                    'Доп услуги',
+                    'Без категории',
+                ]
+            )
         )
 
     @admin.action(description='Опубликовать выбранные товары')
@@ -211,4 +276,9 @@ class NewSabyProductAdmin(admin.ModelAdmin):
         if obj.is_active:
             obj.needs_review = False
 
-        super().save_model(request, obj, form, change)
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )

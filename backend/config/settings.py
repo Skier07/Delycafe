@@ -11,26 +11,39 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v2bt(x#y+e@n)33ky0b1#zd*!q#8jvi))w46@0u#gdoc-*=x)g'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'unsafe-dev-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    '10.0.2.2',
+    host.strip()
+    for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
+    if host.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 # Application definition
@@ -95,8 +108,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'delycafe_db'),
+        'USER': os.getenv('DB_USER', 'delycafe_user'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -134,6 +151,7 @@ USE_TZ = True
 # Static files
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
@@ -166,9 +184,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-import os
-
-
 ALFA_PAYMENT_ENABLED = os.getenv(
     'ALFA_PAYMENT_ENABLED',
     'False',
@@ -179,15 +194,9 @@ ALFA_API_BASE_URL = os.getenv(
     'https://payment.alfabank.ru/payment/rest',
 )
 
-ALFA_API_LOGIN = os.getenv(
-    'ALFA_API_LOGIN',
-    '',
-)
+ALFA_API_LOGIN = os.getenv('ALFA_API_LOGIN', '')
 
-ALFA_API_PASSWORD = os.getenv(
-    'ALFA_API_PASSWORD',
-    '',
-)
+ALFA_API_PASSWORD = os.getenv('ALFA_API_PASSWORD', '')
 
 ALFA_RETURN_URL = os.getenv(
     'ALFA_RETURN_URL',
@@ -199,7 +208,16 @@ ALFA_FAIL_URL = os.getenv(
     'http://127.0.0.1:8000/api/payments/fail/',
 )
 
-ALFA_CALLBACK_URL = os.getenv(
-    'ALFA_CALLBACK_URL',
-    '',
+ALFA_CALLBACK_URL = os.getenv('ALFA_CALLBACK_URL', '')
+
+
+SABY_APP_CLIENT_ID = os.getenv('SABY_APP_CLIENT_ID', '')
+SABY_APP_SECRET = os.getenv('SABY_APP_SECRET', '')
+SABY_SECRET_KEY = os.getenv('SABY_SECRET_KEY', '')
+SABY_POINT_ID = int(
+    os.getenv('SABY_POINT_ID', '187')
+)
+
+SABY_PRICE_LIST_ID = int(
+    os.getenv('SABY_PRICE_LIST_ID', '4')
 )

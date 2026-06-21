@@ -1,15 +1,11 @@
 import 'dart:convert';
 
+import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/order.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class OrderService extends ChangeNotifier {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://api.delycafe.ru',
-  );
-
   final List<Order> _orders = [];
 
   bool _isLoading = false;
@@ -27,7 +23,7 @@ class OrderService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uri = _uri(
+      final uri = ApiConfig.uri(
         '/api/orders/history/',
         queryParameters: {
           'phone': phone,
@@ -65,18 +61,5 @@ class OrderService extends ChangeNotifier {
     _orders.clear();
     _errorMessage = null;
     notifyListeners();
-  }
-
-  Uri _uri(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) {
-    final cleanBaseUrl = baseUrl.endsWith('/')
-        ? baseUrl.substring(0, baseUrl.length - 1)
-        : baseUrl;
-
-    return Uri.parse('$cleanBaseUrl$path').replace(
-      queryParameters: queryParameters,
-    );
   }
 }

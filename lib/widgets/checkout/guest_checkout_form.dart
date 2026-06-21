@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
@@ -36,6 +37,19 @@ extension DeliveryTypeApiValue on DeliveryType {
         return 'pickup';
     }
   }
+
+  String get defaultLocality {
+    switch (this) {
+      case DeliveryType.ozersk:
+        return 'Озерск';
+      case DeliveryType.prom:
+        return 'Промплощадка';
+      case DeliveryType.tatysh:
+        return 'Татыш';
+      case DeliveryType.pickup:
+        return '';
+    }
+  }
 }
 
 extension DeliveryUrgencyApiValue on DeliveryUrgency {
@@ -66,6 +80,10 @@ class GuestCheckoutData {
   final DeliveryType deliveryType;
   final int deliveryPrice;
   final String address;
+  final String addressLocality;
+  final String addressEntrance;
+  final String addressFloor;
+  final String addressApartment;
   final DeliveryUrgency urgency;
   final String? deliveryTime;
   final PaymentMethod paymentMethod;
@@ -78,6 +96,10 @@ class GuestCheckoutData {
     required this.deliveryType,
     required this.deliveryPrice,
     required this.address,
+    required this.addressLocality,
+    required this.addressEntrance,
+    required this.addressFloor,
+    required this.addressApartment,
     required this.urgency,
     required this.deliveryTime,
     required this.paymentMethod,
@@ -116,6 +138,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final _entranceController = TextEditingController();
+  final _floorController = TextEditingController();
+  final _apartmentController = TextEditingController();
   final _commentController = TextEditingController();
   final _timeController = TextEditingController();
 
@@ -167,13 +192,13 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   int get _firstOrderDiscount {
     if (!_hasAutomaticFirstOrderDiscount) return 0;
 
-    return widget.cartTotal * 20 ~/ 100;
+    return widget.cartTotal * BonusRules.firstOrderDiscountPercent ~/ 100;
   }
 
   int get _maxBonusSpend {
     if (_hasAutomaticFirstOrderDiscount) return 0;
 
-    final maxByPercent = widget.cartTotal * 30 ~/ 100;
+    final maxByPercent = widget.cartTotal * BonusRules.maxSpendPercent ~/ 100;
 
     final values = [
       widget.availableBonuses,
@@ -240,6 +265,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _entranceController.dispose();
+    _floorController.dispose();
+    _apartmentController.dispose();
     _commentController.dispose();
     _timeController.dispose();
     super.dispose();
@@ -397,6 +425,10 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       deliveryType: _deliveryType,
       deliveryPrice: _deliveryPrice,
       address: _needsAddress ? _addressController.text.trim() : 'Самовывоз',
+      addressLocality: _needsAddress ? _deliveryType.defaultLocality : '',
+      addressEntrance: _needsAddress ? _entranceController.text.trim() : '',
+      addressFloor: _needsAddress ? _floorController.text.trim() : '',
+      addressApartment: _needsAddress ? _apartmentController.text.trim() : '',
       urgency: _urgency,
       deliveryTime: _urgency == DeliveryUrgency.byTime
           ? _timeController.text.trim()
@@ -523,7 +555,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             TextFormField(
               controller: _addressController,
               textInputAction: TextInputAction.next,
-              decoration: _inputDecoration('Адрес доставки'),
+              decoration: _inputDecoration('Улица, дом'),
               validator: (value) {
                 if (!_needsAddress) return null;
 
@@ -533,6 +565,38 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
                 return null;
               },
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _entranceController,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: _inputDecoration('Подъезд'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    controller: _floorController,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: _inputDecoration('Этаж'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    controller: _apartmentController,
+                    textInputAction: TextInputAction.next,
+                    decoration: _inputDecoration('Квартира'),
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 24),

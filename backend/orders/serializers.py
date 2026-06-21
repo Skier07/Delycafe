@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
 from .models import Order, OrderItem
-
+from orders.services import SabyOrderService
 
 FIRST_ORDER_DISCOUNT_PERCENT = 20
 BONUS_EARN_PERCENT = 5
@@ -33,8 +33,8 @@ def calculate_delivery_price(delivery_type, products_total):
 
 
 def normalize_phone(phone):
-    phone = phone.strip()
-    digits = ''.join(char for char in phone if char.isdigit())
+    raw_phone = str(phone or '').strip()
+    digits = ''.join(char for char in raw_phone if char.isdigit())
 
     if len(digits) == 11 and digits.startswith('8'):
         digits = '7' + digits[1:]
@@ -43,9 +43,9 @@ def normalize_phone(phone):
         digits = '7' + digits
 
     if len(digits) == 11 and digits.startswith('7'):
-        return f'+{digits}'
+        return digits
 
-    return phone
+    return digits or raw_phone
 
 
 class OrderItemCreateSerializer(serializers.Serializer):
@@ -303,7 +303,28 @@ class OrderCreateSerializer(serializers.Serializer):
 
         OrderItem.objects.bulk_create(order_items)
 
+        print("=== CREATE ORDER: BEFORE SABY ===")
+        print("ORDER ID:", order.id)
+
+        try:
+            saby_response = (
+                SabyOrderService()
+                .create_order(order)
+            )
+
+            print(
+                "SABY ORDER CREATED:",
+                saby_response,
+            )
+
+        except Exception as e:
+            print(
+                "SABY ORDER ERROR:",
+                str(e),
+            )
+
         customer_bonus_update_fields = []
+
 
         if first_order_discount_applied:
             customer.first_order_discount_available = False
@@ -381,7 +402,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'address',
             'delivery_time_type',
             'delivery_time',
-            'payment_type',            
+            'payment_type',
             'payment_status',
             'payment_amount',
             'payment_provider',

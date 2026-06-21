@@ -1,33 +1,16 @@
 import 'dart:convert';
 
+import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:http/http.dart' as http;
 
 class CustomerApiService {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://api.delycafe.ru',
-  );
-
-  Uri _uri(
-    String path, {
-    Map<String, String>? queryParameters,
-  }) {
-    final cleanBaseUrl = baseUrl.endsWith('/')
-        ? baseUrl.substring(0, baseUrl.length - 1)
-        : baseUrl;
-
-    return Uri.parse('$cleanBaseUrl$path').replace(
-      queryParameters: queryParameters,
-    );
-  }
-
   Future<User> fetchProfile({
     required String phone,
   }) async {
     final response = await http.get(
-      _uri(
+      ApiConfig.uri(
         '/api/customers/profile/',
         queryParameters: {
           'phone': phone,
@@ -58,7 +41,7 @@ class CustomerApiService {
     }
 
     final response = await http.patch(
-      _uri('/api/customers/profile/'),
+      ApiConfig.uri('/api/customers/profile/'),
       headers: _jsonHeaders,
       body: jsonEncode(body),
     );
@@ -72,7 +55,7 @@ class CustomerApiService {
     required String phone,
   }) async {
     final response = await http.get(
-      _uri(
+      ApiConfig.uri(
         '/api/customers/addresses/',
         queryParameters: {
           'phone': phone,
@@ -99,7 +82,7 @@ class CustomerApiService {
     bool isDefault = false,
   }) async {
     final response = await http.post(
-      _uri('/api/customers/addresses/'),
+      ApiConfig.uri('/api/customers/addresses/'),
       headers: _jsonHeaders,
       body: jsonEncode({
         'phone': phone,
@@ -159,7 +142,7 @@ class CustomerApiService {
     }
 
     final response = await http.patch(
-      _uri('/api/customers/addresses/$addressId/'),
+      ApiConfig.uri('/api/customers/addresses/$addressId/'),
       headers: _jsonHeaders,
       body: jsonEncode(body),
     );
@@ -173,7 +156,7 @@ class CustomerApiService {
     required int addressId,
   }) async {
     final response = await http.post(
-      _uri('/api/customers/addresses/$addressId/set-default/'),
+      ApiConfig.uri('/api/customers/addresses/$addressId/set-default/'),
       headers: _jsonHeaders,
     );
 
@@ -186,7 +169,7 @@ class CustomerApiService {
     required int addressId,
   }) async {
     final response = await http.delete(
-      _uri('/api/customers/addresses/$addressId/'),
+      ApiConfig.uri('/api/customers/addresses/$addressId/'),
     );
 
     if (response.statusCode == 204) {

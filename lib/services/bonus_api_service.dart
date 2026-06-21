@@ -1,19 +1,18 @@
 import 'dart:convert';
 
+import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/bonus_summary.dart';
 import 'package:http/http.dart' as http;
 
 class BonusApiService {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
-  );
-
   Future<BonusSummary> fetchBonuses({
     required String phone,
   }) async {
-    final uri = Uri.parse(
-      '$baseUrl/api/customers/bonuses/?phone=${Uri.encodeComponent(phone)}',
+    final uri = ApiConfig.uri(
+      '/api/customers/bonuses/',
+      queryParameters: {
+        'phone': phone,
+      },
     );
 
     final response = await http.get(uri);

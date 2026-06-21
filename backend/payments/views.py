@@ -1,108 +1,77 @@
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from orders.models import Order
-from .services import AlfaPaymentError, AlfaPaymentService
+
+from .services import (
+    AlfaPaymentError,
+    create_alfa_payment,
+    get_alfa_payment_status,
+)
 
 
-class CreateAlfaPaymentAPIView(APIView):
+class AlfaCreatePaymentAPIView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         order_id = request.data.get('order_id')
 
         if not order_id:
             return Response(
-                {
-                    'detail': 'Не передан order_id.',
-                },
+                {'detail': 'Не передан order_id.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            order = Order.objects.get(id=order_id)
-        except Order.DoesNotExist:
+        order = Order.objects.filter(id=order_id).first()
+
+        if order is None:
             return Response(
-                {
-                    'detail': 'Заказ не найден.',
-                },
+                {'detail': 'Заказ не найден.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if order.payment_status == Order.PaymentStatus.PAID:
-            return Response(
-                {
-                    'detail': 'Заказ уже оплачен.',
-                    'order_id': order.id,
-                    'payment_status': order.payment_status,
-                    'payment_amount': order.payment_amount,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        service = AlfaPaymentService()
-
         try:
-            result = service.create_payment_for_order(order)
+            data = create_alfa_payment(order)
         except AlfaPaymentError as error:
             return Response(
-                {
-                    'detail': str(error),
-                },
+                {'detail': str(error)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response(
-            {
-                'order_id': order.id,
-                'payment_status': order.payment_status,
-                'payment_amount': order.payment_amount,
-                'payment_provider': order.payment_provider,
-                'payment_external_id': result.payment_external_id,
-                'payment_url': result.payment_url,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        return Response(data)
 
 
 class AlfaPaymentStatusAPIView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def get(self, request):
         order_id = request.query_params.get('order_id')
 
         if not order_id:
             return Response(
-                {
-                    'detail': 'Не передан order_id.',
-                },
+                {'detail': 'Не передан order_id.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            order = Order.objects.get(id=order_id)
-        except Order.DoesNotExist:
+        order = Order.objects.filter(id=order_id).first()
+
+        if order is None:
             return Response(
-                {
-                    'detail': 'Заказ не найден.',
-                },
+                {'detail': 'Заказ не найден.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        service = AlfaPaymentService()
-
         try:
-            result = service.sync_order_payment_status(order)
+            alfa_status = get_alfa_payment_status(order)
         except AlfaPaymentError as error:
             return Response(
-                {
-                    'detail': str(error),
-                },
+                {'detail': str(error)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -110,15 +79,12 @@ class AlfaPaymentStatusAPIView(APIView):
             {
                 'order_id': order.id,
                 'payment_status': order.payment_status,
-                'payment_amount': order.payment_amount,
-                'payment_url': order.payment_url,
-                'paid_at': order.paid_at,
-                'bank_order_status': result.get('order_status'),
+                'status': order.status,
+                'alfa': alfa_status,
             }
         )
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class AlfaCallbackAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -130,80 +96,66 @@ class AlfaCallbackAPIView(APIView):
         return self._handle_callback(request)
 
     def _handle_callback(self, request):
-        callback_data = {}
+        data = request.data.copy()
 
-        callback_data.update(request.query_params.dict())
+        if not data:
+            data = request.query_params.copy()
 
-        if hasattr(request.data, 'dict'):
-            callback_data.update(request.data.dict())
-        elif isinstance(request.data, dict):
-            callback_data.update(request.data)
+        external_id = (
+            data.get('mdOrder')
+            or data.get('orderId')
+            or data.get('order_id')
+        )
 
-        service = AlfaPaymentService()
-        order = service.find_order_by_callback_data(callback_data)
+        order_number = data.get('orderNumber') or data.get('order_number')
+
+        order = None
+
+        if external_id:
+            order = Order.objects.filter(
+                payment_external_id=external_id,
+            ).first()
+
+        if order is None and order_number:
+            clean_number = str(order_number).replace('delycafe-', '')
+
+            if clean_number.isdigit():
+                order = Order.objects.filter(
+                    id=int(clean_number),
+                ).first()
 
         if order is None:
             return Response(
-                {
-                    'detail': 'Заказ по callback не найден.',
-                    'received': callback_data,
-                },
+                {'detail': 'Заказ не найден.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        try:
-            result = service.sync_order_payment_status(order)
-        except AlfaPaymentError as error:
-            return Response(
-                {
-                    'detail': str(error),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        operation = str(data.get('operation') or '').lower()
+        callback_status = str(data.get('status') or '')
+
+        if operation in {'deposited', 'approved'} or callback_status == '1':
+            order.payment_status = 'paid'
+            order.status = 'accepted'
+            order.paid_at = timezone.now()
+            order.save(
+                update_fields=[
+                    'payment_status',
+                    'status',
+                    'paid_at',
+                    'updated_at',
+                ]
             )
 
-        return Response(
-            {
-                'ok': True,
-                'order_id': order.id,
-                'payment_status': order.payment_status,
-                'bank_order_status': result.get('order_status'),
-            }
-        )
+        return Response({'result': 'ok'})
 
 
-def payment_success_view(request):
+def payment_success(request):
     return HttpResponse(
-        '''
-        <!doctype html>
-        <html lang="ru">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Оплата успешна</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; padding: 32px;">
-          <h2>Оплата прошла успешно</h2>
-          <p>Можно вернуться в приложение DelyCafe.</p>
-        </body>
-        </html>
-        '''
+        'Оплата прошла успешно. Можно вернуться в приложение.'
     )
 
 
-def payment_fail_view(request):
+def payment_fail(request):
     return HttpResponse(
-        '''
-        <!doctype html>
-        <html lang="ru">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Оплата не прошла</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; padding: 32px;">
-          <h2>Оплата не прошла</h2>
-          <p>Попробуйте снова или выберите другой способ оплаты.</p>
-        </body>
-        </html>
-        '''
+        'Оплата не была завершена. Можно вернуться в приложение.'
     )

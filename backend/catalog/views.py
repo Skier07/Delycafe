@@ -9,7 +9,10 @@ class CategoryViewSet(ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
 
     def get_queryset(self):
-        return Category.objects.filter(is_active=True)
+        return Category.objects.filter(
+            is_active=True,
+            show_in_app=True,
+        )
 
 
 class ProductViewSet(ReadOnlyModelViewSet):
@@ -24,10 +27,10 @@ class ProductViewSet(ReadOnlyModelViewSet):
         )
 
         return (
-            Product.objects
-            .filter(
+            Product.objects.filter(
                 is_active=True,
                 category__is_active=True,
+                category__show_in_app=True,
             )
             .prefetch_related(
                 Prefetch(

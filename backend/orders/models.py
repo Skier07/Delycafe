@@ -113,6 +113,24 @@ class Order(models.Model):
         verbose_name='Ссылка на оплату',
     )
 
+    saby_order_number = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Номер заказа Saby',
+    )
+
+    saby_sale_id = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Sale ID Saby',
+    )
+
+    saby_external_id = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name='External ID Saby',
+    )
+
     paid_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -147,6 +165,11 @@ class Order(models.Model):
     bonus_earned = models.PositiveIntegerField(
         default=0,
         verbose_name='Начислено бонусов',
+    )
+
+    bonus_compensated = models.BooleanField(
+    	default=False,
+    	verbose_name='Бонусы компенсированы',
     )
 
     first_order_discount_applied = models.BooleanField(

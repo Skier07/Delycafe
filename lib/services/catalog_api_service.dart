@@ -1,17 +1,13 @@
 import 'dart:convert';
 
+import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/models/category.dart';
 import 'package:http/http.dart' as http;
 
 class CatalogApiService {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
-  );
-
   Future<List<CatalogItem>> fetchProducts() async {
-    final uri = Uri.parse('$baseUrl/api/catalog/products/');
+    final uri = ApiConfig.uri('/api/catalog/products/');
 
     final response = await http.get(uri);
 
@@ -97,9 +93,7 @@ class CatalogApiService {
   }
 
   Future<List<Category>> fetchCategories() async {
-    final uri = Uri.parse(
-      '$baseUrl/api/catalog/categories/',
-    );
+    final uri = ApiConfig.uri('/api/catalog/categories/');
 
     final response = await http.get(uri);
 

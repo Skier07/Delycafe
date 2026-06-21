@@ -2,37 +2,16 @@ from django.urls import path
 
 from .views import (
     AlfaCallbackAPIView,
+    AlfaCreatePaymentAPIView,
     AlfaPaymentStatusAPIView,
-    CreateAlfaPaymentAPIView,
-    payment_fail_view,
-    payment_success_view,
+    payment_fail,
+    payment_success,
 )
 
-
 urlpatterns = [
-    path(
-        'alfa/create/',
-        CreateAlfaPaymentAPIView.as_view(),
-        name='alfa-payment-create',
-    ),
-    path(
-        'alfa/status/',
-        AlfaPaymentStatusAPIView.as_view(),
-        name='alfa-payment-status',
-    ),
-    path(
-        'alfa/callback/',
-        AlfaCallbackAPIView.as_view(),
-        name='alfa-payment-callback',
-    ),
-    path(
-        'success/',
-        payment_success_view,
-        name='payment-success',
-    ),
-    path(
-        'fail/',
-        payment_fail_view,
-        name='payment-fail',
-    ),
+    path('alfa/create/', AlfaCreatePaymentAPIView.as_view(), name='alfa-create-payment'),
+    path('alfa/status/', AlfaPaymentStatusAPIView.as_view(), name='alfa-payment-status'),
+    path('alfa/callback/', AlfaCallbackAPIView.as_view(), name='alfa-callback'),
+    path('success/', payment_success, name='payment-success'),
+    path('fail/', payment_fail, name='payment-fail'),
 ]

@@ -1,3 +1,5 @@
+import 'package:delycafe/constants/bonus_rules.dart';
+
 class BonusSummary {
   final int customerId;
   final String phone;
@@ -21,13 +23,16 @@ class BonusSummary {
 
   factory BonusSummary.fromJson(Map<String, dynamic> json) {
     final transactionsJson = json['transactions'];
+    final earnPercent = _toInt(json['earn_percent']);
+    final maxSpendPercent = _toInt(json['max_spend_percent']);
 
     return BonusSummary(
       customerId: _toInt(json['customer_id']),
       phone: json['phone']?.toString() ?? '',
       bonusBalance: _toInt(json['bonus_balance']),
-      earnPercent: _toInt(json['earn_percent']),
-      maxSpendPercent: _toInt(json['max_spend_percent']),
+      earnPercent: earnPercent > 0 ? earnPercent : BonusRules.earnPercent,
+      maxSpendPercent:
+          maxSpendPercent > 0 ? maxSpendPercent : BonusRules.maxSpendPercent,
       firstOrderDiscountAvailable:
           json['first_order_discount_available'] == true,
       firstOrderDiscountUsed: json['first_order_discount_used'] == true,

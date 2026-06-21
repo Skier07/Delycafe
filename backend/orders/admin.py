@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils import timezone
+from orders.services import rollback_order
 
 from .models import Order, OrderItem
 
@@ -46,6 +47,8 @@ class OrderAdmin(admin.ModelAdmin):
         'bonus_earned',
         'total_price',
         'status',
+        'saby_order_number',
+        'saby_sale_id',
         'created_at',
     )
 
@@ -91,6 +94,9 @@ class OrderAdmin(admin.ModelAdmin):
         'payment_provider',
         'payment_external_id',
         'payment_url',
+        'saby_order_number',
+        'saby_sale_id',
+        'saby_external_id',
         'paid_at',
         'comment',
         'products_total',
@@ -144,6 +150,17 @@ class OrderAdmin(admin.ModelAdmin):
                     'bonus_earned',
                     'first_order_discount_applied',
                     'total_price',
+                ),
+            },
+        ),
+
+        (
+            'Интеграция Saby',
+            {
+                'fields': (
+                    'saby_order_number',
+                    'saby_sale_id',
+                    'saby_external_id',
                 ),
             },
         ),
@@ -239,7 +256,22 @@ class OrderAdmin(admin.ModelAdmin):
         )
 
     def save_model(self, request, obj, form, change):
-        if obj.payment_status == Order.PaymentStatus.PAID and obj.paid_at is None:
+
+        previous_status = None
+
+        if change:
+            previous_status = (
+                Order.objects
+                .filter(pk=obj.pk)
+                .values_list('status', flat=True)
+                .first()
+            )
+
+
+        if (
+            obj.payment_status == Order.PaymentStatus.PAID
+            and obj.paid_at is None
+        ):
             obj.paid_at = timezone.now()
 
         if obj.payment_status in (
@@ -248,7 +280,18 @@ class OrderAdmin(admin.ModelAdmin):
         ):
             obj.paid_at = None
 
-        super().save_model(request, obj, form, change)
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )
+
+        if (
+            previous_status != Order.Status.CANCELED
+            and obj.status == Order.Status.CANCELED
+        ):
+            rollback_order(obj)
 
 
 @admin.register(OrderItem)

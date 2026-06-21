@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:delycafe/config/api_config.dart';
 import 'package:http/http.dart' as http;
 
 class OrderCreateResult {
@@ -40,16 +41,15 @@ class OrderCreateResult {
 }
 
 class OrderApiService {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
-  );
-
   Future<OrderCreateResult> createOrder({
     required String phone,
     required String customerName,
     required String deliveryType,
     required String address,
+    String addressLocality = '',
+    String addressEntrance = '',
+    String addressFloor = '',
+    String addressApartment = '',
     required String deliveryTimeType,
     required String deliveryTime,
     required String paymentType,
@@ -57,13 +57,17 @@ class OrderApiService {
     required List<Map<String, dynamic>> items,
     int bonusSpent = 0,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/orders/');
+    final uri = ApiConfig.uri('/api/orders/');
 
     final body = {
       'phone': phone,
       'customer_name': customerName,
       'delivery_type': deliveryType,
       'address': address,
+      'address_locality': addressLocality,
+      'address_entrance': addressEntrance,
+      'address_floor': addressFloor,
+      'address_apartment': addressApartment,
       'delivery_time_type': deliveryTimeType,
       'delivery_time': deliveryTime,
       'payment_type': paymentType,
