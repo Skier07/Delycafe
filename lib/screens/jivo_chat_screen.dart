@@ -1,9 +1,13 @@
-import 'dart:convert';
-
 import 'package:delycafe/config/jivo_config.dart';
 import 'package:delycafe/models/user.dart';
+import 'package:delycafe/services/jivo_html_builder.dart';
+import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 class JivoChatScreen extends StatefulWidget {
   final User? user;
@@ -22,6 +26,7 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _initStarted = false;
+  bool _chatLoaded = false;
 
   static const double _extraTopInset = 20;
 
@@ -45,130 +50,6 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
     Navigator.of(context).pop(true);
   }
 
-  Future<void> _initializeWebView() async {
-    final widgetId = JivoConfig.widgetId.trim();
-
-    if (widgetId.isEmpty) {
-      setState(() {
-        _errorMessage = 'JIVO_WIDGET_ID не задан';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    final user = widget.user;
-    final contactName = jsonEncode(user?.name.trim() ?? '');
-    final contactPhone = jsonEncode(user?.phone.trim() ?? '');
-    final userToken = jsonEncode(_buildUserToken(user?.phone));
-
-    final html = '''
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #ffffff;
-      overflow: hidden;
-    }
-  </style>
-</head>
-<body>
-  <script>
-    function jivo_onLoadCallback() {
-      var name = $contactName;
-      var phone = $contactPhone;
-      var userToken = $userToken;
-
-      if (userToken) {
-        jivo_api.setUserToken(userToken);
-      }
-
-      if (name || phone) {
-        jivo_api.setContactInfo({
-          name: name || 'Клиент',
-          phone: phone,
-          description: 'Мобильное приложение Delycafe'
-        });
-      }
-
-      jivo_api.setCustomData([
-        { content: 'Источник: приложение Delycafe' }
-      ]);
-
-      jivo_api.sendPageTitle('Delycafe — Поддержка', true, 'app://support');
-
-      jivo_api.open({ start: 'chat' });
-
-      if (window.JivoBridge) {
-        JivoBridge.postMessage('loaded');
-      }
-    }
-
-    function jivo_onOpen() {
-      if (window.JivoBridge) {
-        JivoBridge.postMessage('loaded');
-      }
-    }
-
-    function jivo_onClose() {
-      if (window.JivoBridge) {
-        JivoBridge.postMessage('closed');
-      }
-    }
-  </script>
-  <script src="https://code.jivo.ru/widget/$widgetId" async></script>
-</body>
-</html>
-''';
-
-    final controller = WebViewController();
-    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
-    await controller.setBackgroundColor(Colors.white);
-    await controller.addJavaScriptChannel(
-      'JivoBridge',
-      onMessageReceived: (message) {
-        if (!mounted) return;
-
-        if (message.message == 'closed') {
-          _closeChat();
-          return;
-        }
-
-        setState(() => _isLoading = false);
-      },
-    );
-    await controller.setNavigationDelegate(
-      NavigationDelegate(
-        onWebResourceError: (error) {
-          if (!mounted) return;
-
-          setState(() {
-            _errorMessage = error.description;
-            _isLoading = false;
-          });
-        },
-      ),
-    );
-    await controller.loadHtmlString(html, baseUrl: 'https://delycafe.ru');
-
-    if (!mounted) return;
-
-    setState(() {
-      _webViewController = controller;
-    });
-
-    Future.delayed(const Duration(seconds: 12), () {
-      if (!mounted || !_isLoading) return;
-
-      setState(() => _isLoading = false);
-    });
-  }
-
   String _buildUserToken(String? phone) {
     if (phone == null || phone.trim().isEmpty) {
       return '';
@@ -185,6 +66,150 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
     }
 
     return digits;
+  }
+
+  Future<void> _configureAndroidWebView(WebViewController controller) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return;
+    }
+
+    final platform = controller.platform;
+
+    if (platform is! AndroidWebViewController) {
+      return;
+    }
+
+    await platform.setMediaPlaybackRequiresUserGesture(false);
+
+    final cookieManager = AndroidWebViewCookieManager(
+      AndroidWebViewCookieManagerCreationParams.fromPlatformWebViewCookieManagerCreationParams(
+        const PlatformWebViewCookieManagerCreationParams(),
+      ),
+    );
+
+    try {
+      await cookieManager.setAcceptThirdPartyCookies(platform, true);
+    } catch (error) {
+      debugPrint('Jivo: third-party cookies setup failed: $error');
+    }
+  }
+
+  Future<WebViewController> _createWebViewController(String html) async {
+    final controller = WebViewController();
+
+    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    await controller.setBackgroundColor(Colors.white);
+    await _configureAndroidWebView(controller);
+
+    await controller.addJavaScriptChannel(
+      'JivoBridge',
+      onMessageReceived: (message) {
+        if (!mounted) return;
+
+        if (message.message == 'closed') {
+          _closeChat();
+          return;
+        }
+
+        setState(() {
+          _chatLoaded = true;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      },
+    );
+
+    await controller.setNavigationDelegate(
+      NavigationDelegate(
+        onWebResourceError: (error) {
+          if (!mounted || _chatLoaded) return;
+
+          final isMainFrame = error.isForMainFrame ?? true;
+
+          if (!isMainFrame) return;
+
+          setState(() {
+            _errorMessage = error.description;
+            _isLoading = false;
+          });
+        },
+      ),
+    );
+
+    await controller.loadHtmlString(html, baseUrl: JivoConfig.baseUrl);
+
+    return controller;
+  }
+
+  Future<void> _initializeWebView() async {
+    if (!JivoConfig.isConfigured) {
+      setState(() {
+        _errorMessage = 'JIVO_WIDGET_ID не задан';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final user = widget.user;
+    final html = JivoHtmlBuilder.build(
+      contactName: user?.name,
+      contactPhone: user?.phone,
+      userToken: _buildUserToken(user?.phone),
+    );
+
+    try {
+      final controller = await _createWebViewController(html);
+
+      if (!mounted) return;
+
+      setState(() {
+        _webViewController = controller;
+      });
+
+      Future.delayed(JivoConfig.loadTimeout, () {
+        if (!mounted || _chatLoaded || _errorMessage != null) return;
+
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'Не удалось загрузить чат. Попробуйте ещё раз или откройте в браузере.';
+        });
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = 'Ошибка инициализации чата: $error';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _retry() async {
+    setState(() {
+      _webViewController = null;
+      _isLoading = true;
+      _errorMessage = null;
+      _chatLoaded = false;
+      _initStarted = false;
+    });
+
+    _initStarted = true;
+    await _initializeWebView();
+  }
+
+  Future<void> _openInBrowser() async {
+    final uri = Uri.parse(JivoConfig.browserChatUrl);
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Не удалось открыть чат в браузере'),
+        ),
+      );
+    }
   }
 
   @override
@@ -212,12 +237,12 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
                 WebViewWidget(controller: _webViewController!),
               if (_isLoading)
                 const ColoredBox(
-                  color: Color(0xFF191430),
+                  color: AppColors.splashBackground,
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(color: Colors.white),
+                        CupertinoActivityIndicator(color: Colors.white),
                         SizedBox(height: 16),
                         Text(
                           'Подключаем чат…',
@@ -229,14 +254,36 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
                 ),
               if (_errorMessage != null)
                 ColoredBox(
-                  color: const Color(0xFF191430),
+                  color: AppColors.splashBackground,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          const SizedBox(height: 24),
+                          FilledButton(
+                            onPressed: _isLoading ? null : _retry,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.header,
+                            ),
+                            child: const Text('Повторить'),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _openInBrowser,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white54),
+                            ),
+                            child: const Text('Открыть в браузере'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
