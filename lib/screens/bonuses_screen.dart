@@ -1,4 +1,5 @@
 import 'package:delycafe/models/bonus_summary.dart';
+import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/bonus_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
@@ -17,31 +18,46 @@ class BonusesScreen extends StatefulWidget {
 class _BonusesScreenState extends State<BonusesScreen> {
   final BonusApiService _bonusApiService = BonusApiService();
 
-  late Future<BonusSummary?> _future;
+  Future<BonusSummary?>? _future;
+  String? _loadedForPhone;
 
   @override
-  void initState() {
-    super.initState();
-    _future = _loadBonuses();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final user = context.watch<AuthService>().currentUser;
+    final phone = user?.phone;
+
+    if (phone != _loadedForPhone) {
+      _loadedForPhone = phone;
+      _future = _loadBonuses(user);
+    }
   }
 
-  Future<BonusSummary?> _loadBonuses() async {
-    final user = context.read<AuthService>().currentUser;
-
+  Future<BonusSummary?> _loadBonuses(User? user) async {
     if (user == null) {
       return null;
     }
 
-    return _bonusApiService.fetchBonuses(
-      phone: user.phone,
-    );
+    try {
+      return await _bonusApiService
+          .fetchBonuses(
+            phone: user.phone,
+          )
+          .timeout(const Duration(seconds: 8));
+    } catch (error) {
+      return BonusSummary.fromUser(user);
+    }
   }
 
   Future<void> _refresh() async {
     await context.read<AuthService>().refreshCurrentUser();
 
+    final user = context.read<AuthService>().currentUser;
+
     setState(() {
-      _future = _loadBonuses();
+      _loadedForPhone = user?.phone;
+      _future = _loadBonuses(user);
     });
 
     await _future;
@@ -94,8 +110,11 @@ class _BonusesScreenState extends State<BonusesScreen> {
             return _ErrorState(
               message: snapshot.error.toString(),
               onRetry: () {
+                final user = context.read<AuthService>().currentUser;
+
                 setState(() {
-                  _future = _loadBonuses();
+                  _loadedForPhone = user?.phone;
+                  _future = _loadBonuses(user);
                 });
               },
             );

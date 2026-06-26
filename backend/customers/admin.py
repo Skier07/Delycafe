@@ -31,6 +31,8 @@ class CustomerAdmin(admin.ModelAdmin):
         'phone',
         'name',
         'bonus_balance',
+        'saby_external_id',
+        'saby_synced_at',
         'first_order_discount_available',
         'first_order_discount_used',
         'is_active',

@@ -22,6 +22,7 @@ enum DeliveryUrgency {
 enum PaymentMethod {
   card,
   sbp,
+  cash,
 }
 
 extension DeliveryTypeApiValue on DeliveryType {
@@ -70,6 +71,8 @@ extension PaymentMethodApiValue on PaymentMethod {
         return 'card';
       case PaymentMethod.sbp:
         return 'sbp';
+      case PaymentMethod.cash:
+        return 'cash';
     }
   }
 }
@@ -292,6 +295,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
         return 'Картой';
       case PaymentMethod.sbp:
         return 'СБП';
+      case PaymentMethod.cash:
+        return 'Наличкой';
     }
   }
 
@@ -671,6 +676,18 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   onTap: () {
                     setState(() {
                       _paymentMethod = PaymentMethod.sbp;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ChoiceCard(
+                  title: _paymentTitle(PaymentMethod.cash),
+                  selected: _paymentMethod == PaymentMethod.cash,
+                  onTap: () {
+                    setState(() {
+                      _paymentMethod = PaymentMethod.cash;
                     });
                   },
                 ),

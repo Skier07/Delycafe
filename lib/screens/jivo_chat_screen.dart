@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:delycafe/config/jivo_config.dart';
 import 'package:delycafe/models/user.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -23,11 +21,28 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
   WebViewController? _webViewController;
   bool _isLoading = true;
   String? _errorMessage;
+  bool _initStarted = false;
+
+  static const double _extraTopInset = 20;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initStarted) return;
+
+    _initStarted = true;
     _initializeWebView();
+  }
+
+  double _chatTopInset(BuildContext context) {
+    return MediaQuery.viewPaddingOf(context).top + _extraTopInset;
+  }
+
+  void _closeChat() {
+    if (!mounted) return;
+
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _initializeWebView() async {
@@ -44,18 +59,21 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
     final user = widget.user;
     final contactName = jsonEncode(user?.name.trim() ?? '');
     final contactPhone = jsonEncode(user?.phone.trim() ?? '');
+    final userToken = jsonEncode(_buildUserToken(user?.phone));
 
     final html = '''
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <style>
     html, body {
       margin: 0;
+      padding: 0;
       height: 100%;
-      background: #191430;
+      background: #ffffff;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -64,16 +82,43 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
     function jivo_onLoadCallback() {
       var name = $contactName;
       var phone = $contactPhone;
+      var userToken = $userToken;
+
+      if (userToken) {
+        jivo_api.setUserToken(userToken);
+      }
 
       if (name || phone) {
         jivo_api.setContactInfo({
           name: name || 'Клиент',
           phone: phone,
-          description: 'Приложение Delycafe'
+          description: 'Мобильное приложение Delycafe'
         });
       }
 
-      jivo_api.open();
+      jivo_api.setCustomData([
+        { content: 'Источник: приложение Delycafe' }
+      ]);
+
+      jivo_api.sendPageTitle('Delycafe — Поддержка', true, 'app://support');
+
+      jivo_api.open({ start: 'chat' });
+
+      if (window.JivoBridge) {
+        JivoBridge.postMessage('loaded');
+      }
+    }
+
+    function jivo_onOpen() {
+      if (window.JivoBridge) {
+        JivoBridge.postMessage('loaded');
+      }
+    }
+
+    function jivo_onClose() {
+      if (window.JivoBridge) {
+        JivoBridge.postMessage('closed');
+      }
     }
   </script>
   <script src="https://code.jivo.ru/widget/$widgetId" async></script>
@@ -83,13 +128,22 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
 
     final controller = WebViewController();
     await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    await controller.setBackgroundColor(Colors.white);
+    await controller.addJavaScriptChannel(
+      'JivoBridge',
+      onMessageReceived: (message) {
+        if (!mounted) return;
+
+        if (message.message == 'closed') {
+          _closeChat();
+          return;
+        }
+
+        setState(() => _isLoading = false);
+      },
+    );
     await controller.setNavigationDelegate(
       NavigationDelegate(
-        onPageFinished: (_) {
-          if (!mounted) return;
-
-          setState(() => _isLoading = false);
-        },
         onWebResourceError: (error) {
           if (!mounted) return;
 
@@ -102,52 +156,94 @@ class _JivoChatScreenState extends State<JivoChatScreen> {
     );
     await controller.loadHtmlString(html, baseUrl: 'https://delycafe.ru');
 
+    if (!mounted) return;
+
     setState(() {
       _webViewController = controller;
     });
+
+    Future.delayed(const Duration(seconds: 12), () {
+      if (!mounted || !_isLoading) return;
+
+      setState(() => _isLoading = false);
+    });
+  }
+
+  String _buildUserToken(String? phone) {
+    if (phone == null || phone.trim().isEmpty) {
+      return '';
+    }
+
+    var digits = phone.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length == 11 && digits.startsWith('8')) {
+      digits = '7${digits.substring(1)}';
+    }
+
+    if (digits.length == 10) {
+      digits = '7$digits';
+    }
+
+    return digits;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF191430),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF191430),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Поддержка'),
-        leading: ShaderGlassContainer(
-          borderRadius: 30,
-          onPressed: () => Navigator.pop(context),
-          padding: const EdgeInsets.all(8),
-          child: const Icon(
-            CupertinoIcons.chevron_left_2,
-            color: Colors.white,
-            size: 24,
+    final topInset = _chatTopInset(context);
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        _closeChat();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Padding(
+          padding: EdgeInsets.only(
+            top: topInset,
+            bottom: bottomInset,
+          ),
+          child: Stack(
+            children: [
+              if (_webViewController != null)
+                WebViewWidget(controller: _webViewController!),
+              if (_isLoading)
+                const ColoredBox(
+                  color: Color(0xFF191430),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: Colors.white),
+                        SizedBox(height: 16),
+                        Text(
+                          'Подключаем чат…',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (_errorMessage != null)
+                ColoredBox(
+                  color: const Color(0xFF191430),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-        leadingWidth: 56,
-      ),
-      body: Stack(
-        children: [
-          if (_webViewController != null)
-            WebViewWidget(controller: _webViewController!),
-          if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-          if (_errorMessage != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  _errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

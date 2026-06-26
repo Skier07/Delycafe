@@ -1,11 +1,11 @@
 from django.http import HttpResponse
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from orders.models import Order
+from orders.services import confirm_order_paid
 
 from .services import (
     AlfaPaymentError,
@@ -134,17 +134,7 @@ class AlfaCallbackAPIView(APIView):
         callback_status = str(data.get('status') or '')
 
         if operation in {'deposited', 'approved'} or callback_status == '1':
-            order.payment_status = 'paid'
-            order.status = 'accepted'
-            order.paid_at = timezone.now()
-            order.save(
-                update_fields=[
-                    'payment_status',
-                    'status',
-                    'paid_at',
-                    'updated_at',
-                ]
-            )
+            confirm_order_paid(order)
 
         return Response({'result': 'ok'})
 

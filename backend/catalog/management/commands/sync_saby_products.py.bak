@@ -1,0 +1,86 @@
+from django.core.management.base import BaseCommand
+
+from catalog.services.saby_catalog_service import (
+    SabyCatalogService,
+)
+
+
+class Command(BaseCommand):
+    help = 'Синхронизация каталога Saby'
+
+    def handle(self, *args, **options):
+        self.stdout.write(
+            self.style.SUCCESS(
+                '=== Синхронизация каталога Saby ==='
+            )
+        )
+
+        service = SabyCatalogService()
+
+        self.stdout.write('Сервис инициализирован')
+
+        try:
+            service.get_catalog()
+        except NotImplementedError as exc:
+            self.stdout.write(str(exc))
+
+from django.core.management.base import BaseCommand
+
+from catalog.services.saby_catalog_service import (
+    SabyCatalogService,
+)
+
+
+class Command(BaseCommand):
+    help = 'Синхронизация каталога Saby'
+
+    MIN_PRODUCTS_LIMIT = 50
+
+    def handle(self, *args, **options):
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                '=== Синхронизация каталога Saby ==='
+            )
+        )
+
+        service = SabyCatalogService()
+
+        try:
+            catalog = service.get_catalog()
+
+        except Exception as exc:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'Ошибка получения каталога: {exc}'
+                )
+            )
+            return
+
+        if catalog is None:
+            self.stdout.write(
+                self.style.ERROR(
+                    'Каталог не получен'
+                )
+            )
+            return
+
+        if len(catalog) < self.MIN_PRODUCTS_LIMIT:
+            self.stdout.write(
+                self.style.ERROR(
+                    f'Получено слишком мало товаров: {len(catalog)}'
+                )
+            )
+            return
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Получено товаров: {len(catalog)}'
+            )
+        )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                'Проверки пройдены'
+            )
+        )

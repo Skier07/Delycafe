@@ -6,6 +6,8 @@ from urllib.error import HTTPError, URLError
 
 from django.conf import settings
 
+from orders.services import confirm_order_paid
+
 
 class AlfaPaymentError(Exception):
     pass
@@ -158,15 +160,7 @@ def get_alfa_payment_status(order):
     order_status = str(response.get('orderStatus', ''))
 
     if order_status == '2':
-        order.payment_status = 'paid'
-        order.status = 'accepted'
-        order.save(
-            update_fields=[
-                'payment_status',
-                'status',
-                'updated_at',
-            ]
-        )
+        confirm_order_paid(order)
     elif order_status in {'3', '4', '6'}:
         order.payment_status = 'failed'
         order.save(

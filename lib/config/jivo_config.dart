@@ -1,11 +1,13 @@
-/// Jivo chat widget for customer support.
+/// Jivo chat widget for customer support (same as pizzaozersk.ru).
 ///
-/// Get Widget ID from Jivo cabinet (same as on pizzaozersk.ru) and pass at build:
-/// `flutter run --dart-define=JIVO_WIDGET_ID=xxxxxxxx`
+/// Override at build time if needed:
+/// `flutter run --dart-define=JIVO_WIDGET_ID=other_id`
 class JivoConfig {
+  static const String defaultWidgetId = 'TEfZ2JmXOW';
+
   static const String widgetId = String.fromEnvironment(
     'JIVO_WIDGET_ID',
-    defaultValue: '',
+    defaultValue: defaultWidgetId,
   );
 
   static bool get isConfigured => widgetId.trim().isNotEmpty;

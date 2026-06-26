@@ -33,10 +33,18 @@ class ApiConfig {
   static String normalizeMediaUrl(String value) {
     final imagePath = value.trim();
 
+    if (imagePath.isEmpty) {
+      return imagePath;
+    }
+
     for (final localPrefix in _localDevPrefixes) {
       if (imagePath.startsWith(localPrefix)) {
         return imagePath.replaceFirst(localPrefix, normalizedBaseUrl);
       }
+    }
+
+    if (imagePath.startsWith('/')) {
+      return '$normalizedBaseUrl$imagePath';
     }
 
     return imagePath;

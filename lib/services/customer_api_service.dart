@@ -8,12 +8,14 @@ import 'package:http/http.dart' as http;
 class CustomerApiService {
   Future<User> fetchProfile({
     required String phone,
+    bool syncSaby = false,
   }) async {
     final response = await http.get(
       ApiConfig.uri(
         '/api/customers/profile/',
         queryParameters: {
           'phone': phone,
+          if (syncSaby) 'sync_saby': '1',
         },
       ),
     );

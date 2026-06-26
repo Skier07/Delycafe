@@ -45,10 +45,34 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
             'first_order_discount_available',
             'first_order_discount_used',
             'is_active',
+            'saby_external_id',
+            'saby_synced_at',
             'addresses',
             'created_at',
             'updated_at',
         )
+
+
+class CustomerAuthAccountSerializer(serializers.ModelSerializer):
+    phone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = (
+            'id',
+            'phone',
+            'name',
+            'bonus_balance',
+            'saby_synced_at',
+        )
+
+    def get_phone(self, customer: Customer) -> str:
+        digits = customer.phone
+
+        if len(digits) == 11 and digits.startswith('7'):
+            return f'+{digits}'
+
+        return digits
 
 
 class BonusTransactionSerializer(serializers.ModelSerializer):

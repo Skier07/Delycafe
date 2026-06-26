@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from catalog.models import Category, Product
+from catalog.models import Category, Product, ProductVariant
 from catalog.services.saby_catalog_service import (
     SabyCatalogService,
 )
@@ -72,6 +72,7 @@ class Command(BaseCommand):
 
         created_count = 0
         updated_count = 0
+        variant_price_count = 0
 
         categories_map = {}
 
@@ -166,6 +167,18 @@ class Command(BaseCommand):
             else:
                 updated_count += 1
 
+            cost = int(float(item.get('cost') or 0))
+
+            if cost > 0:
+                variant = ProductVariant.objects.filter(
+                    saby_id=saby_id,
+                ).first()
+
+                if variant and variant.price != cost:
+                    variant.price = cost
+                    variant.save(update_fields=['price'])
+                    variant_price_count += 1
+
         disabled_count = (
             Product.objects
             .filter(source=Product.Source.SABY)
@@ -182,6 +195,12 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f'Обновлено: {updated_count}'
+            )
+        )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Обновлено цен вариантов: {variant_price_count}'
             )
         )
 

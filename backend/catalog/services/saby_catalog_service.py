@@ -36,10 +36,12 @@ class SabyCatalogService:
         response = requests.get(
             self.CATALOG_URL,
             headers={
-                "X-SBISAccessToken": token,
+                'X-SBISAccessToken': token,
             },
             params={
-                "pageSize": 1000,
+                'pageSize': 1000,
+                'pointId': settings.SABY_POINT_ID,
+                'priceListId': settings.SABY_PRICE_LIST_ID,
             },
             timeout=60,
         )

@@ -1,5 +1,5 @@
 import 'package:delycafe/data/hive/hive_init.dart';
-import 'package:delycafe/screens/home_screen.dart';
+import 'package:delycafe/screens/splash_screen.dart';
 import 'package:delycafe/services/address_service.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: SplashScreen(),
     );
   }
 }

@@ -1,9 +1,6 @@
-import 'package:delycafe/services/auth_service.dart';
-import 'package:delycafe/services/jivo_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class ContactsScreen extends StatelessWidget {
   const ContactsScreen({super.key});
@@ -81,41 +78,6 @@ class ContactsScreen extends StatelessWidget {
                       fontSize: 16,
                       color: Colors.white,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ShaderGlassContainer(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 20,
-                  ),
-                  onPressed: () {
-                    final user = context.read<AuthService>().currentUser;
-
-                    JivoService.openSupportChat(
-                      context,
-                      user: user,
-                    );
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        CupertinoIcons.chat_bubble_text,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                      SizedBox(width: 10),
-                      Text(
-                        'Написать',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(height: 12),

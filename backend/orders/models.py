@@ -17,6 +17,7 @@ class Order(models.Model):
     class PaymentType(models.TextChoices):
         CARD = 'card', 'Картой'
         SBP = 'sbp', 'СБП'
+        CASH = 'cash', 'Наличкой'
 
     class PaymentStatus(models.TextChoices):
         UNPAID = 'unpaid', 'Ожидает оплаты'
@@ -62,6 +63,26 @@ class Order(models.Model):
     address = models.TextField(
         blank=True,
         verbose_name='Адрес',
+    )
+    address_locality = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name='Населный пункт',
+    )
+    address_entrance = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Подъезд',
+    )
+    address_floor = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Этаж',
+    )
+    address_apartment = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Квартира',
     )
 
     delivery_time_type = models.CharField(
@@ -129,6 +150,11 @@ class Order(models.Model):
         max_length=120,
         blank=True,
         verbose_name='External ID Saby',
+    )
+
+    saby_dispatch_error = models.TextField(
+        blank=True,
+        verbose_name='Ошибка отправки в Saby',
     )
 
     paid_at = models.DateTimeField(

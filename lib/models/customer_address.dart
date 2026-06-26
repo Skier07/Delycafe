@@ -35,6 +35,20 @@ class CustomerAddress {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'address': address,
+      'entrance': entrance,
+      'floor': floor,
+      'apartment': apartment,
+      'comment': comment,
+      'is_default': isDefault,
+      'full_address': fullAddress,
+    };
+  }
+
   Map<String, dynamic> toCreateJson({
     required String phone,
   }) {

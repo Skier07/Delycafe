@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
 from .models import Order, OrderItem
-from orders.services import SabyOrderService
 
 FIRST_ORDER_DISCOUNT_PERCENT = 20
 BONUS_EARN_PERCENT = 5
@@ -100,6 +99,30 @@ class OrderCreateSerializer(serializers.Serializer):
         allow_blank=True,
     )
 
+    address_locality = serializers.CharField(
+        max_length=120,
+        required=False,
+        allow_blank=True,
+    )
+
+    address_entrance = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
+    address_floor = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
+    address_apartment = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_blank=True,
+    )
+
     delivery_time_type = serializers.ChoiceField(
         choices=Order.DeliveryTimeType.choices,
     )
@@ -177,6 +200,22 @@ class OrderCreateSerializer(serializers.Serializer):
                 'Если выбрана доставка ко времени, нужно указать время.'
             )
 
+        missing_saby = [
+            item.get('product_title') or 'позиция'
+            for item in items
+            if not item.get('saby_id')
+        ]
+
+        if missing_saby:
+            raise serializers.ValidationError(
+                {
+                    'items': (
+                        'У каждой позиции нужен saby_id для отправки в Presto: '
+                        + ', '.join(missing_saby)
+                    ),
+                }
+            )
+
         return attrs
 
     @transaction.atomic
@@ -188,6 +227,14 @@ class OrderCreateSerializer(serializers.Serializer):
         customer_name = validated_data.get('customer_name', '').strip()
         order_address = (validated_data.get('address') or '').strip()
         delivery_type = validated_data.get('delivery_type')
+
+        if delivery_type != Order.DeliveryType.PICKUP:
+            if not validated_data.get('address_locality'):
+                from orders.services import LOCALITY_BY_DELIVERY_TYPE
+
+                validated_data['address_locality'] = (
+                    LOCALITY_BY_DELIVERY_TYPE.get(delivery_type, '')
+                )
 
         customer, created = Customer.objects.get_or_create(
             phone=phone,
@@ -303,26 +350,6 @@ class OrderCreateSerializer(serializers.Serializer):
 
         OrderItem.objects.bulk_create(order_items)
 
-        print("=== CREATE ORDER: BEFORE SABY ===")
-        print("ORDER ID:", order.id)
-
-        try:
-            saby_response = (
-                SabyOrderService()
-                .create_order(order)
-            )
-
-            print(
-                "SABY ORDER CREATED:",
-                saby_response,
-            )
-
-        except Exception as e:
-            print(
-                "SABY ORDER ERROR:",
-                str(e),
-            )
-
         customer_bonus_update_fields = []
 
 
@@ -418,6 +445,9 @@ class OrderSerializer(serializers.ModelSerializer):
             'first_order_discount_applied',
             'total_price',
             'status',
+            'saby_order_number',
+            'saby_sale_id',
+            'saby_external_id',
             'created_at',
             'updated_at',
             'items',

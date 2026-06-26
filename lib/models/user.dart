@@ -49,6 +49,19 @@ class User {
     return defaultAddress;
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'phone': phone,
+      'name': name,
+      'default_address': defaultAddress,
+      'bonus_balance': bonusBalance,
+      'first_order_discount_available': firstOrderDiscountAvailable,
+      'first_order_discount_used': firstOrderDiscountUsed,
+      'addresses': addresses.map((address) => address.toJson()).toList(),
+    };
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     final rawAddresses = json['addresses'];
 

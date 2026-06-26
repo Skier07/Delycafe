@@ -3,13 +3,25 @@ from django.urls import path
 from .views import (
     CustomerAddressDetailAPIView,
     CustomerAddressesAPIView,
+    CustomerAuthMatchAPIView,
     CustomerBonusesAPIView,
     CustomerProfileAPIView,
+    CustomerSabyLookupAPIView,
     SetDefaultAddressAPIView,
 )
 
 
 urlpatterns = [
+    path(
+        'auth/match/',
+        CustomerAuthMatchAPIView.as_view(),
+        name='customer-auth-match',
+    ),
+    path(
+        'saby/lookup/',
+        CustomerSabyLookupAPIView.as_view(),
+        name='customer-saby-lookup',
+    ),
     path(
         'profile/',
         CustomerProfileAPIView.as_view(),

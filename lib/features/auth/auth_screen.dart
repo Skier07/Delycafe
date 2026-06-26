@@ -11,11 +11,9 @@ class AuthScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = context.read<AuthService>();
 
-    void _onPhoneSubmit(String phone) {
-      // Отправляем код
-      authService.senCode(phone);
+    void onPhoneSubmit(String phone) {
+      authService.sendCode(phone);
 
-      // Переходим на экран ввода кода
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -34,7 +32,7 @@ class AuthScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: AuthForm(onSubmit: _onPhoneSubmit),
+          child: AuthForm(onSubmit: onPhoneSubmit),
         ),
       ),
     );

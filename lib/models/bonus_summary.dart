@@ -1,4 +1,5 @@
 import 'package:delycafe/constants/bonus_rules.dart';
+import 'package:delycafe/models/user.dart';
 
 class BonusSummary {
   final int customerId;
@@ -42,6 +43,19 @@ class BonusSummary {
               .map(BonusTransactionItem.fromJson)
               .toList()
           : const [],
+    );
+  }
+
+  factory BonusSummary.fromUser(User user) {
+    return BonusSummary(
+      customerId: user.id ?? 0,
+      phone: user.phone,
+      bonusBalance: user.bonusBalance,
+      earnPercent: BonusRules.earnPercent,
+      maxSpendPercent: BonusRules.maxSpendPercent,
+      firstOrderDiscountAvailable: user.firstOrderDiscountAvailable,
+      firstOrderDiscountUsed: user.firstOrderDiscountUsed,
+      transactions: const [],
     );
   }
 

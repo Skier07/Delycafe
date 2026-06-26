@@ -99,6 +99,18 @@ class CheckoutScreens extends StatelessWidget {
 
                     if (!context.mounted) return;
 
+                    try {
+                      await context.read<AuthService>().signInWithPhone(
+                            data.phone,
+                          );
+                    } catch (error) {
+                      debugPrint(
+                        'Не удалось войти после оформления заказа: $error',
+                      );
+                    }
+
+                    if (!context.mounted) return;
+
                     final paymentUrl = order.paymentUrl.trim();
 
                     if (paymentUrl.isNotEmpty) {
@@ -131,14 +143,6 @@ class CheckoutScreens extends StatelessWidget {
 
                     cartService.clearCart();
 
-                    if (!context.mounted) return;
-
-                    try {
-                      await context.read<AuthService>().refreshCurrentUser();
-                    } catch (error) {
-                      debugPrint(
-                          'Не удалось обновить профиль после заказа: $error');
-                    }
                     if (!context.mounted) return;
 
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -210,6 +210,16 @@ ALFA_FAIL_URL = os.getenv(
 
 ALFA_CALLBACK_URL = os.getenv('ALFA_CALLBACK_URL', '')
 
+ALFA_REGISTER_URL = os.getenv(
+    'ALFA_REGISTER_URL',
+    'https://payment.alfabank.ru/payment/rest/register.do',
+)
+
+ALFA_STATUS_URL = os.getenv(
+    'ALFA_STATUS_URL',
+    'https://payment.alfabank.ru/payment/rest/getOrderStatusExtended.do',
+)
+
 
 SABY_APP_CLIENT_ID = os.getenv('SABY_APP_CLIENT_ID', '')
 SABY_APP_SECRET = os.getenv('SABY_APP_SECRET', '')

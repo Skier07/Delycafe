@@ -168,13 +168,16 @@ class _HomeScreenState extends State<HomeScreen> {
             const DarkGlassSheetDivider(),
             DarkGlassSheetItem(
               title: 'Поддержка',
-              onTap: () {
+              onTap: () async {
                 final user = context.read<AuthService>().currentUser;
                 _closeOverlay();
-                JivoService.openSupportChat(
+                await JivoService.openSupportChat(
                   context,
                   user: user,
                 );
+                if (!mounted) return;
+
+                _openOverlay(HomeOverlayType.menu);
               },
             ),
           ],

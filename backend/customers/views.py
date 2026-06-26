@@ -7,7 +7,12 @@ from .models import BonusTransaction, Customer, CustomerAddress
 from .serializers import (
     BonusTransactionSerializer,
     CustomerAddressSerializer,
+    CustomerAuthAccountSerializer,
     CustomerProfileSerializer,
+)
+from .services.saby_customer_service import (
+    SabyCustomerService,
+    upsert_customer_from_saby,
 )
 
 
@@ -59,6 +64,108 @@ def sync_customer_default_address(customer, address_obj=None):
     customer.save(update_fields=['default_address', 'updated_at'])
 
 
+def sync_customer_from_saby(phone: str):
+    service = SabyCustomerService()
+    saby_data = service.find_by_phone(phone)
+
+    if saby_data is None:
+        return None
+
+    return upsert_customer_from_saby(saby_data)
+
+
+class CustomerSabyLookupAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        phone = request.query_params.get('phone')
+        normalized_phone = normalize_phone(phone)
+
+        if not normalized_phone:
+            return Response(
+                {'detail': 'Не передан телефон.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            customer = sync_customer_from_saby(normalized_phone)
+        except Exception as exc:
+            return Response(
+                {'detail': f'Ошибка Saby: {exc}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        if customer is None:
+            return Response(
+                {
+                    'found': False,
+                    'phone': SabyCustomerService().format_phone_for_app(
+                        normalized_phone,
+                    ),
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                'found': True,
+                'customer': CustomerAuthAccountSerializer(customer).data,
+            },
+        )
+
+
+class CustomerAuthMatchAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        raw_phones = request.data.get('phones')
+
+        if not isinstance(raw_phones, list) or not raw_phones:
+            return Response(
+                {'detail': 'Передайте список phones.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        normalized_phones = []
+
+        for raw_phone in raw_phones:
+            normalized_phone = normalize_phone(raw_phone)
+
+            if normalized_phone:
+                normalized_phones.append(normalized_phone)
+
+        normalized_phones = list(dict.fromkeys(normalized_phones))
+
+        if not normalized_phones:
+            return Response({'accounts': []})
+
+        matched_accounts = []
+
+        for phone in normalized_phones:
+            customer = Customer.objects.filter(phone=phone).first()
+
+            if customer is None:
+                try:
+                    customer = sync_customer_from_saby(phone)
+                except Exception:
+                    customer = None
+
+            if customer is None:
+                continue
+
+            matched_accounts.append(
+                CustomerAuthAccountSerializer(customer).data,
+            )
+
+        return Response(
+            {
+                'accounts': matched_accounts,
+            },
+        )
+
+
 class CustomerProfileAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -69,6 +176,15 @@ class CustomerProfileAPIView(APIView):
 
         if error_response:
             return error_response
+
+        if request.query_params.get('sync_saby') == '1':
+            try:
+                synced_customer = sync_customer_from_saby(customer.phone)
+
+                if synced_customer is not None:
+                    customer = synced_customer
+            except Exception:
+                pass
 
         return Response(CustomerProfileSerializer(customer).data)
 

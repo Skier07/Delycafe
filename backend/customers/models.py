@@ -32,6 +32,23 @@ class Customer(models.Model):
         default=True,
         verbose_name='Активен',
     )
+    saby_external_id = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        unique=True,
+        verbose_name='UUID клиента в Saby',
+    )
+    saby_customer_id = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='ID клиента в Saby',
+    )
+    saby_synced_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Дата синхронизации с Saby',
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания',

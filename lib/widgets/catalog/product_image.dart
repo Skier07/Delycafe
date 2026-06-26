@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -20,11 +21,13 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final normalizedImage = _normalizedImageUrl(image);
+    final normalizedImage = ApiConfig.normalizeMediaUrl(image);
     final child = _buildImage(normalizedImage);
+
     if (borderRadius == null) {
       return child;
     }
+
     return ClipRRect(
       borderRadius: borderRadius!,
       child: child,
@@ -32,38 +35,45 @@ class ProductImage extends StatelessWidget {
   }
 
   Widget _buildImage(String normalizedImage) {
+    final resolvedWidth = width ?? double.infinity;
+    final resolvedHeight = height ?? double.infinity;
+
     if (normalizedImage.startsWith('http')) {
-      return Image.network(
-        normalizedImage,
+      return CachedNetworkImage(
+        imageUrl: normalizedImage,
         fit: fit,
-        width: width ?? double.infinity,
-        height: height ?? double.infinity,
-        errorBuilder: (context, error, stackTrace) {
-          return const _ImagePlaceholder();
-        },
+        width: resolvedWidth,
+        height: resolvedHeight,
+        fadeInDuration: const Duration(milliseconds: 180),
+        placeholder: (context, url) => const _ImagePlaceholder(
+          showProgress: true,
+        ),
+        errorWidget: (context, url, error) => const _ImagePlaceholder(),
       );
     }
-    if (normalizedImage.isEmpty) {
+
+    if (normalizedImage.startsWith('assets/')) {
       return Image.asset(
         normalizedImage,
         fit: fit,
-        width: width ?? double.infinity,
-        height: height ?? double.infinity,
+        width: resolvedWidth,
+        height: resolvedHeight,
         errorBuilder: (context, error, stackTrace) {
           return const _ImagePlaceholder();
         },
       );
     }
-    return const _ImagePlaceholder();
-  }
 
-  String _normalizedImageUrl(String value) {
-    return ApiConfig.normalizeMediaUrl(value);
+    return const _ImagePlaceholder();
   }
 }
 
 class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder();
+  final bool showProgress;
+
+  const _ImagePlaceholder({
+    this.showProgress = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +82,20 @@ class _ImagePlaceholder extends StatelessWidget {
       height: double.infinity,
       color: AppColors.header.withValues(alpha: 0.08),
       alignment: Alignment.center,
-      child: Icon(
-        Icons.restaurant_menu,
-        size: 44,
-        color: AppColors.header.withValues(alpha: 0.45),
-      ),
+      child: showProgress
+          ? SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: AppColors.header.withValues(alpha: 0.55),
+              ),
+            )
+          : Icon(
+              Icons.restaurant_menu,
+              size: 44,
+              color: AppColors.header.withValues(alpha: 0.45),
+            ),
     );
   }
 }
