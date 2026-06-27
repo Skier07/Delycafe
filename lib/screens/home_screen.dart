@@ -1,4 +1,6 @@
+import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/features/auth/auth_screen.dart';
+import 'package:delycafe/models/user.dart';
 import 'package:delycafe/screens/about_screen.dart';
 import 'package:delycafe/screens/addresses_screen.dart';
 import 'package:delycafe/screens/bonuses_screen.dart';
@@ -212,19 +214,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            const DarkGlassSheetDivider(),
-            DarkGlassSheetItem(
-              title: 'Бонусы',
-              onTap: () {
-                _closeOverlay();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const BonusesScreen(),
-                  ),
-                );
-              },
-            ),
+            if (AppFeatures.bonusesEnabled) ...[
+              const DarkGlassSheetDivider(),
+              DarkGlassSheetItem(
+                title: 'Бонусы',
+                onTap: () {
+                  _closeOverlay();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BonusesScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
             const DarkGlassSheetDivider(),
             DarkGlassSheetItem(
               title: 'Адреса доставки',
@@ -427,38 +431,44 @@ class HomeBanner extends StatelessWidget {
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: ShaderGlassContainer(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const BonusesScreen(),
-                    ),
-                  );
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${user.points}',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.buttonText,
+            if (AppFeatures.bonusesEnabled)
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: ShaderGlassContainer(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BonusesScreen(),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      CupertinoIcons.tickets,
-                      color: AppColors.buttonText,
-                      size: AppSizes.buttonSize,
-                    ),
-                  ],
+                    );
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${user.points}',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.buttonText,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        CupertinoIcons.tickets,
+                        color: AppColors.buttonText,
+                        size: AppSizes.buttonSize,
+                      ),
+                    ],
+                  ),
                 ),
+              )
+            else
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: _BannerSupportButton(user: user),
               ),
-            ),
             Align(
               alignment: Alignment.bottomRight,
               child: Stack(
@@ -510,6 +520,33 @@ class HomeBanner extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BannerSupportButton extends StatelessWidget {
+  final User? user;
+
+  const _BannerSupportButton({
+    required this.user,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderGlassContainer(
+      onPressed: () {
+        JivoService.openSupportChat(
+          context,
+          user: user,
+        );
+      },
+      padding: const EdgeInsets.all(8),
+      borderRadius: 30,
+      child: const Icon(
+        CupertinoIcons.ellipses_bubble,
+        color: AppColors.buttonText,
+        size: AppSizes.buttonSize,
       ),
     );
   }

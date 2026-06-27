@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/models/order.dart';
 import 'package:delycafe/screens/checkout_screens.dart';
@@ -321,12 +322,12 @@ class _OrderCard extends StatelessWidget {
               title: 'Доставка',
               value: order.deliveryPrice,
             ),
-          if (order.discountAmount > 0)
+          if (AppFeatures.firstOrderDiscountEnabled && order.discountAmount > 0)
             _PriceRow(
               title: 'Скидка',
               value: -order.discountAmount,
             ),
-          if (order.bonusSpent > 0)
+          if (AppFeatures.bonusesEnabled && order.bonusSpent > 0)
             _PriceRow(
               title: 'Списано бонусов',
               value: -order.bonusSpent,
@@ -353,7 +354,7 @@ class _OrderCard extends StatelessWidget {
               ),
             ],
           ),
-          if (order.bonusEarned > 0) ...[
+          if (AppFeatures.bonusesEnabled && order.bonusEarned > 0) ...[
             const SizedBox(height: 8),
             Text(
               'Начислено бонусов: ${order.bonusEarned}',

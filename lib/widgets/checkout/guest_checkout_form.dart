@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -171,7 +172,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   bool get _hasAutomaticFirstOrderDiscount {
-    return widget.firstOrderDiscountAvailable;
+    return AppFeatures.firstOrderDiscountEnabled &&
+        widget.firstOrderDiscountAvailable;
   }
 
   int get _deliveryPrice {
@@ -199,7 +201,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   int get _maxBonusSpend {
-    if (_hasAutomaticFirstOrderDiscount) return 0;
+    if (!AppFeatures.bonusesEnabled || _hasAutomaticFirstOrderDiscount) {
+      return 0;
+    }
 
     final maxByPercent = widget.cartTotal * BonusRules.maxSpendPercent ~/ 100;
 
@@ -695,26 +699,29 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             ],
           ),
           const SizedBox(height: 24),
-          const _BlockTitle('Скидки и бонусы'),
-          const SizedBox(height: 12),
-          if (_hasAutomaticFirstOrderDiscount)
-            _DiscountInfoCard(
-              discountAmount: _firstOrderDiscount,
-            )
-          else
-            _BonusSpendCard(
-              availableBonuses: widget.availableBonuses,
-              bonusSpent: _bonusSpent,
-              useBonuses: _useBonuses,
-              onChanged: widget.availableBonuses > 0 && _maxBonusSpend > 0
-                  ? (value) {
-                      setState(() {
-                        _useBonuses = value;
-                      });
-                    }
-                  : null,
-            ),
-          const SizedBox(height: 24),
+          if (AppFeatures.bonusesEnabled ||
+              AppFeatures.firstOrderDiscountEnabled) ...[
+            const _BlockTitle('Скидки и бонусы'),
+            const SizedBox(height: 12),
+            if (_hasAutomaticFirstOrderDiscount)
+              _DiscountInfoCard(
+                discountAmount: _firstOrderDiscount,
+              )
+            else if (AppFeatures.bonusesEnabled)
+              _BonusSpendCard(
+                availableBonuses: widget.availableBonuses,
+                bonusSpent: _bonusSpent,
+                useBonuses: _useBonuses,
+                onChanged: widget.availableBonuses > 0 && _maxBonusSpend > 0
+                    ? (value) {
+                        setState(() {
+                          _useBonuses = value;
+                        });
+                      }
+                    : null,
+              ),
+            const SizedBox(height: 24),
+          ],
           const _BlockTitle('Комментарий'),
           const SizedBox(height: 12),
           TextFormField(
@@ -744,14 +751,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   value: '${widget.cartTotal} ₽',
                 ),
                 const SizedBox(height: 10),
-                if (_firstOrderDiscount > 0) ...[
+                if (AppFeatures.firstOrderDiscountEnabled &&
+                    _firstOrderDiscount > 0) ...[
                   _PriceRow(
                     title: 'Скидка первого заказа',
                     value: '-$_firstOrderDiscount ₽',
                   ),
                   const SizedBox(height: 10),
                 ],
-                if (_bonusSpent > 0) ...[
+                if (AppFeatures.bonusesEnabled && _bonusSpent > 0) ...[
                   _PriceRow(
                     title: 'Списано бонусов',
                     value: '-$_bonusSpent ₽',

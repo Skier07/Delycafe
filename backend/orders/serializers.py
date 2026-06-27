@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
 from .models import Order, OrderItem
+from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
 
 FIRST_ORDER_DISCOUNT_PERCENT = 20
 BONUS_EARN_PERCENT = 5
@@ -223,6 +224,9 @@ class OrderCreateSerializer(serializers.Serializer):
         items_data = validated_data.pop('items')
         requested_bonus_spent = validated_data.pop('bonus_spent', 0)
 
+        if not APP_BONUSES_ENABLED:
+            requested_bonus_spent = 0
+
         phone = validated_data['phone']
         customer_name = validated_data.get('customer_name', '').strip()
         order_address = (validated_data.get('address') or '').strip()
@@ -243,7 +247,7 @@ class OrderCreateSerializer(serializers.Serializer):
                 'default_address': order_address
                 if delivery_type != Order.DeliveryType.PICKUP
                 else '',
-                'first_order_discount_available': True,
+                'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
                 'first_order_discount_used': False,
             },
         )
@@ -282,7 +286,8 @@ class OrderCreateSerializer(serializers.Serializer):
         first_order_discount_applied = False
 
         can_use_first_order_discount = (
-            customer.first_order_discount_available
+            APP_FIRST_ORDER_DISCOUNT_ENABLED
+            and customer.first_order_discount_available
             and not customer.first_order_discount_used
         )
 
@@ -294,7 +299,11 @@ class OrderCreateSerializer(serializers.Serializer):
 
         bonus_spent = 0
 
-        if not first_order_discount_applied and requested_bonus_spent > 0:
+        if (
+            APP_BONUSES_ENABLED
+            and not first_order_discount_applied
+            and requested_bonus_spent > 0
+        ):
             max_bonus_spend = (
                 products_total * MAX_BONUS_SPEND_PERCENT // 100
             )
@@ -311,7 +320,10 @@ class OrderCreateSerializer(serializers.Serializer):
             0,
         )
 
-        bonus_earned = paid_products_total * BONUS_EARN_PERCENT // 100
+        bonus_earned = 0
+
+        if APP_BONUSES_ENABLED:
+            bonus_earned = paid_products_total * BONUS_EARN_PERCENT // 100
 
         total_price = paid_products_total + delivery_price
 

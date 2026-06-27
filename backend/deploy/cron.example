@@ -1,0 +1,23 @@
+# DelyCafe backend — пример crontab для VPS.
+#
+# Установка:
+#   crontab -e
+#   Скопируйте нужные строки ниже (раскомментируйте).
+#
+# Пути по умолчанию (проверьте на сервере):
+#   BACKEND=/var/www/delycafe_backend/Delycafe/backend
+#   VENV=/var/www/delycafe_backend/venv/bin/python
+#   LOG=/var/log/delycafe_saby_sync.log
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Синхронизация статусов заказов из Saby Presto (в т.ч. отмена).
+# Рекомендуется: каждые 2 минуты.
+*/2 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_order_statuses --limit=200 >> /var/log/delycafe_saby_sync.log 2>&1
+
+# Более частая синхронизация — каждую минуту (если нужна минимальная задержка):
+# * * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_order_statuses --limit=200 >> /var/log/delycafe_saby_sync.log 2>&1
+
+# Повторная отправка в Saby оплаченных заказов без sale_id (реже, раз в 10 минут):
+# */10 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py retry_saby_dispatch --limit=50 >> /var/log/delycafe_saby_retry.log 2>&1

@@ -1,3 +1,4 @@
+import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
@@ -17,14 +18,8 @@ class ProfileScreen extends StatelessWidget {
 
     final name = _getName(user);
     final phone = _formatPhone(user?.phone ?? '');
-    final bonuses = user?.bonusBalance ?? 0;
     final address = user?.defaultAddress.trim() ?? '';
-
-    final discountText = user == null
-        ? 'Войдите в аккаунт, чтобы получить скидку'
-        : user.firstOrderDiscountAvailable
-            ? 'Доступна скидка 20% на первый заказ'
-            : 'Скидка первого заказа уже использована';
+    final bonuses = user?.bonusBalance ?? 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -69,11 +64,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             _ProfileHeaderCard(
               name: name,
-              subtitle: user == null
-                  ? 'Гость'
-                  : user.firstOrderDiscountAvailable
-                      ? 'Новый клиент'
-                      : 'Постоянный клиент',
+              subtitle: user == null ? 'Гость' : 'Клиент DelyCafe',
               onEditName: user == null
                   ? null
                   : () {
@@ -89,36 +80,44 @@ class ProfileScreen extends StatelessWidget {
                 style: _valueStyle,
               ),
             ),
-            const SizedBox(height: 12),
-            _InfoCard(
-              icon: CupertinoIcons.star_fill,
-              title: 'Бонусы',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$bonuses',
-                    style: _bigValueStyle.copyWith(
-                      color: AppColors.header,
+            if (AppFeatures.bonusesEnabled) ...[
+              const SizedBox(height: 12),
+              _InfoCard(
+                icon: CupertinoIcons.star_fill,
+                title: 'Бонусы',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$bonuses',
+                      style: _bigValueStyle.copyWith(
+                        color: AppColors.header,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '1 бонус = 1 ₽',
-                    style: _subtleStyle,
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    const Text(
+                      '1 бонус = 1 ₽',
+                      style: _subtleStyle,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            _InfoCard(
-              icon: CupertinoIcons.tag_fill,
-              title: 'Скидка первого заказа',
-              child: Text(
-                discountText,
-                style: _valueStyle,
+            ],
+            if (AppFeatures.firstOrderDiscountEnabled) ...[
+              const SizedBox(height: 12),
+              _InfoCard(
+                icon: CupertinoIcons.tag_fill,
+                title: 'Скидка первого заказа',
+                child: Text(
+                  user == null
+                      ? 'Войдите в аккаунт, чтобы получить скидку'
+                      : user.firstOrderDiscountAvailable
+                          ? 'Доступна скидка 20% на первый заказ'
+                          : 'Скидка первого заказа уже использована',
+                  style: _valueStyle,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 12),
             _InfoCard(
               icon: CupertinoIcons.location,

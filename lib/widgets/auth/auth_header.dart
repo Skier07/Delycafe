@@ -1,3 +1,4 @@
+import 'package:delycafe/constants/app_features.dart';
 import 'package:flutter/material.dart';
 
 class AuthHeader extends StatelessWidget {
@@ -18,24 +19,26 @@ class AuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(height: 25),
-          Text(
+          const SizedBox(height: 25),
+          const Text(
             'ВВЕДИ СВОЙ НОМЕР',
             style: textStyleL,
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 25),
+          const SizedBox(height: 25),
           Text(
-            'Чтобы копить баллы,\n применять скидки\n и оформлять заказы',
+            AppFeatures.bonusesEnabled
+                ? 'Чтобы копить баллы,\n применять скидки\n и оформлять заказы'
+                : 'Чтобы оформлять заказы\n и видеть историю',
             style: textStyleS,
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 25),
+          const SizedBox(height: 25),
         ],
       ),
     );

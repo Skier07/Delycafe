@@ -15,6 +15,11 @@ from .services.saby_customer_service import (
     upsert_customer_from_saby,
 )
 
+try:
+    from orders.promotions import APP_FIRST_ORDER_DISCOUNT_ENABLED
+except ImportError:
+    APP_FIRST_ORDER_DISCOUNT_ENABLED = False
+
 
 def normalize_phone(value):
     raw_phone = str(value or '').strip()
@@ -44,7 +49,7 @@ def get_or_create_customer_by_phone(phone):
     customer, _ = Customer.objects.get_or_create(
         phone=normalized_phone,
         defaults={
-            'first_order_discount_available': True,
+            'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
             'first_order_discount_used': False,
         },
     )
