@@ -8,7 +8,7 @@
             "program": "lib/main.dart",
             "args": [
                 "--dart-define=API_BASE_URL=https://api.delycafe.ru",
-                "--dart-define=JIVO_WIDGET_ID=TEfZ2JmXOW"
+                "--dart-define=JIVO_WIDGET_ID=iu8CBCjhtn"
             ]
         },
         {
@@ -18,7 +18,7 @@
             "program": "lib/main.dart",
             "args": [
                 "--dart-define=API_BASE_URL=http://10.0.2.2:8000",
-                "--dart-define=JIVO_WIDGET_ID=TEfZ2JmXOW"
+                "--dart-define=JIVO_WIDGET_ID=iu8CBCjhtn"
             ]
         }
     ]

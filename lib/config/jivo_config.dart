@@ -3,7 +3,7 @@
 /// Override at build time if needed:
 /// `flutter run --dart-define=JIVO_WIDGET_ID=other_id`
 class JivoConfig {
-  static const String defaultWidgetId = 'TEfZ2JmXOW';
+  static const String defaultWidgetId = 'iu8CBCjhtn';
 
   /// Origin for WebView — Jivo CDN, no dependency on marketing sites.
   static const String baseUrl = 'https://code.jivo.ru/';
