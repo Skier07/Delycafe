@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -8,6 +9,7 @@ from customers.models import BonusTransaction, Customer
 from .models import Order, OrderItem
 from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
 from .services import rollback_order
+from payments.services import evaluate_alfa_session_for_reuse
 
 UNPAID_ORDER_REUSE_HOURS = 24
 
@@ -52,6 +54,17 @@ def normalize_phone(phone):
         return digits
 
     return digits or raw_phone
+
+
+def phone_order_filter(phone):
+    normalized = normalize_phone(phone)
+    variants = {normalized, str(phone or '').strip()}
+
+    if len(normalized) == 11 and normalized.startswith('7'):
+        variants.add(f'+{normalized}')
+        variants.add(f'8{normalized[1:]}')
+
+    return Q(phone__in=[value for value in variants if value])
 
 
 class OrderItemCreateSerializer(serializers.Serializer):
@@ -269,7 +282,7 @@ class OrderCreateSerializer(serializers.Serializer):
 
         candidates = (
             Order.objects.filter(
-                phone=phone,
+                phone_order_filter(phone),
                 payment_status__in=[
                     Order.PaymentStatus.UNPAID,
                     Order.PaymentStatus.FAILED,
@@ -282,14 +295,19 @@ class OrderCreateSerializer(serializers.Serializer):
         )
 
         for order in candidates:
-            if self._build_order_items_signature(order) == signature:
-                return order
+            if self._build_order_items_signature(order) != signature:
+                continue
+
+            if not evaluate_alfa_session_for_reuse(order):
+                continue
+
+            return order
 
         return None
 
     def _cancel_unpaid_orders(self, phone, *, exclude_order_id=None):
         queryset = Order.objects.filter(
-            phone=phone,
+            phone_order_filter(phone),
             payment_status__in=[
                 Order.PaymentStatus.UNPAID,
                 Order.PaymentStatus.FAILED,
@@ -408,10 +426,28 @@ class OrderCreateSerializer(serializers.Serializer):
 
         return customer
 
-    def _clear_alfa_payment_session(self, order):
-        order.payment_provider = ''
-        order.payment_external_id = ''
-        order.payment_url = ''
+    def _needs_new_order_for_payment_change(self, order, data, items_data):
+        requested_bonus_spent = data.get('bonus_spent', 0)
+        if not APP_BONUSES_ENABLED:
+            requested_bonus_spent = 0
+
+        delivery_type = data.get('delivery_type')
+        customer = order.customer
+
+        if customer is None:
+            return data['payment_type'] != order.payment_type
+
+        pricing = self._calculate_order_pricing(
+            customer=customer,
+            items_data=items_data,
+            delivery_type=delivery_type,
+            requested_bonus_spent=requested_bonus_spent,
+        )
+
+        return (
+            data['payment_type'] != order.payment_type
+            or pricing['total_price'] != order.payment_amount
+        )
 
     @transaction.atomic
     def create_or_reuse(self, validated_data):
@@ -423,6 +459,14 @@ class OrderCreateSerializer(serializers.Serializer):
         )
 
         if reusable_order is not None:
+            if self._needs_new_order_for_payment_change(
+                reusable_order,
+                data,
+                items_data,
+            ):
+                self._cancel_unpaid_orders(data['phone'])
+                return self.create(data)
+
             self._cancel_unpaid_orders(
                 data['phone'],
                 exclude_order_id=reusable_order.id,
@@ -483,13 +527,6 @@ class OrderCreateSerializer(serializers.Serializer):
             requested_bonus_spent=requested_bonus_spent,
         )
 
-        previous_total = order.payment_amount
-        previous_payment_type = order.payment_type
-        payment_changed = (
-            pricing['total_price'] != previous_total
-            or data['payment_type'] != previous_payment_type
-        )
-
         order.phone = phone
         order.customer_name = customer_name
         order.delivery_type = delivery_type
@@ -514,10 +551,6 @@ class OrderCreateSerializer(serializers.Serializer):
 
         if order.payment_status == Order.PaymentStatus.FAILED:
             order.payment_status = Order.PaymentStatus.UNPAID
-            payment_changed = True
-
-        if payment_changed:
-            self._clear_alfa_payment_session(order)
 
         order.save()
         return order

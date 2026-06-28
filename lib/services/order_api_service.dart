@@ -10,6 +10,7 @@ class OrderCreateResult {
   final String paymentStatus;
   final String paymentType;
   final String paymentUrl;
+  final String? paymentError;
 
   const OrderCreateResult({
     required this.id,
@@ -18,6 +19,7 @@ class OrderCreateResult {
     required this.paymentStatus,
     required this.paymentType,
     required this.paymentUrl,
+    this.paymentError,
   });
 
   factory OrderCreateResult.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class OrderCreateResult {
       paymentStatus: json['payment_status']?.toString() ?? '',
       paymentType: json['payment_type']?.toString() ?? '',
       paymentUrl: json['payment_url']?.toString() ?? '',
+      paymentError: json['payment_error']?.toString(),
     );
   }
 

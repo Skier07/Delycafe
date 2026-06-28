@@ -4,6 +4,7 @@ import 'package:delycafe/screens/order_payment_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/order_api_service.dart';
+import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/widgets/checkout/guest_checkout_form.dart';
@@ -133,35 +134,57 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
 
                     if (!context.mounted) return;
 
-                    final paymentUrl = order.paymentUrl.trim();
+                    var paymentUrl = order.paymentUrl.trim();
+                    var paymentError = order.paymentError?.trim();
+
+                    if (paymentUrl.isEmpty) {
+                      try {
+                        final session =
+                            await PaymentApiService().createPayment(order.id);
+                        paymentUrl = session.paymentUrl.trim();
+                      } catch (error) {
+                        paymentError ??= error.toString();
+                      }
+                    }
 
                     if (paymentUrl.isNotEmpty) {
-                      final paid = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OrderPaymentScreen(
-                            orderId: order.id,
-                            paymentUrl: paymentUrl,
-                            paymentAmount: order.paymentAmount,
-                            paymentType: order.paymentType,
+                      paymentError = null;
+                    }
+
+                    if (paymentUrl.isEmpty) {
+                      throw Exception(
+                        paymentError?.isNotEmpty == true
+                            ? paymentError!
+                            : 'Не удалось получить ссылку на оплату '
+                                'для заказа №${order.id}.',
+                      );
+                    }
+
+                    final paid = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OrderPaymentScreen(
+                          orderId: order.id,
+                          paymentUrl: paymentUrl,
+                          paymentAmount: order.paymentAmount,
+                          paymentType: order.paymentType,
+                        ),
+                      ),
+                    );
+
+                    if (!context.mounted) return;
+
+                    if (paid != true) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Оплата не завершена. Оформите заказ снова из корзины — '
+                            'будет использован тот же заказ №${order.id}.',
                           ),
                         ),
                       );
-
-                      if (!context.mounted) return;
-
-                      if (paid != true) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Оплата не завершена. Оформите заказ снова из корзины — '
-                              'будет использован тот же заказ №${order.id}.',
-                            ),
-                          ),
-                        );
-                        Navigator.pop(context);
-                        return;
-                      }
+                      Navigator.pop(context);
+                      return;
                     }
 
                     cartService.clearCart();
@@ -171,10 +194,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          paymentUrl.isNotEmpty
-                              ? 'Заказ №${order.id} оплачен и принят в работу'
-                              : 'Заказ №${order.id} оформлен. '
-                                  'К оплате: ${order.paymentAmount} ₽',
+                          'Заказ №${order.id} оплачен и принят в работу',
                         ),
                       ),
                     );

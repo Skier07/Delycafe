@@ -223,6 +223,11 @@ ALFA_STATUS_URL = os.getenv(
     'https://payment.alfabank.ru/payment/rest/getOrderStatusExtended.do',
 )
 
+ALFA_PAYMENT_FORM_URL = os.getenv(
+    'ALFA_PAYMENT_FORM_URL',
+    'https://payment.alfabank.ru/payment/merchants/r-pizzaozersk/payment_ru.html?mdOrder={mdOrder}',
+)
+
 
 SABY_APP_CLIENT_ID = os.getenv('SABY_APP_CLIENT_ID', '')
 SABY_APP_SECRET = os.getenv('SABY_APP_SECRET', '')

@@ -19,11 +19,16 @@ class OrderCreateAPIView(APIView):
 
         order = serializer.save()
 
+        payment_error = None
+
         if getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
             try:
                 create_alfa_payment(order)
                 order.refresh_from_db()
-            except AlfaPaymentError:
+            except AlfaPaymentError as error:
+                order.refresh_from_db()
+                if not (order.payment_url or '').strip():
+                    payment_error = str(error)
                 logger.exception(
                     'Failed to register Alfa payment for order #%s',
                     order.id,
@@ -36,7 +41,11 @@ class OrderCreateAPIView(APIView):
             },
         )
 
+        response_data = response_serializer.data
+        if payment_error:
+            response_data['payment_error'] = payment_error
+
         return Response(
-            response_serializer.data,
+            response_data,
             status=status.HTTP_201_CREATED,
         )

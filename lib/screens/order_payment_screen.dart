@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -203,7 +201,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
           onPageFinished: (url) {
             if (!mounted || _paymentCompleted) return;
             unawaited(_maybeTriggerSbpFlow());
-            _checkPaymentStatus(showErrors: false);
+            if (_isPaymentReturnUrl(url)) {
+              _checkPaymentStatus(showErrors: false);
+            }
           },
           onWebResourceError: (error) {
             if (!mounted || _paymentCompleted) return;
@@ -513,7 +513,6 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
     if (!mounted) return;
 
-    context.read<CartService>().clearCart();
     Navigator.pop(context, true);
   }
 
