@@ -1,3 +1,5 @@
+import 'package:delycafe/utils/delivery_address_parser.dart';
+
 class CustomerAddress {
   final int id;
   final String title;
@@ -72,5 +74,33 @@ class CustomerAddress {
     }
 
     return 0;
+  }
+}
+
+extension CustomerAddressCheckout on CustomerAddress {
+  ParsedDeliveryAddress get checkoutFields {
+    if (address.trim().isNotEmpty) {
+      return ParsedDeliveryAddress(
+        street: address.trim(),
+        entrance: entrance.trim(),
+        floor: floor.trim(),
+        apartment: apartment.trim(),
+      );
+    }
+
+    return parseDeliveryAddress(
+      fullAddress.trim().isNotEmpty ? fullAddress.trim() : address.trim(),
+    );
+  }
+
+  String get checkoutDisplayLine {
+    final fields = checkoutFields;
+    final line = fields.displayLine;
+
+    if (line.isNotEmpty) {
+      return line;
+    }
+
+    return title.trim();
   }
 }

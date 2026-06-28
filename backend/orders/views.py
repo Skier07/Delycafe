@@ -7,10 +7,7 @@ from rest_framework.views import APIView
 
 from payments.services import AlfaPaymentError, create_alfa_payment
 
-from .models import Order
 from .serializers import OrderCreateSerializer, OrderSerializer
-from .services import confirm_order_paid
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,10 +19,7 @@ class OrderCreateAPIView(APIView):
 
         order = serializer.save()
 
-        if (
-            getattr(settings, 'ALFA_PAYMENT_ENABLED', False)
-            and order.payment_type != Order.PaymentType.CASH
-        ):
+        if getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
             try:
                 create_alfa_payment(order)
                 order.refresh_from_db()
@@ -34,9 +28,6 @@ class OrderCreateAPIView(APIView):
                     'Failed to register Alfa payment for order #%s',
                     order.id,
                 )
-        elif order.payment_type == Order.PaymentType.CASH:
-            confirm_order_paid(order)
-            order.refresh_from_db()
 
         response_serializer = OrderSerializer(
             order,

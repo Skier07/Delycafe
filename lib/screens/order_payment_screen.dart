@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -12,12 +14,14 @@ class OrderPaymentScreen extends StatefulWidget {
   final int orderId;
   final String paymentUrl;
   final int paymentAmount;
+  final String paymentType;
 
   const OrderPaymentScreen({
     super.key,
     required this.orderId,
     required this.paymentUrl,
     required this.paymentAmount,
+    this.paymentType = 'card',
   });
 
   @override
@@ -39,6 +43,8 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   bool _awaitingBankReturn = false;
   String? _lastLaunchedExternalUrl;
   DateTime? _lastLaunchedAt;
+  int _statusRetryGeneration = 0;
+  bool _sbpFlowTriggered = false;
 
   static final _bankSbpPathPattern = RegExp(
     r'paymentsbp|/sbp/|/sbp$|paysbp|sbp-pay',
@@ -78,7 +84,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       if (_awaitingBankReturn) {
         _awaitingBankReturn = false;
       }
-      _checkPaymentStatus(showErrors: false);
+      unawaited(_checkPaymentStatusWithRetries());
     }
   }
 
@@ -121,6 +127,65 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     });
   }
 
+  Future<void> _maybeTriggerSbpFlow() async {
+    if (_sbpFlowTriggered ||
+        widget.paymentType.toLowerCase() != 'sbp' ||
+        _webViewController == null) {
+      return;
+    }
+
+    _sbpFlowTriggered = true;
+
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    if (!mounted || _paymentCompleted || _webViewController == null) {
+      return;
+    }
+
+    try {
+      await _webViewController!.runJavaScript('''
+        (function () {
+          var bodyText = (document.body && document.body.innerText) || '';
+          if (bodyText.toLowerCase().indexOf('выберите банк') >= 0) {
+            return;
+          }
+
+          var selectors = [
+            'button[data-payment-way="SBP_C2B"]',
+            '[data-payment-way="SBP_C2B"]',
+            'button[data-payment-type="SBP"]',
+            '[data-payment-type="SBP"]',
+            'a[href*="sbp"]'
+          ];
+
+          for (var i = 0; i < selectors.length; i++) {
+            var element = document.querySelector(selectors[i]);
+            if (element) {
+              element.click();
+              return;
+            }
+          }
+
+          var clickables = document.querySelectorAll(
+            'button, a, [role="button"], [class*="payment"]'
+          );
+
+          for (var j = 0; j < clickables.length; j++) {
+            var node = clickables[j];
+            var text = ((node.innerText || node.textContent || '') + '').toLowerCase();
+            if (text.indexOf('сбп') >= 0 || text.indexOf('sbp') >= 0) {
+              node.click();
+              return;
+            }
+          }
+        })();
+      ''');
+    } catch (error) {
+      debugPrint('Не удалось автоматически открыть СБП: $error');
+      _sbpFlowTriggered = false;
+    }
+  }
+
   void _setupWebView(String paymentUrl) {
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -135,8 +200,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
             _handleExternalUrl(url, fromNavigationRequest: false);
           },
-          onPageFinished: (_) {
+          onPageFinished: (url) {
             if (!mounted || _paymentCompleted) return;
+            unawaited(_maybeTriggerSbpFlow());
             _checkPaymentStatus(showErrors: false);
           },
           onWebResourceError: (error) {
@@ -175,7 +241,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     final url = request.url;
 
     if (_isPaymentReturnUrl(url)) {
-      unawaited(_checkPaymentStatus(showErrors: false));
+      unawaited(_checkPaymentStatusWithRetries());
     }
 
     if (_handleExternalUrl(url, fromNavigationRequest: true)) {
@@ -376,6 +442,37 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     });
   }
 
+  Future<void> _checkPaymentStatusWithRetries() async {
+    final generation = ++_statusRetryGeneration;
+
+    const delays = <Duration>[
+      Duration.zero,
+      Duration(seconds: 2),
+      Duration(seconds: 4),
+      Duration(seconds: 8),
+    ];
+
+    for (final delay in delays) {
+      if (_paymentCompleted || !mounted || generation != _statusRetryGeneration) {
+        return;
+      }
+
+      if (delay > Duration.zero) {
+        await Future.delayed(delay);
+      }
+
+      if (_paymentCompleted || !mounted || generation != _statusRetryGeneration) {
+        return;
+      }
+
+      await _checkPaymentStatus(showErrors: false);
+
+      if (_paymentCompleted) {
+        return;
+      }
+    }
+  }
+
   Future<void> _checkPaymentStatus({required bool showErrors}) async {
     if (_paymentCompleted || _isCheckingStatus) return;
 
@@ -412,9 +509,11 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
     _paymentCompleted = true;
     _pollTimer?.cancel();
+    _statusRetryGeneration++;
 
     if (!mounted) return;
 
+    context.read<CartService>().clearCart();
     Navigator.pop(context, true);
   }
 

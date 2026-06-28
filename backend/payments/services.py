@@ -172,6 +172,10 @@ def create_alfa_payment(order):
     if not external_id or not payment_url:
         raise AlfaPaymentError(f'Альфа не вернула ссылку оплаты: {response}')
 
+    if order.payment_type == Order.PaymentType.SBP:
+        separator = '&' if '?' in payment_url else '?'
+        payment_url = f'{payment_url}{separator}paymentWay=SBP_C2B'
+
     order.payment_provider = 'alfa'
     order.payment_external_id = external_id
     order.payment_url = payment_url

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:delycafe/screens/order_payment_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
@@ -9,8 +11,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class CheckoutScreens extends StatelessWidget {
+class CheckoutScreens extends StatefulWidget {
   const CheckoutScreens({super.key});
+
+  @override
+  State<CheckoutScreens> createState() => _CheckoutScreensState();
+}
+
+class _CheckoutScreensState extends State<CheckoutScreens> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final auth = context.read<AuthService>();
+      if (auth.isLoggedIn) {
+        unawaited(auth.refreshCurrentUser());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +91,7 @@ class CheckoutScreens extends StatelessWidget {
                   initialName: user?.name,
                   initialAddress: user?.checkoutAddress,
                   initialPhone: user?.phone,
+                  savedAddresses: user?.addresses ?? const [],
                   availableBonuses: user?.bonusBalance ?? 0,
                   firstOrderDiscountAvailable:
                       user?.firstOrderDiscountAvailable ?? false,
@@ -121,6 +143,7 @@ class CheckoutScreens extends StatelessWidget {
                             orderId: order.id,
                             paymentUrl: paymentUrl,
                             paymentAmount: order.paymentAmount,
+                            paymentType: order.paymentType,
                           ),
                         ),
                       );

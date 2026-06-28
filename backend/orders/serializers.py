@@ -135,7 +135,10 @@ class OrderCreateSerializer(serializers.Serializer):
     )
 
     payment_type = serializers.ChoiceField(
-        choices=Order.PaymentType.choices,
+        choices=[
+            Order.PaymentType.CARD,
+            Order.PaymentType.SBP,
+        ],
     )
 
     comment = serializers.CharField(

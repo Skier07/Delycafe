@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
+import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/delivery_address_parser.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +25,6 @@ enum DeliveryUrgency {
 enum PaymentMethod {
   card,
   sbp,
-  cash,
 }
 
 extension DeliveryTypeApiValue on DeliveryType {
@@ -72,8 +73,6 @@ extension PaymentMethodApiValue on PaymentMethod {
         return 'card';
       case PaymentMethod.sbp:
         return 'sbp';
-      case PaymentMethod.cash:
-        return 'cash';
     }
   }
 }
@@ -117,6 +116,7 @@ class GuestCheckoutForm extends StatefulWidget {
   final String? initialName;
   final String? initialAddress;
   final String? initialPhone;
+  final List<CustomerAddress> savedAddresses;
   final int availableBonuses;
   final bool firstOrderDiscountAvailable;
   final FutureOr<void> Function(GuestCheckoutData data) onSubmit;
@@ -127,6 +127,7 @@ class GuestCheckoutForm extends StatefulWidget {
     this.initialName,
     this.initialAddress,
     this.initialPhone,
+    this.savedAddresses = const [],
     this.availableBonuses = 0,
     this.firstOrderDiscountAvailable = false,
     required this.onSubmit,
@@ -151,6 +152,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   DeliveryType _deliveryType = DeliveryType.ozersk;
   DeliveryUrgency _urgency = DeliveryUrgency.asap;
   PaymentMethod _paymentMethod = PaymentMethod.card;
+
+  CustomerAddress? _selectedSavedAddress;
+  bool _useManualAddress = false;
 
   bool _useBonuses = false;
   bool _isSubmitting = false;
@@ -261,10 +265,59 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       _nameController.text = widget.initialName!.trim();
     }
 
-    if (widget.initialAddress != null &&
+    if (widget.savedAddresses.isNotEmpty) {
+      _applySavedAddress(_pickInitialSavedAddress());
+    } else if (widget.initialAddress != null &&
         widget.initialAddress!.trim().isNotEmpty) {
-      _addressController.text = widget.initialAddress!.trim();
+      _applyParsedAddress(widget.initialAddress!.trim());
+      _useManualAddress = true;
     }
+  }
+
+  CustomerAddress? _pickInitialSavedAddress() {
+    for (final address in widget.savedAddresses) {
+      if (address.isDefault) {
+        return address;
+      }
+    }
+
+    return widget.savedAddresses.first;
+  }
+
+  void _applySavedAddress(CustomerAddress? address) {
+    if (address == null) {
+      return;
+    }
+
+    final fields = address.checkoutFields;
+
+    _selectedSavedAddress = address;
+    _useManualAddress = false;
+    _addressController.text = fields.street;
+    _entranceController.text = fields.entrance;
+    _floorController.text = fields.floor;
+    _apartmentController.text = fields.apartment;
+
+    if (address.comment.trim().isNotEmpty) {
+      _commentController.text = address.comment.trim();
+    }
+  }
+
+  void _applyParsedAddress(String rawAddress) {
+    final fields = parseDeliveryAddress(rawAddress);
+
+    _selectedSavedAddress = null;
+    _addressController.text = fields.street;
+    _entranceController.text = fields.entrance;
+    _floorController.text = fields.floor;
+    _apartmentController.text = fields.apartment;
+  }
+
+  void _selectManualAddress() {
+    setState(() {
+      _useManualAddress = true;
+      _selectedSavedAddress = null;
+    });
   }
 
   @override
@@ -299,8 +352,6 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
         return 'Картой';
       case PaymentMethod.sbp:
         return 'СБП';
-      case PaymentMethod.cash:
-        return 'Наличкой';
     }
   }
 
@@ -560,6 +611,49 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             ),
           ),
           if (_needsAddress) ...[
+            if (widget.savedAddresses.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Куда доставить?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black.withValues(alpha: 0.82),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...widget.savedAddresses.map((address) {
+                final selected = !_useManualAddress &&
+                    _selectedSavedAddress?.id == address.id;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _SavedAddressCard(
+                    title: address.title.trim().isNotEmpty
+                        ? address.title.trim()
+                        : 'Адрес',
+                    subtitle: address.checkoutDisplayLine,
+                    selected: selected,
+                    isDefault: address.isDefault,
+                    onTap: () {
+                      setState(() {
+                        _applySavedAddress(address);
+                      });
+                    },
+                  ),
+                );
+              }),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: _SavedAddressCard(
+                  title: 'Другой адрес',
+                  subtitle: 'Указать адрес вручную',
+                  selected: _useManualAddress,
+                  onTap: _selectManualAddress,
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
             const SizedBox(height: 12),
             TextFormField(
               controller: _addressController,
@@ -680,18 +774,6 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   onTap: () {
                     setState(() {
                       _paymentMethod = PaymentMethod.sbp;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ChoiceCard(
-                  title: _paymentTitle(PaymentMethod.cash),
-                  selected: _paymentMethod == PaymentMethod.cash,
-                  onTap: () {
-                    setState(() {
-                      _paymentMethod = PaymentMethod.cash;
                     });
                   },
                 ),
@@ -969,6 +1051,112 @@ class _BonusSpendCard extends StatelessWidget {
             onChanged: onChanged,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SavedAddressCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final bool isDefault;
+  final VoidCallback onTap;
+
+  const _SavedAddressCard({
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+    this.isDefault = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.header.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected
+                  ? AppColors.header
+                  : Colors.black.withValues(alpha: 0.08),
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off,
+                color: selected ? AppColors.header : Colors.black45,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (isDefault)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.header.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'По умолчанию',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.header,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.35,
+                          color: Colors.black.withValues(alpha: 0.68),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -17,7 +17,6 @@ class Order(models.Model):
     class PaymentType(models.TextChoices):
         CARD = 'card', 'Картой'
         SBP = 'sbp', 'СБП'
-        CASH = 'cash', 'Наличкой'
 
     class PaymentStatus(models.TextChoices):
         UNPAID = 'unpaid', 'Ожидает оплаты'
