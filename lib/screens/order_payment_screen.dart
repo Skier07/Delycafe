@@ -36,6 +36,27 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   bool _isLoading = true;
   bool _isCheckingStatus = false;
   bool _paymentCompleted = false;
+  bool _awaitingBankReturn = false;
+  String? _lastLaunchedExternalUrl;
+  DateTime? _lastLaunchedAt;
+
+  static final _bankSbpPathPattern = RegExp(
+    r'paymentsbp|/sbp/|/sbp$|paysbp|sbp-pay',
+    caseSensitive: false,
+  );
+
+  static const _bankSbpHosts = {
+    'online.vtb.ru',
+    'vtb.ru',
+    'online.sberbank.ru',
+    'sberbank.ru',
+    'online.alfabank.ru',
+    'alfabank.ru',
+    'www.tinkoff.ru',
+    'tinkoff.ru',
+    'qr.nspk.ru',
+    'sub.nspk.ru',
+  };
 
   @override
   void initState() {
@@ -54,6 +75,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && !_paymentCompleted) {
+      if (_awaitingBankReturn) {
+        _awaitingBankReturn = false;
+      }
       _checkPaymentStatus(showErrors: false);
     }
   }
@@ -103,9 +127,42 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: _handleNavigation,
+          onUrlChange: (change) {
+            final url = change.url;
+            if (url == null || url.isEmpty) {
+              return;
+            }
+
+            _handleExternalUrl(url, fromNavigationRequest: false);
+          },
           onPageFinished: (_) {
             if (!mounted || _paymentCompleted) return;
             _checkPaymentStatus(showErrors: false);
+          },
+          onWebResourceError: (error) {
+            if (!mounted || _paymentCompleted) return;
+
+            final isMainFrame = error.isForMainFrame ?? true;
+            if (!isMainFrame) return;
+
+            final failingUrl = error.url ?? '';
+            if (failingUrl.isNotEmpty &&
+                _shouldOpenOutsideWebView(failingUrl) &&
+                _handleExternalUrl(failingUrl, fromNavigationRequest: false)) {
+              return;
+            }
+
+            if (error.errorCode == -10 ||
+                error.errorCode == -2 ||
+                error.description.contains('ERR_UNKNOWN_URL_SCHEME') ||
+                error.description.contains('ERR_NAME_NOT_RESOLVED')) {
+              if (failingUrl.isNotEmpty &&
+                  _shouldOpenOutsideWebView(failingUrl) &&
+                  _handleExternalUrl(failingUrl, fromNavigationRequest: false)) {
+                return;
+              }
+              return;
+            }
           },
         ),
       )
@@ -115,18 +172,199 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   }
 
   NavigationDecision _handleNavigation(NavigationRequest request) {
-    final url = request.url.toLowerCase();
+    final url = request.url;
 
     if (_isPaymentReturnUrl(url)) {
       unawaited(_checkPaymentStatus(showErrors: false));
     }
 
+    if (_handleExternalUrl(url, fromNavigationRequest: true)) {
+      return NavigationDecision.prevent;
+    }
+
     return NavigationDecision.navigate;
   }
 
+  bool _handleExternalUrl(
+    String url, {
+    required bool fromNavigationRequest,
+  }) {
+    if (_isPaymentReturnUrl(url)) {
+      return false;
+    }
+
+    if (!_shouldOpenOutsideWebView(url)) {
+      return false;
+    }
+
+    if (!_markExternalLaunch(url)) {
+      return true;
+    }
+
+    unawaited(_launchExternalPaymentUrl(url));
+    return true;
+  }
+
+  bool _markExternalLaunch(String url) {
+    final now = DateTime.now();
+    if (_lastLaunchedExternalUrl == url &&
+        _lastLaunchedAt != null &&
+        now.difference(_lastLaunchedAt!) < const Duration(seconds: 3)) {
+      return false;
+    }
+
+    _lastLaunchedExternalUrl = url;
+    _lastLaunchedAt = now;
+    return true;
+  }
+
+  bool _shouldOpenOutsideWebView(String url) {
+    if (_isPaymentReturnUrl(url)) {
+      return false;
+    }
+
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return false;
+    }
+
+    if (_isAlfaPaymentHost(uri)) {
+      return false;
+    }
+
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme != 'http' && scheme != 'https') {
+      return scheme != 'about' &&
+          scheme != 'data' &&
+          scheme != 'javascript';
+    }
+
+    return _isBankSbpPaymentUrl(uri);
+  }
+
+  bool _isAlfaPaymentHost(Uri uri) {
+    final host = uri.host.toLowerCase();
+
+    return host.contains('alfabank.ru') &&
+        (host.startsWith('payment.') ||
+            host.startsWith('pay.') ||
+            host.contains('ecom'));
+  }
+
+  bool _isBankSbpPaymentUrl(Uri uri) {
+    final host = uri.host.toLowerCase();
+    final path = '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}'
+        .toLowerCase();
+
+    if (host == 'qr.nspk.ru' || host == 'sub.nspk.ru') {
+      return true;
+    }
+
+    if (_bankSbpHosts.contains(host) || host.endsWith('.vtb.ru')) {
+      return _bankSbpPathPattern.hasMatch(path) || host.startsWith('online.');
+    }
+
+    if (host.contains('sberbank.ru') && _bankSbpPathPattern.hasMatch(path)) {
+      return true;
+    }
+
+    return _bankSbpPathPattern.hasMatch(path);
+  }
+
+  Future<void> _launchExternalPaymentUrl(String url) async {
+    _awaitingBankReturn = true;
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    final launched = await _tryLaunchExternalUrl(url);
+
+    if (!mounted || launched) {
+      return;
+    }
+
+    setState(() {
+      _errorMessage =
+          'Не удалось открыть приложение банка. Установите приложение '
+          'вашего банка и повторите оплату.';
+    });
+  }
+
+  Future<bool> _tryLaunchExternalUrl(String url) async {
+    if (url.startsWith('intent://')) {
+      final intentUri = Uri.tryParse(url);
+      if (intentUri != null &&
+          await launchUrl(intentUri, mode: LaunchMode.externalApplication)) {
+        return true;
+      }
+
+      final bankSchemeUrl = _buildUrlFromAndroidIntent(url);
+      if (bankSchemeUrl != null &&
+          await launchUrl(
+            Uri.parse(bankSchemeUrl),
+            mode: LaunchMode.externalApplication,
+          )) {
+        return true;
+      }
+
+      final fallbackUrl = _extractAndroidIntentFallback(url);
+      if (fallbackUrl != null) {
+        return _tryLaunchExternalUrl(fallbackUrl);
+      }
+
+      return false;
+    }
+
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return false;
+    }
+
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String? _buildUrlFromAndroidIntent(String intentUrl) {
+    final schemeMatch = RegExp(
+      r';scheme=([^;]+);',
+      caseSensitive: false,
+    ).firstMatch(intentUrl);
+    final scheme = schemeMatch?.group(1);
+    if (scheme == null || scheme.isEmpty) {
+      return null;
+    }
+
+    final path = intentUrl
+        .replaceFirst(RegExp(r'^intent://', caseSensitive: false), '')
+        .split('#Intent')
+        .first;
+
+    if (path.isEmpty) {
+      return null;
+    }
+
+    return '$scheme://$path';
+  }
+
+  String? _extractAndroidIntentFallback(String intentUrl) {
+    final fallbackMatch = RegExp(
+      r';S\.browser_fallback_url=([^;]+);',
+      caseSensitive: false,
+    ).firstMatch(intentUrl);
+
+    final encoded = fallbackMatch?.group(1);
+    if (encoded == null || encoded.isEmpty) {
+      return null;
+    }
+
+    return Uri.decodeComponent(encoded);
+  }
+
   bool _isPaymentReturnUrl(String url) {
-    return url.contains('/api/payments/success') ||
-        url.contains('/api/payments/fail');
+    final normalized = url.toLowerCase();
+
+    return normalized.contains('/api/payments/success') ||
+        normalized.contains('/api/payments/fail');
   }
 
   void _startPolling() {
@@ -178,22 +416,6 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     if (!mounted) return;
 
     Navigator.pop(context, true);
-  }
-
-  Future<void> _openInBrowser() async {
-    final url = _paymentUrl;
-
-    if (url == null || url.isEmpty) return;
-
-    final uri = Uri.parse(url);
-
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось открыть страницу оплаты')),
-      );
-    }
   }
 
   @override
@@ -271,7 +493,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
               ),
               const SizedBox(height: 6),
               Text(
-                'После оплаты заказ автоматически отправится на кухню.',
+                _awaitingBankReturn
+                    ? 'Завершите оплату в приложении банка и вернитесь сюда.'
+                    : 'После оплаты заказ автоматически отправится на кухню.',
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.35,
@@ -301,26 +525,15 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _openInBrowser,
-                    child: const Text('Открыть в браузере'),
-                  ),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.header,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.header,
-                    ),
-                    onPressed: () =>
-                        _checkPaymentStatus(showErrors: true),
-                    child: const Text('Проверить оплату'),
-                  ),
-                ),
-              ],
+                onPressed: () => _checkPaymentStatus(showErrors: true),
+                child: const Text('Проверить оплату'),
+              ),
             ),
           ),
         ),

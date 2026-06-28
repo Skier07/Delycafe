@@ -1,4 +1,5 @@
 import json
+import re
 from decimal import Decimal
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -6,6 +7,7 @@ from urllib.error import HTTPError, URLError
 
 from django.conf import settings
 
+from orders.models import Order
 from orders.services import confirm_order_paid
 
 
@@ -45,7 +47,7 @@ def _get_register_url():
     return getattr(
         settings,
         'ALFA_REGISTER_URL',
-        'https://pay.alfabank.ru/payment/rest/register.do',
+        'https://payment.alfabank.ru/payment/rest/register.do',
     )
 
 
@@ -53,13 +55,35 @@ def _get_status_url():
     return getattr(
         settings,
         'ALFA_STATUS_URL',
-        'https://pay.alfabank.ru/payment/rest/getOrderStatusExtended.do',
+        'https://payment.alfabank.ru/payment/rest/getOrderStatusExtended.do',
     )
 
 
 def _amount_to_kopecks(value):
     amount = Decimal(str(value or 0))
     return int(amount * 100)
+
+
+def _normalize_phone_for_alfa(phone):
+    digits = re.sub(r'\D', '', phone or '')
+
+    if len(digits) == 11 and digits.startswith('8'):
+        digits = f'7{digits[1:]}'
+
+    if len(digits) == 11 and digits.startswith('7'):
+        return f'+{digits}'
+
+    if len(digits) == 10:
+        return f'+7{digits}'
+
+    return digits
+
+
+def _alfa_allowed_payment_ways(order):
+    if order.payment_type == Order.PaymentType.SBP:
+        return ['SBP_C2B']
+
+    return ['CARD']
 
 
 def create_alfa_payment(order):
@@ -88,11 +112,27 @@ def create_alfa_payment(order):
         'returnUrl': getattr(settings, 'ALFA_RETURN_URL', ''),
         'failUrl': getattr(settings, 'ALFA_FAIL_URL', ''),
         'description': f'DelyCafe заказ №{order.id}',
+        'pageView': 'MOBILE',
+        'allowedPaymentWays': _alfa_allowed_payment_ways(order)[0],
     }
 
     callback_url = getattr(settings, 'ALFA_CALLBACK_URL', '')
     if callback_url:
         payload['dynamicCallbackUrl'] = callback_url
+
+    phone = _normalize_phone_for_alfa(order.phone)
+    if phone:
+        payload['phone'] = phone
+
+    if order.payment_type == Order.PaymentType.SBP:
+        json_params = {}
+
+        customer_name = (order.customer_name or '').strip()
+        if customer_name:
+            json_params['sbpSenderFIO'] = customer_name[:200]
+
+        if json_params:
+            payload['jsonParams'] = json.dumps(json_params, ensure_ascii=False)
 
     response = _alfa_post(
         _get_register_url(),
