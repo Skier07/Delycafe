@@ -1,9 +1,15 @@
+from datetime import timedelta
+
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
 from .models import Order, OrderItem
 from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
+from .services import rollback_order
+
+UNPAID_ORDER_REUSE_HOURS = 24
 
 FIRST_ORDER_DISCOUNT_PERCENT = 20
 BONUS_EARN_PERCENT = 5
@@ -222,57 +228,91 @@ class OrderCreateSerializer(serializers.Serializer):
 
         return attrs
 
-    @transaction.atomic
-    def create(self, validated_data):
-        items_data = validated_data.pop('items')
-        requested_bonus_spent = validated_data.pop('bonus_spent', 0)
+    def save(self, **kwargs):
+        return self.create_or_reuse(self.validated_data)
 
-        if not APP_BONUSES_ENABLED:
-            requested_bonus_spent = 0
+    def _build_checkout_items_signature(self, items_data):
+        signatures = []
 
-        phone = validated_data['phone']
-        customer_name = validated_data.get('customer_name', '').strip()
-        order_address = (validated_data.get('address') or '').strip()
-        delivery_type = validated_data.get('delivery_type')
-
-        if delivery_type != Order.DeliveryType.PICKUP:
-            if not validated_data.get('address_locality'):
-                from orders.services import LOCALITY_BY_DELIVERY_TYPE
-
-                validated_data['address_locality'] = (
-                    LOCALITY_BY_DELIVERY_TYPE.get(delivery_type, '')
+        for item in items_data:
+            signatures.append(
+                (
+                    str(item.get('product_api_id') or ''),
+                    str(item.get('variant_title') or ''),
+                    int(item.get('saby_id') or 0),
+                    int(item['quantity']),
+                    int(item['price']),
                 )
+            )
 
-        customer, created = Customer.objects.get_or_create(
-            phone=phone,
-            defaults={
-                'name': customer_name,
-                'default_address': order_address
-                if delivery_type != Order.DeliveryType.PICKUP
-                else '',
-                'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
-                'first_order_discount_used': False,
-            },
+        return tuple(sorted(signatures))
+
+    def _build_order_items_signature(self, order):
+        signatures = []
+
+        for item in order.items.all():
+            signatures.append(
+                (
+                    str(item.product_api_id or ''),
+                    str(item.variant_title or ''),
+                    int(item.saby_id or 0),
+                    int(item.quantity),
+                    int(item.price),
+                )
+            )
+
+        return tuple(sorted(signatures))
+
+    def _find_reusable_unpaid_order(self, phone, items_data):
+        signature = self._build_checkout_items_signature(items_data)
+        cutoff = timezone.now() - timedelta(hours=UNPAID_ORDER_REUSE_HOURS)
+
+        candidates = (
+            Order.objects.filter(
+                phone=phone,
+                payment_status__in=[
+                    Order.PaymentStatus.UNPAID,
+                    Order.PaymentStatus.FAILED,
+                ],
+                status=Order.Status.NEW,
+                created_at__gte=cutoff,
+            )
+            .prefetch_related('items')
+            .order_by('-created_at')
         )
 
-        customer_update_fields = []
+        for order in candidates:
+            if self._build_order_items_signature(order) == signature:
+                return order
 
-        if customer_name and customer.name != customer_name:
-            customer.name = customer_name
-            customer_update_fields.append('name')
+        return None
 
-        if (
-            delivery_type != Order.DeliveryType.PICKUP
-            and order_address
-            and customer.default_address != order_address
-        ):
-            customer.default_address = order_address
-            customer_update_fields.append('default_address')
+    def _cancel_unpaid_orders(self, phone, *, exclude_order_id=None):
+        queryset = Order.objects.filter(
+            phone=phone,
+            payment_status__in=[
+                Order.PaymentStatus.UNPAID,
+                Order.PaymentStatus.FAILED,
+            ],
+            status=Order.Status.NEW,
+        )
 
-        if customer_update_fields:
-            customer_update_fields.append('updated_at')
-            customer.save(update_fields=customer_update_fields)
+        if exclude_order_id is not None:
+            queryset = queryset.exclude(id=exclude_order_id)
 
+        for order in queryset:
+            order.status = Order.Status.CANCELED
+            order.save(update_fields=['status', 'updated_at'])
+            rollback_order(order)
+
+    def _calculate_order_pricing(
+        self,
+        *,
+        customer,
+        items_data,
+        delivery_type,
+        requested_bonus_spent,
+    ):
         products_total = 0
 
         for item_data in items_data:
@@ -330,18 +370,217 @@ class OrderCreateSerializer(serializers.Serializer):
 
         total_price = paid_products_total + delivery_price
 
+        return {
+            'products_total': products_total,
+            'delivery_price': delivery_price,
+            'discount_amount': discount_amount,
+            'bonus_spent': bonus_spent,
+            'bonus_earned': bonus_earned,
+            'first_order_discount_applied': first_order_discount_applied,
+            'total_price': total_price,
+        }
+
+    def _sync_customer_for_checkout(
+        self,
+        *,
+        customer,
+        customer_name,
+        order_address,
+        delivery_type,
+    ):
+        customer_update_fields = []
+
+        if customer_name and customer.name != customer_name:
+            customer.name = customer_name
+            customer_update_fields.append('name')
+
+        if (
+            delivery_type != Order.DeliveryType.PICKUP
+            and order_address
+            and customer.default_address != order_address
+        ):
+            customer.default_address = order_address
+            customer_update_fields.append('default_address')
+
+        if customer_update_fields:
+            customer_update_fields.append('updated_at')
+            customer.save(update_fields=customer_update_fields)
+
+        return customer
+
+    def _clear_alfa_payment_session(self, order):
+        order.payment_provider = ''
+        order.payment_external_id = ''
+        order.payment_url = ''
+
+    @transaction.atomic
+    def create_or_reuse(self, validated_data):
+        data = dict(validated_data)
+        items_data = data['items']
+        reusable_order = self._find_reusable_unpaid_order(
+            data['phone'],
+            items_data,
+        )
+
+        if reusable_order is not None:
+            self._cancel_unpaid_orders(
+                data['phone'],
+                exclude_order_id=reusable_order.id,
+            )
+            return self._update_existing_order(reusable_order, data)
+
+        self._cancel_unpaid_orders(data['phone'])
+        return self.create(data)
+
+    @transaction.atomic
+    def _update_existing_order(self, order, validated_data):
+        data = dict(validated_data)
+        items_data = data.pop('items')
+        requested_bonus_spent = data.pop('bonus_spent', 0)
+
+        if not APP_BONUSES_ENABLED:
+            requested_bonus_spent = 0
+
+        phone = data['phone']
+        customer_name = data.get('customer_name', '').strip()
+        order_address = (data.get('address') or '').strip()
+        delivery_type = data.get('delivery_type')
+
+        if delivery_type != Order.DeliveryType.PICKUP:
+            if not data.get('address_locality'):
+                from orders.services import LOCALITY_BY_DELIVERY_TYPE
+
+                data['address_locality'] = (
+                    LOCALITY_BY_DELIVERY_TYPE.get(delivery_type, '')
+                )
+
+        customer = order.customer
+        if customer is None:
+            customer, _ = Customer.objects.get_or_create(
+                phone=phone,
+                defaults={
+                    'name': customer_name,
+                    'default_address': order_address
+                    if delivery_type != Order.DeliveryType.PICKUP
+                    else '',
+                    'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
+                    'first_order_discount_used': False,
+                },
+            )
+            order.customer = customer
+
+        self._sync_customer_for_checkout(
+            customer=customer,
+            customer_name=customer_name,
+            order_address=order_address,
+            delivery_type=delivery_type,
+        )
+
+        pricing = self._calculate_order_pricing(
+            customer=customer,
+            items_data=items_data,
+            delivery_type=delivery_type,
+            requested_bonus_spent=requested_bonus_spent,
+        )
+
+        previous_total = order.payment_amount
+        previous_payment_type = order.payment_type
+        payment_changed = (
+            pricing['total_price'] != previous_total
+            or data['payment_type'] != previous_payment_type
+        )
+
+        order.phone = phone
+        order.customer_name = customer_name
+        order.delivery_type = delivery_type
+        order.address = data.get('address', '')
+        order.address_locality = data.get('address_locality', '')
+        order.address_entrance = data.get('address_entrance', '')
+        order.address_floor = data.get('address_floor', '')
+        order.address_apartment = data.get('address_apartment', '')
+        order.delivery_time_type = data['delivery_time_type']
+        order.delivery_time = data.get('delivery_time', '')
+        order.payment_type = data['payment_type']
+        order.comment = data.get('comment', '')
+        order.products_total = pricing['products_total']
+        order.delivery_price = pricing['delivery_price']
+        order.discount_amount = pricing['discount_amount']
+        order.bonus_spent = pricing['bonus_spent']
+        order.bonus_earned = pricing['bonus_earned']
+        order.first_order_discount_applied = pricing['first_order_discount_applied']
+        order.total_price = pricing['total_price']
+        order.payment_amount = pricing['total_price']
+        order.status = Order.Status.NEW
+
+        if order.payment_status == Order.PaymentStatus.FAILED:
+            order.payment_status = Order.PaymentStatus.UNPAID
+            payment_changed = True
+
+        if payment_changed:
+            self._clear_alfa_payment_session(order)
+
+        order.save()
+        return order
+
+    @transaction.atomic
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        requested_bonus_spent = validated_data.pop('bonus_spent', 0)
+
+        if not APP_BONUSES_ENABLED:
+            requested_bonus_spent = 0
+
+        phone = validated_data['phone']
+        customer_name = validated_data.get('customer_name', '').strip()
+        order_address = (validated_data.get('address') or '').strip()
+        delivery_type = validated_data.get('delivery_type')
+
+        if delivery_type != Order.DeliveryType.PICKUP:
+            if not validated_data.get('address_locality'):
+                from orders.services import LOCALITY_BY_DELIVERY_TYPE
+
+                validated_data['address_locality'] = (
+                    LOCALITY_BY_DELIVERY_TYPE.get(delivery_type, '')
+                )
+
+        customer, created = Customer.objects.get_or_create(
+            phone=phone,
+            defaults={
+                'name': customer_name,
+                'default_address': order_address
+                if delivery_type != Order.DeliveryType.PICKUP
+                else '',
+                'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
+                'first_order_discount_used': False,
+            },
+        )
+
+        self._sync_customer_for_checkout(
+            customer=customer,
+            customer_name=customer_name,
+            order_address=order_address,
+            delivery_type=delivery_type,
+        )
+
+        pricing = self._calculate_order_pricing(
+            customer=customer,
+            items_data=items_data,
+            delivery_type=delivery_type,
+            requested_bonus_spent=requested_bonus_spent,
+        )
+
         order = Order.objects.create(
             **validated_data,
             customer=customer,
-            products_total=products_total,
-            delivery_price=delivery_price,
-            discount_amount=discount_amount,
-            bonus_spent=bonus_spent,
-            bonus_earned=bonus_earned,
-            first_order_discount_applied=first_order_discount_applied,
-            total_price=total_price,
+            products_total=pricing['products_total'],
+            delivery_price=pricing['delivery_price'],
+            discount_amount=pricing['discount_amount'],
+            bonus_spent=pricing['bonus_spent'],
+            bonus_earned=pricing['bonus_earned'],
+            first_order_discount_applied=pricing['first_order_discount_applied'],
+            total_price=pricing['total_price'],
             payment_status=Order.PaymentStatus.UNPAID,
-            payment_amount=total_price,
+            payment_amount=pricing['total_price'],
         )
 
         order_items = []
@@ -367,8 +606,7 @@ class OrderCreateSerializer(serializers.Serializer):
 
         customer_bonus_update_fields = []
 
-
-        if first_order_discount_applied:
+        if pricing['first_order_discount_applied']:
             customer.first_order_discount_available = False
             customer.first_order_discount_used = True
             customer_bonus_update_fields.extend([
@@ -376,29 +614,29 @@ class OrderCreateSerializer(serializers.Serializer):
                 'first_order_discount_used',
             ])
 
-        if bonus_spent > 0:
-            customer.bonus_balance -= bonus_spent
+        if pricing['bonus_spent'] > 0:
+            customer.bonus_balance -= pricing['bonus_spent']
 
             BonusTransaction.objects.create(
                 customer=customer,
                 transaction_type=BonusTransaction.TransactionType.SPEND,
-                amount=-bonus_spent,
+                amount=-pricing['bonus_spent'],
                 order_id=order.id,
                 comment=f'Списание бонусов по заказу #{order.id}',
             )
 
-        if bonus_earned > 0:
-            customer.bonus_balance += bonus_earned
+        if pricing['bonus_earned'] > 0:
+            customer.bonus_balance += pricing['bonus_earned']
 
             BonusTransaction.objects.create(
                 customer=customer,
                 transaction_type=BonusTransaction.TransactionType.EARN,
-                amount=bonus_earned,
+                amount=pricing['bonus_earned'],
                 order_id=order.id,
                 comment=f'Начисление бонусов по заказу #{order.id}',
             )
 
-        if bonus_spent > 0 or bonus_earned > 0:
+        if pricing['bonus_spent'] > 0 or pricing['bonus_earned'] > 0:
             customer_bonus_update_fields.append('bonus_balance')
 
         if customer_bonus_update_fields:

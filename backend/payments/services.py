@@ -111,17 +111,35 @@ def _alfa_allowed_payment_ways(order):
     return ['CARD']
 
 
-def create_alfa_payment(order):
+def _can_reuse_alfa_payment_session(order):
+    return (
+        order.payment_provider == 'alfa'
+        and order.payment_external_id
+        and (order.payment_url or '').strip()
+        and order.payment_status == Order.PaymentStatus.UNPAID
+    )
+
+
+def create_alfa_payment(order, *, force=False):
     if not getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
         raise AlfaPaymentError('Оплата через Альфа-Банк выключена в настройках.')
+
+    amount_value = getattr(order, 'payment_amount', None) or getattr(order, 'total_price', 0)
+
+    if not force and _can_reuse_alfa_payment_session(order):
+        return {
+            'order_id': order.id,
+            'payment_url': order.payment_url,
+            'external_id': order.payment_external_id,
+            'amount': amount_value,
+            'reused': True,
+        }
 
     login = getattr(settings, 'ALFA_API_LOGIN', '')
     password = getattr(settings, 'ALFA_API_PASSWORD', '')
 
     if not login or not password:
         raise AlfaPaymentError('Не указан ALFA_API_LOGIN или ALFA_API_PASSWORD.')
-
-    amount_value = getattr(order, 'payment_amount', None) or getattr(order, 'total_price', 0)
     amount = _amount_to_kopecks(amount_value)
 
     if amount <= 0:

@@ -52,7 +52,10 @@ class OrderHistoryAPIView(APIView):
 
         orders = (
             Order.objects
-            .filter(query)
+            .filter(
+                query,
+                payment_status=Order.PaymentStatus.PAID,
+            )
             .prefetch_related('items')
             .order_by('-created_at')[:50]
         )
