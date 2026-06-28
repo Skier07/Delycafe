@@ -1,12 +1,18 @@
 from django.http import HttpResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from orders.models import Order
-from orders.services import confirm_order_paid
 
+from .callback_handlers import (
+    extract_alfa_callback_data,
+    handle_alfa_callback,
+    sync_order_from_return_url,
+)
 from .services import (
     AlfaPaymentError,
     create_alfa_payment,
@@ -68,7 +74,8 @@ class AlfaPaymentStatusAPIView(APIView):
             )
 
         try:
-            alfa_status = get_alfa_payment_status(order)
+            get_alfa_payment_status(order)
+            order.refresh_from_db()
         except AlfaPaymentError as error:
             return Response(
                 {'detail': str(error)},
@@ -80,11 +87,11 @@ class AlfaPaymentStatusAPIView(APIView):
                 'order_id': order.id,
                 'payment_status': order.payment_status,
                 'status': order.status,
-                'alfa': alfa_status,
             }
         )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class AlfaCallbackAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -96,53 +103,33 @@ class AlfaCallbackAPIView(APIView):
         return self._handle_callback(request)
 
     def _handle_callback(self, request):
-        data = request.data.copy()
+        data = extract_alfa_callback_data(request)
+        result = handle_alfa_callback(data)
 
-        if not data:
-            data = request.query_params.copy()
-
-        external_id = (
-            data.get('mdOrder')
-            or data.get('orderId')
-            or data.get('order_id')
-        )
-
-        order_number = data.get('orderNumber') or data.get('order_number')
-
-        order = None
-
-        if external_id:
-            order = Order.objects.filter(
-                payment_external_id=external_id,
-            ).first()
-
-        if order is None and order_number:
-            clean_number = str(order_number).replace('delycafe-', '')
-
-            if clean_number.isdigit():
-                order = Order.objects.filter(
-                    id=int(clean_number),
-                ).first()
-
-        if order is None:
+        if result.get('result') == 'not_found':
             return Response(
-                {'detail': 'Заказ не найден.'},
+                {'detail': result.get('detail', 'Заказ не найден.')},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        operation = str(data.get('operation') or '').lower()
-        callback_status = str(data.get('status') or '')
-
-        if operation in {'deposited', 'approved'} or callback_status == '1':
-            confirm_order_paid(order)
-
-        return Response({'result': 'ok'})
+        return Response(result, status=status.HTTP_200_OK)
 
 
 def payment_success(request):
-    return HttpResponse(
-        'Оплата прошла успешно. Можно вернуться в приложение.'
-    )
+    order = sync_order_from_return_url(request)
+
+    if order is not None and order.payment_status == Order.PaymentStatus.PAID:
+        message = (
+            f'Оплата заказа №{order.id} прошла успешно. '
+            'Можно вернуться в приложение.'
+        )
+    else:
+        message = (
+            'Оплата прошла успешно. Можно вернуться в приложение. '
+            'Если статус в приложении не обновился, нажмите «Проверить оплату».'
+        )
+
+    return HttpResponse(message)
 
 
 def payment_fail(request):

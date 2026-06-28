@@ -210,14 +210,17 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.action(description='Пометить выбранные заказы как оплаченные')
     def mark_as_paid(self, request, queryset):
-        updated_count = queryset.update(
-            payment_status=Order.PaymentStatus.PAID,
-            paid_at=timezone.now(),
-        )
+        from orders.services import confirm_order_paid
+
+        updated_count = 0
+
+        for order in queryset:
+            confirm_order_paid(order)
+            updated_count += 1
 
         self.message_user(
             request,
-            f'Оплачено заказов: {updated_count}',
+            f'Оплачено и отправлено в Saby (где возможно): {updated_count}',
         )
 
     @admin.action(description='Пометить выбранные заказы как ожидающие оплаты')

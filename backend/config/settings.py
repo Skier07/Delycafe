@@ -208,7 +208,10 @@ ALFA_FAIL_URL = os.getenv(
     'http://127.0.0.1:8000/api/payments/fail/',
 )
 
-ALFA_CALLBACK_URL = os.getenv('ALFA_CALLBACK_URL', '')
+ALFA_CALLBACK_URL = os.getenv(
+    'ALFA_CALLBACK_URL',
+    'https://api.delycafe.ru/api/payments/alfa/callback/',
+)
 
 ALFA_REGISTER_URL = os.getenv(
     'ALFA_REGISTER_URL',

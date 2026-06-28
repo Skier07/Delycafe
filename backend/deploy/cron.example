@@ -21,3 +21,5 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Повторная отправка в Saby оплаченных заказов без sale_id (реже, раз в 10 минут):
 # */10 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py retry_saby_dispatch --limit=50 >> /var/log/delycafe_saby_retry.log 2>&1
+#
+# Альфа-Банк (callback, returnUrl): см. deploy/alfa.env.example

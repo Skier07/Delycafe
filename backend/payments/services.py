@@ -43,6 +43,31 @@ def _alfa_post(url, payload):
         raise AlfaPaymentError(f'Альфа вернула не JSON: {body}') from error
 
 
+def _alfa_response_error_message(response):
+    if not isinstance(response, dict):
+        return 'Альфа вернула неожиданный ответ'
+
+    error_code = response.get('errorCode')
+    if error_code is None:
+        return None
+
+    code = str(error_code).strip()
+    if code in ('', '0'):
+        return None
+
+    return (
+        response.get('errorMessage')
+        or response.get('error_message')
+        or str(response)
+    )
+
+
+def _raise_for_alfa_error(response):
+    message = _alfa_response_error_message(response)
+    if message:
+        raise AlfaPaymentError(message)
+
+
 def _get_register_url():
     return getattr(
         settings,
@@ -116,7 +141,7 @@ def create_alfa_payment(order):
         'allowedPaymentWays': _alfa_allowed_payment_ways(order)[0],
     }
 
-    callback_url = getattr(settings, 'ALFA_CALLBACK_URL', '')
+    callback_url = (getattr(settings, 'ALFA_CALLBACK_URL', '') or '').strip()
     if callback_url:
         payload['dynamicCallbackUrl'] = callback_url
 
@@ -139,10 +164,7 @@ def create_alfa_payment(order):
         payload,
     )
 
-    if response.get('errorCode'):
-        raise AlfaPaymentError(
-            response.get('errorMessage') or str(response)
-        )
+    _raise_for_alfa_error(response)
 
     external_id = response.get('orderId')
     payment_url = response.get('formUrl')
@@ -192,10 +214,7 @@ def get_alfa_payment_status(order):
         },
     )
 
-    if response.get('errorCode'):
-        raise AlfaPaymentError(
-            response.get('errorMessage') or str(response)
-        )
+    _raise_for_alfa_error(response)
 
     order_status = str(response.get('orderStatus', ''))
 
