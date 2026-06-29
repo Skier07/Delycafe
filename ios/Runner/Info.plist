@@ -42,5 +42,7 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Быстрый вход в аккаунт DelyCafe по Face ID</string>
 	</dict>
 </plist>

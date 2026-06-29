@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 
 class AuthForm extends StatefulWidget {
   final void Function(String phone) onSubmit;
+  final bool isLoading;
 
   const AuthForm({
     super.key,
     required this.onSubmit,
+    this.isLoading = false,
   });
 
   @override
@@ -39,6 +41,10 @@ class _AuthFormState extends State<AuthForm> {
   }
 
   void _submit() {
+    if (widget.isLoading) {
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       var digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
 
@@ -73,8 +79,8 @@ class _AuthFormState extends State<AuthForm> {
           ),
           const SizedBox(height: 20),
           AuthButton(
-            text: 'Продолжить',
-            onPressed: _isPhoneValid ? _submit : null,
+            text: widget.isLoading ? 'Отправляем...' : 'Продолжить',
+            onPressed: _isPhoneValid && !widget.isLoading ? _submit : null,
           ),
         ],
       ),

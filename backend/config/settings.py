@@ -239,3 +239,41 @@ SABY_POINT_ID = int(
 SABY_PRICE_LIST_ID = int(
     os.getenv('SABY_PRICE_LIST_ID', '4')
 )
+
+# SMS Aero — OTP-авторизация
+# Документация: https://smsaero.ru/integration/documentation/api/
+
+SMSAERO_ENABLED = os.getenv('SMSAERO_ENABLED', 'False').lower() == 'true'
+
+SMSAERO_EMAIL = os.getenv('SMSAERO_EMAIL', '')
+
+SMSAERO_API_KEY = os.getenv('SMSAERO_API_KEY', '')
+
+SMSAERO_SIGN = os.getenv('SMSAERO_SIGN', 'SMS Aero')
+
+# sms — отправка своего кода через /v2/sms/send
+# mobile_id — мобильная авторизация SMS Aero (/v2/mobile-id/*)
+SMSAERO_AUTH_MODE = os.getenv('SMSAERO_AUTH_MODE', 'sms').strip().lower()
+
+SMSAERO_CALLBACK_URL = os.getenv(
+    'SMSAERO_CALLBACK_URL',
+    'https://api.delycafe.ru/api/customers/auth/mobile-id/webhook/',
+)
+
+SMSAERO_OTP_LENGTH = int(os.getenv('SMSAERO_OTP_LENGTH', '4'))
+
+SMSAERO_OTP_TTL_SECONDS = int(os.getenv('SMSAERO_OTP_TTL_SECONDS', '300'))
+
+SMSAERO_SEND_COOLDOWN_SECONDS = int(os.getenv('SMSAERO_SEND_COOLDOWN_SECONDS', '30'))
+
+SMSAERO_MAX_SENDS_PER_HOUR = int(os.getenv('SMSAERO_MAX_SENDS_PER_HOUR', '15'))
+
+SMSAERO_MAX_VERIFY_ATTEMPTS = int(os.getenv('SMSAERO_MAX_VERIFY_ATTEMPTS', '15'))
+
+SMSAERO_OTP_MESSAGE = os.getenv(
+    'SMSAERO_OTP_MESSAGE',
+    'Код для входа в DelyCafe: {code}',
+)
+
+# Используется только при SMSAERO_ENABLED=false (локальная разработка).
+SMSAERO_DEV_CODE = os.getenv('SMSAERO_DEV_CODE', '1234')

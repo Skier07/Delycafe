@@ -14,6 +14,7 @@ from .services.saby_customer_service import (
     SabyCustomerService,
     upsert_customer_from_saby,
 )
+from .services.otp_auth_service import OtpAuthError, OtpAuthService
 
 try:
     from orders.promotions import APP_FIRST_ORDER_DISCOUNT_ENABLED
@@ -410,3 +411,163 @@ class SetDefaultAddressAPIView(APIView):
         sync_customer_default_address(customer, address_obj)
 
         return Response(CustomerAddressSerializer(address_obj).data)
+
+
+def _otp_error_response(error: OtpAuthError):
+    payload = {
+        'detail': str(error),
+        'code': error.code,
+    }
+
+    if error.retry_after is not None:
+        payload['retry_after'] = error.retry_after
+
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    if error.code == 'rate_limited':
+        status_code = status.HTTP_429_TOO_MANY_REQUESTS
+
+    return Response(payload, status=status_code)
+
+
+class CustomerOtpSendAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        phone = request.data.get('phone')
+        service = OtpAuthService()
+
+        try:
+            session = service.send_code(phone)
+        except OtpAuthError as error:
+            return _otp_error_response(error)
+
+        normalized_phone = normalize_phone(phone)
+        response_data = {
+            'session_id': session.id,
+            'phone': SabyCustomerService().format_phone_for_app(normalized_phone),
+            'mode': session.mode,
+            'status': session.status,
+            'awaiting_code': session.status in {
+                session.Status.AWAITING_OTP,
+                session.Status.PENDING,
+            },
+            'expires_at': session.expires_at.isoformat(),
+        }
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class CustomerOtpVerifyAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        code = str(request.data.get('code') or '').strip()
+        phone = request.data.get('phone')
+
+        if not session_id:
+            return Response(
+                {'detail': 'Передайте session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not code:
+            return Response(
+                {'detail': 'Передайте code.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = OtpAuthService()
+
+        try:
+            session = service.verify_code(
+                session_id=int(session_id),
+                code=code,
+                phone=phone,
+            )
+        except OtpAuthError as error:
+            return _otp_error_response(error)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'Некорректный session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        customer, error_response = get_or_create_customer_by_phone(session.phone)
+
+        if error_response is not None:
+            return error_response
+
+        return Response(
+            {
+                'verified': True,
+                'session_id': session.id,
+                'customer': CustomerAuthAccountSerializer(customer).data,
+            },
+        )
+
+
+class CustomerOtpStatusAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        session_id = request.query_params.get('session_id')
+        phone = request.query_params.get('phone')
+
+        if not session_id:
+            return Response(
+                {'detail': 'Передайте session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = OtpAuthService()
+
+        try:
+            session = service.get_session_status(int(session_id), phone=phone)
+        except OtpAuthError as error:
+            return _otp_error_response(error)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'Некорректный session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                'session_id': session.id,
+                'status': session.status,
+                'verified': session.status == session.Status.VERIFIED,
+                'awaiting_code': session.status in {
+                    session.Status.AWAITING_OTP,
+                    session.Status.PENDING,
+                },
+            },
+        )
+
+
+class CustomerMobileIdWebhookAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        payload = request.data
+
+        smsaero_id = payload.get('id')
+        raw_status = payload.get('status')
+        number = payload.get('number')
+
+        if smsaero_id is None or raw_status is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        service = OtpAuthService()
+        service.apply_mobile_id_webhook(
+            smsaero_id=int(smsaero_id),
+            status=int(raw_status),
+            number=number,
+        )
+
+        return Response({'ok': True})

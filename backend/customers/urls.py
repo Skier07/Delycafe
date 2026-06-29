@@ -5,6 +5,10 @@ from .views import (
     CustomerAddressesAPIView,
     CustomerAuthMatchAPIView,
     CustomerBonusesAPIView,
+    CustomerMobileIdWebhookAPIView,
+    CustomerOtpSendAPIView,
+    CustomerOtpStatusAPIView,
+    CustomerOtpVerifyAPIView,
     CustomerProfileAPIView,
     CustomerSabyLookupAPIView,
     SetDefaultAddressAPIView,
@@ -12,6 +16,26 @@ from .views import (
 
 
 urlpatterns = [
+    path(
+        'auth/otp/send/',
+        CustomerOtpSendAPIView.as_view(),
+        name='customer-otp-send',
+    ),
+    path(
+        'auth/otp/verify/',
+        CustomerOtpVerifyAPIView.as_view(),
+        name='customer-otp-verify',
+    ),
+    path(
+        'auth/otp/status/',
+        CustomerOtpStatusAPIView.as_view(),
+        name='customer-otp-status',
+    ),
+    path(
+        'auth/mobile-id/webhook/',
+        CustomerMobileIdWebhookAPIView.as_view(),
+        name='customer-mobile-id-webhook',
+    ),
     path(
         'auth/match/',
         CustomerAuthMatchAPIView.as_view(),

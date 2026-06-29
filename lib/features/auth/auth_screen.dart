@@ -4,24 +4,61 @@ import 'package:delycafe/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  bool _isSending = false;
+  String? _errorMessage;
+
+  Future<void> _onPhoneSubmit(String phone) async {
+    if (_isSending) {
+      return;
+    }
+
+    setState(() {
+      _isSending = true;
+      _errorMessage = null;
+    });
+
     final authService = context.read<AuthService>();
 
-    void onPhoneSubmit(String phone) {
-      authService.sendCode(phone);
+    try {
+      await authService.sendCode(phone);
 
-      Navigator.pushReplacement(
+      if (!mounted) {
+        return;
+      }
+
+      await Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => CodeScreen(phoneNumber: phone),
         ),
       );
-    }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
 
+      setState(() {
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -32,7 +69,22 @@ class AuthScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: AuthForm(onSubmit: onPhoneSubmit),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_errorMessage != null) ...[
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+                const SizedBox(height: 12),
+              ],
+              AuthForm(
+                onSubmit: _onPhoneSubmit,
+                isLoading: _isSending,
+              ),
+            ],
+          ),
         ),
       ),
     );

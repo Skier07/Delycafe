@@ -5,7 +5,90 @@ import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:http/http.dart' as http;
 
+class OtpSendResult {
+  const OtpSendResult({
+    required this.sessionId,
+    required this.phone,
+    required this.awaitingCode,
+    this.mode,
+    this.status,
+  });
+
+  final int sessionId;
+  final String phone;
+  final bool awaitingCode;
+  final String? mode;
+  final String? status;
+
+  factory OtpSendResult.fromJson(Map<String, dynamic> json) {
+    return OtpSendResult(
+      sessionId: json['session_id'] as int,
+      phone: json['phone']?.toString() ?? '',
+      awaitingCode: json['awaiting_code'] == true,
+      mode: json['mode']?.toString(),
+      status: json['status']?.toString(),
+    );
+  }
+}
+
+class OtpVerifyResult {
+  const OtpVerifyResult({
+    required this.verified,
+    required this.phone,
+  });
+
+  final bool verified;
+  final String phone;
+
+  factory OtpVerifyResult.fromJson(Map<String, dynamic> json) {
+    final customer = json['customer'];
+
+    return OtpVerifyResult(
+      verified: json['verified'] == true,
+      phone: customer is Map<String, dynamic>
+          ? customer['phone']?.toString() ?? ''
+          : '',
+    );
+  }
+}
+
 class CustomerApiService {
+  Future<OtpSendResult> sendOtp({
+    required String phone,
+  }) async {
+    final response = await http.post(
+      ApiConfig.uri('/api/customers/auth/otp/send/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'phone': phone,
+      }),
+    );
+
+    final data = _decodeResponse(response);
+
+    return OtpSendResult.fromJson(data);
+  }
+
+  Future<OtpVerifyResult> verifyOtp({
+    required int sessionId,
+    required String phone,
+    required String code,
+  }) async {
+    final response = await http.post(
+      ApiConfig.uri('/api/customers/auth/otp/verify/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'session_id': sessionId,
+        'phone': phone,
+        'code': code,
+      }),
+    );
+
+    final data = _decodeResponse(response);
+
+    return OtpVerifyResult.fromJson(data);
+  }
+
   Future<User> fetchProfile({
     required String phone,
     bool syncSaby = false,
