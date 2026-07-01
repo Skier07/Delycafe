@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
+from .delivery_schedule import validate_order_delivery_window
 from .models import Order, OrderItem
 from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
 from .services import rollback_order
@@ -222,6 +223,13 @@ class OrderCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Если выбрана доставка ко времени, нужно указать время.'
             )
+
+        validate_order_delivery_window(
+            now=timezone.now(),
+            delivery_type=delivery_type,
+            delivery_time_type=delivery_time_type,
+            delivery_time=delivery_time,
+        )
 
         missing_saby = [
             item.get('product_title') or 'позиция'

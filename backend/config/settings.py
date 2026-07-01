@@ -240,6 +240,11 @@ SABY_PRICE_LIST_ID = int(
     os.getenv('SABY_PRICE_LIST_ID', '4')
 )
 
+SABY_RETAIL_PLACE = os.getenv(
+    'SABY_RETAIL_PLACE',
+    'https://delycafe.ru',
+)
+
 # SMS Aero — OTP-авторизация
 # Документация: https://smsaero.ru/integration/documentation/api/
 

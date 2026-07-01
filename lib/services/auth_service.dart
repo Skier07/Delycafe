@@ -193,21 +193,25 @@ class AuthService extends ChangeNotifier {
   Future<void> signInWithPhone(String phone) async {
     final normalizedPhone = _normalizePhone(phone);
     final hasPin = await _pinCredentialService.hasPin(normalizedPhone);
+    final sameAccount = _normalizePhone(
+          _registeredPhone ?? _currentUser?.phone ?? '',
+        ) ==
+        normalizedPhone;
+    final preserveUnlock = _isUnlocked && sameAccount;
 
     _registeredPhone = normalizedPhone;
     _guestSession = false;
-    _currentUser = User(phone: normalizedPhone);
-    _isUnlocked = !hasPin;
+    _currentUser ??= User(phone: normalizedPhone);
+    _isUnlocked = preserveUnlock || !hasPin;
 
     notifyListeners();
 
     await _savePhone(normalizedPhone);
 
-    if (_isUnlocked) {
-      await loadCustomerProfile(normalizedPhone);
-    } else {
-      await loadCustomerProfile(normalizedPhone, keepLocked: true);
-    }
+    await loadCustomerProfile(
+      normalizedPhone,
+      keepLocked: hasPin && !preserveUnlock,
+    );
   }
 
   Future<void> loadCustomerProfile(
@@ -268,11 +272,13 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> refreshCurrentUser() async {
-    final user = _currentUser;
+    final phone = _currentUser?.phone ?? _registeredPhone;
 
-    if (user == null) return;
+    if (phone == null || phone.trim().isEmpty) return;
 
-    await loadCustomerProfile(user.phone);
+    final keepLocked = !_isUnlocked;
+
+    await loadCustomerProfile(phone, keepLocked: keepLocked);
   }
 
   Future<void> resetAccountAccess() async {

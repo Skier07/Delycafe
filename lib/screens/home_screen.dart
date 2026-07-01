@@ -1,5 +1,6 @@
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/features/auth/auth_screen.dart';
+import 'package:delycafe/screens/pin_unlock_screen.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/screens/about_screen.dart';
 import 'package:delycafe/screens/addresses_screen.dart';
@@ -574,9 +575,14 @@ class __LoginBannerContentState extends State<_LoginBannerContent> {
       onTapUp: (_) => _setPressed(false),
       onTapCancel: () => _setPressed(false),
       onTap: () {
+        final auth = context.read<AuthService>();
+        final nextScreen = auth.needsPinUnlock
+            ? const PinUnlockScreen(allowGuest: true)
+            : const AuthScreen();
+
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
+          MaterialPageRoute(builder: (_) => nextScreen),
         );
       },
       child: AnimatedContainer(

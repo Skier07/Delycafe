@@ -156,6 +156,16 @@ class Order(models.Model):
         verbose_name='Ошибка отправки в Saby',
     )
 
+    saby_payment_registered = models.BooleanField(
+        default=False,
+        verbose_name='Оплата зарегистрирована в Saby',
+    )
+
+    saby_payment_error = models.TextField(
+        blank=True,
+        verbose_name='Ошибка регистрации оплаты в Saby',
+    )
+
     paid_at = models.DateTimeField(
         null=True,
         blank=True,

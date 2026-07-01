@@ -17,16 +17,27 @@ class AuthButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
-          elevation: 2,
+          backgroundColor: onPressed == null
+              ? Colors.black.withValues(alpha: 0.12)
+              : AppColors.primary,
+          foregroundColor: onPressed == null
+              ? Colors.black.withValues(alpha: 0.55)
+              : AppColors.onPrimary,
+          disabledBackgroundColor: Colors.black.withValues(alpha: 0.12),
+          disabledForegroundColor: Colors.black.withValues(alpha: 0.55),
+          elevation: onPressed == null ? 0 : 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.button),
           ),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
         ),
       ),
     );

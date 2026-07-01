@@ -122,13 +122,16 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
 
                     if (!context.mounted) return;
 
+                    final auth = context.read<AuthService>();
                     try {
-                      await context.read<AuthService>().signInWithPhone(
-                            data.phone,
-                          );
+                      if (auth.isLoggedIn) {
+                        await auth.refreshCurrentUser();
+                      } else {
+                        await auth.signInWithPhone(data.phone);
+                      }
                     } catch (error) {
                       debugPrint(
-                        'Не удалось войти после оформления заказа: $error',
+                        'Не удалось обновить профиль после оформления заказа: $error',
                       );
                     }
 

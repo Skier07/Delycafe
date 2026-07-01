@@ -49,6 +49,7 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'saby_order_number',
         'saby_sale_id',
+        'saby_payment_registered',
         'created_at',
     )
 
@@ -97,6 +98,9 @@ class OrderAdmin(admin.ModelAdmin):
         'saby_order_number',
         'saby_sale_id',
         'saby_external_id',
+        'saby_payment_registered',
+        'saby_dispatch_error',
+        'saby_payment_error',
         'paid_at',
         'comment',
         'products_total',
@@ -161,6 +165,9 @@ class OrderAdmin(admin.ModelAdmin):
                     'saby_order_number',
                     'saby_sale_id',
                     'saby_external_id',
+                    'saby_payment_registered',
+                    'saby_dispatch_error',
+                    'saby_payment_error',
                 ),
             },
         ),

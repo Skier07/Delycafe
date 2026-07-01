@@ -6,6 +6,8 @@ import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
+import 'package:delycafe/utils/delivery_schedule.dart';
+import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -158,6 +160,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   bool _useBonuses = false;
   bool _isSubmitting = false;
+  Timer? _scheduleTimer;
 
   static const int _promDeliveryPrice = 350;
   static const int _tatyshDeliveryPrice = 450;
@@ -167,8 +170,17 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     return digits.length == 10;
   }
 
+  DateTime get _now => DeliverySchedule.now;
+
+  bool get _isOrderingOpen {
+    return DeliverySchedule.isOrderingOpen(
+      _now,
+      _deliveryType.apiValue,
+    );
+  }
+
   bool get _canSubmit {
-    return _isPhoneComplete && !_isSubmitting;
+    return _isPhoneComplete && !_isSubmitting && _isOrderingOpen;
   }
 
   bool get _needsAddress {
@@ -272,6 +284,60 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       _applyParsedAddress(widget.initialAddress!.trim());
       _useManualAddress = true;
     }
+
+    _scheduleTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+
+      setState(_syncDeliveryTimeWithSchedule);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      setState(_syncDeliveryTimeWithSchedule);
+    });
+  }
+
+  void _syncDeliveryTimeWithSchedule() {
+    final previewTime = DeliverySchedule.previewTimeLabel(
+      _now,
+      _deliveryType.apiValue,
+    );
+
+    if (!_isOrderingOpen) {
+      _timeController.text = previewTime;
+      return;
+    }
+
+    if (_urgency != DeliveryUrgency.byTime) {
+      _timeController.clear();
+      return;
+    }
+
+    final slots = DeliverySchedule.availableSlots(
+      _now,
+      _deliveryType.apiValue,
+    );
+
+    if (slots.isEmpty) {
+      _timeController.text = previewTime;
+      return;
+    }
+
+    final selected = _timeController.text.trim();
+
+    if (selected.isEmpty) {
+      _timeController.text = DeliverySchedule.formatTime(slots.first);
+      return;
+    }
+
+    final stillValid = slots.any(
+      (slot) => DeliverySchedule.formatTime(slot) == selected,
+    );
+
+    if (!stillValid) {
+      _timeController.text = DeliverySchedule.formatTime(slots.first);
+    }
   }
 
   CustomerAddress? _pickInitialSavedAddress() {
@@ -322,6 +388,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   @override
   void dispose() {
+    _scheduleTimer?.cancel();
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
@@ -356,21 +423,38 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   Future<void> _pickTime() async {
-    const minuteInterval = 5;
-
-    final now = DateTime.now();
-
-    final roundedMinute = (now.minute / minuteInterval).ceil() * minuteInterval;
-
-    var selectedDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      now.hour,
-      roundedMinute,
+    final slots = DeliverySchedule.availableSlots(
+      _now,
+      _deliveryType.apiValue,
     );
 
-    await showCupertinoModalPopup(
+    if (slots.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(DeliverySchedule.closedMessage(_now)),
+        ),
+      );
+      return;
+    }
+
+    final slotLabels = slots
+        .map(DeliverySchedule.formatTime)
+        .toList(growable: false);
+
+    var selectedIndex = 0;
+    final current = _timeController.text.trim();
+
+    if (current.isNotEmpty) {
+      final index = slotLabels.indexOf(current);
+
+      if (index >= 0) {
+        selectedIndex = index;
+      }
+    }
+
+    await showCupertinoModalPopup<void>(
       context: context,
       builder: (context) {
         return Material(
@@ -414,15 +498,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                           ),
                           TextButton(
                             onPressed: () {
-                              final hour = selectedDateTime.hour
-                                  .toString()
-                                  .padLeft(2, '0');
-                              final minute = selectedDateTime.minute
-                                  .toString()
-                                  .padLeft(2, '0');
-
                               setState(() {
-                                _timeController.text = '$hour:$minute';
+                                _timeController.text = slotLabels[selectedIndex];
                               });
 
                               Navigator.pop(context);
@@ -441,14 +518,27 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                     ),
                     const Divider(height: 1),
                     Expanded(
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.time,
-                        use24hFormat: true,
-                        minuteInterval: minuteInterval,
-                        initialDateTime: selectedDateTime,
-                        onDateTimeChanged: (DateTime value) {
-                          selectedDateTime = value;
+                      child: CupertinoPicker(
+                        scrollController: FixedExtentScrollController(
+                          initialItem: selectedIndex,
+                        ),
+                        itemExtent: 42,
+                        onSelectedItemChanged: (index) {
+                          selectedIndex = index;
                         },
+                        children: slotLabels
+                            .map(
+                              (label) => Center(
+                                child: Text(
+                                  label,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
                     ),
                   ],
@@ -465,6 +555,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     if (_isSubmitting) return;
 
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_isOrderingOpen) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(DeliverySchedule.closedMessage(_now)),
+        ),
+      );
+      return;
+    }
 
     final phoneDigits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
 
@@ -528,6 +627,10 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!_isOrderingOpen) ...[
+            OrderingClosedBanner(now: _now),
+            const SizedBox(height: 20),
+          ],
           const _BlockTitle('Контактные данные'),
           const SizedBox(height: 12),
           TextFormField(
@@ -587,6 +690,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                 onTap: () {
                   setState(() {
                     _deliveryType = type;
+                    _syncDeliveryTimeWithSchedule();
                   });
                 },
               );
@@ -710,11 +814,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
               Expanded(
                 child: _ChoiceCard(
                   title: 'Как можно скорее',
+                  subtitle: DeliverySchedule.asapChoiceLabel(
+                    _now,
+                    _deliveryType.apiValue,
+                  ),
                   selected: _urgency == DeliveryUrgency.asap,
                   onTap: () {
                     setState(() {
                       _urgency = DeliveryUrgency.asap;
-                      _timeController.clear();
+                      _syncDeliveryTimeWithSchedule();
                     });
                   },
                 ),
@@ -723,27 +831,67 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
               Expanded(
                 child: _ChoiceCard(
                   title: 'Ко времени',
+                  subtitle: _isOrderingOpen
+                      ? (_timeController.text.trim().isNotEmpty
+                          ? _timeController.text.trim()
+                          : 'выберите')
+                      : DeliverySchedule.previewTimeLabel(
+                          _now,
+                          _deliveryType.apiValue,
+                        ),
                   selected: _urgency == DeliveryUrgency.byTime,
                   onTap: () {
                     setState(() {
                       _urgency = DeliveryUrgency.byTime;
+                      _syncDeliveryTimeWithSchedule();
                     });
                   },
                 ),
               ),
             ],
           ),
+          if (_urgency == DeliveryUrgency.asap) ...[
+            const SizedBox(height: 12),
+            Text(
+              DeliverySchedule.asapEstimateMessage(
+                _now,
+                _deliveryType.apiValue,
+              ),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black.withValues(
+                  alpha: _isOrderingOpen ? 0.62 : 0.45,
+                ),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
           if (_urgency == DeliveryUrgency.byTime) ...[
             const SizedBox(height: 12),
             TextFormField(
               controller: _timeController,
               readOnly: true,
-              onTap: _pickTime,
+              onTap: _isOrderingOpen ? _pickTime : null,
               decoration: _inputDecoration('Выберите время'),
               validator: (value) {
+                if (!_isOrderingOpen) {
+                  return null;
+                }
+
                 if (_urgency == DeliveryUrgency.byTime &&
                     (value == null || value.trim().isEmpty)) {
                   return 'Выберите время';
+                }
+
+                if (_urgency == DeliveryUrgency.byTime) {
+                  final slots = DeliverySchedule.availableSlots(
+                    _now,
+                    _deliveryType.apiValue,
+                  ).map(DeliverySchedule.formatTime);
+
+                  if (!slots.contains(value?.trim())) {
+                    return 'Выбранное время недоступно';
+                  }
                 }
 
                 return null;
@@ -866,7 +1014,11 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           SafeArea(
             top: false,
             child: AuthButton(
-              text: _isSubmitting ? 'Оформляем...' : 'Оформить заказ',
+              text: _isSubmitting
+                  ? 'Оформляем...'
+                  : !_isOrderingOpen
+                      ? DeliverySchedule.closedSubmitButtonLabel(_now)
+                      : 'Оформить заказ',
               onPressed: _canSubmit ? _submit : null,
             ),
           ),
@@ -1164,11 +1316,13 @@ class _SavedAddressCard extends StatelessWidget {
 
 class _ChoiceCard extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final bool selected;
   final VoidCallback onTap;
 
   const _ChoiceCard({
     required this.title,
+    this.subtitle,
     required this.selected,
     required this.onTap,
   });
@@ -1193,15 +1347,36 @@ class _ChoiceCard extends StatelessWidget {
                 : Colors.black.withValues(alpha: 0.08),
           ),
         ),
-        child: Text(
-          title,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black87,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (subtitle != null && subtitle!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : Colors.black.withValues(alpha: 0.55),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

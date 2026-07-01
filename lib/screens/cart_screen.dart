@@ -1,13 +1,45 @@
+import 'dart:async';
+
 import 'package:delycafe/screens/checkout_screens.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/delivery_schedule.dart';
+import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  Timer? _scheduleTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scheduleTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _scheduleTimer?.cancel();
+    super.dispose();
+  }
+
+  DateTime get _now => DeliverySchedule.now;
+
+  bool get _isOrderingOpen => DeliverySchedule.isAnyOrderingOpen(_now);
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +80,27 @@ class CartScreen extends StatelessWidget {
       ),
       body: cart.items.isEmpty
           ? const _EmptyCart()
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-              itemCount: cart.items.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final item = cart.items[index];
+          : Column(
+              children: [
+                if (!_isOrderingOpen) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: OrderingClosedBanner(now: _now),
+                  ),
+                ],
+                Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      _isOrderingOpen ? 16 : 12,
+                      16,
+                      120,
+                    ),
+                    itemCount: cart.items.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = cart.items[index];
 
                 return Container(
                   padding: const EdgeInsets.all(14),
@@ -177,6 +224,9 @@ class CartScreen extends StatelessWidget {
                 );
               },
             ),
+                ),
+              ],
+            ),
       bottomNavigationBar: cart.items.isEmpty
           ? null
           : SafeArea(
@@ -227,30 +277,43 @@ class CartScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(
-                          width: 180,
-                          height: double.infinity,
+                        Expanded(
+                          flex: 3,
                           child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const CheckoutScreens(),
-                                ),
-                              );
-                            },
+                            onTap: _isOrderingOpen
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const CheckoutScreens(),
+                                      ),
+                                    );
+                                  }
+                                : null,
                             child: Container(
                               alignment: Alignment.center,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
                               decoration: BoxDecoration(
-                                color: AppColors.header,
+                                color: _isOrderingOpen
+                                    ? AppColors.header
+                                    : Colors.black.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(18),
                               ),
-                              child: const Text(
-                                'Оформить',
+                              child: Text(
+                                _isOrderingOpen
+                                    ? 'Оформить'
+                                    : DeliverySchedule
+                                        .closedSubmitButtonLabel(_now),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: _isOrderingOpen
+                                      ? Colors.white
+                                      : Colors.black.withValues(alpha: 0.55),
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 16,
+                                  fontSize: _isOrderingOpen ? 16 : 13,
                                 ),
                               ),
                             ),

@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 
 import requests
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 
 from catalog.services.saby_catalog_service import SabyCatalogService
 from customers.models import BonusTransaction
+from orders.delivery_schedule import min_delivery_datetime
 from orders.models import Order
 
 logger = logging.getLogger(__name__)
@@ -131,6 +133,10 @@ def order_already_in_saby(order: Order) -> bool:
     return bool(order.saby_sale_id or order.saby_order_number)
 
 
+def saby_external_id(order: Order) -> str:
+    return (order.saby_external_id or str(order.id)).strip()
+
+
 def save_saby_order_response(order: Order, saby_response: dict) -> None:
     order_number = (
         saby_response.get('orderNumber')
@@ -165,6 +171,56 @@ def save_saby_order_response(order: Order, saby_response: dict) -> None:
         order.save(update_fields=update_fields)
 
 
+def register_saby_payment(order: Order) -> dict | None:
+    """Регистрирует онлайн-оплату в Saby и пробивает чек (кнопка «Оплачено»)."""
+    if order.saby_payment_registered:
+        logger.info(
+            'Order #%s Saby payment already registered, skipping',
+            order.id,
+        )
+        return None
+
+    if order.payment_status != Order.PaymentStatus.PAID:
+        logger.warning(
+            'Order #%s is not paid, skipping Saby payment registration',
+            order.id,
+        )
+        return None
+
+    if not order_already_in_saby(order):
+        raise SabyOrderError(
+            'Нельзя зарегистрировать оплату в Saby: заказ ещё не создан.'
+        )
+
+    try:
+        response = SabyOrderService().register_payment(order)
+    except SabyOrderError as exc:
+        order.saby_payment_error = str(exc)
+        order.save(update_fields=['saby_payment_error', 'updated_at'])
+        raise
+
+    order.saby_payment_registered = True
+    order.saby_payment_error = ''
+    order.save(
+        update_fields=[
+            'saby_payment_registered',
+            'saby_payment_error',
+            'updated_at',
+        ]
+    )
+    return response
+
+
+def _try_register_saby_payment(order: Order) -> None:
+    try:
+        register_saby_payment(order)
+    except SabyOrderError:
+        logger.exception(
+            'Failed to register Saby payment for order #%s',
+            order.id,
+        )
+
+
 def dispatch_order_to_saby(order: Order) -> dict | None:
     """Отправляет оплаченный заказ в Saby. Повторный вызов безопасен."""
     if order_already_in_saby(order):
@@ -181,6 +237,7 @@ def dispatch_order_to_saby(order: Order) -> dict | None:
     try:
         response = SabyOrderService().create_order(order)
         order.refresh_from_db()
+        _try_register_saby_payment(order)
         return response
     except SabyOrderError as exc:
         order.saby_dispatch_error = str(exc)
@@ -210,12 +267,19 @@ def confirm_order_paid(order: Order) -> Order:
         update_fields.append('updated_at')
         order.save(update_fields=update_fields)
 
+    order.refresh_from_db()
+
     if not order_already_in_saby(order):
         try:
             dispatch_order_to_saby(order)
         except SabyOrderError:
             pass
+    elif not order.saby_payment_registered:
+        _try_register_saby_payment(order)
 
+    order.refresh_from_db()
+
+    if order_already_in_saby(order):
         try:
             from orders.saby_order_status_service import SabyOrderStatusService
 
@@ -256,8 +320,39 @@ def retry_pending_saby_dispatches(*, limit: int = 50) -> dict[str, int]:
     }
 
 
+def retry_pending_saby_payments(*, limit: int = 50) -> dict[str, int]:
+    """Повторно регистрирует оплату в Saby для заказов без чека."""
+    pending_orders = list(
+        Order.objects.filter(
+            payment_status=Order.PaymentStatus.PAID,
+            saby_payment_registered=False,
+        ).filter(
+            Q(saby_sale_id__gt='') | Q(saby_order_number__gt=''),
+        ).order_by('paid_at', 'created_at')[:limit]
+    )
+
+    success_count = 0
+    failed_count = 0
+
+    for order in pending_orders:
+        try:
+            register_saby_payment(order)
+            success_count += 1
+        except SabyOrderError:
+            failed_count += 1
+
+    return {
+        'checked': len(pending_orders),
+        'success': success_count,
+        'failed': failed_count,
+    }
+
+
 class SabyOrderService:
     ORDER_URL = 'https://api.sbis.ru/retail/order/create'
+    REGISTER_PAYMENT_URL = (
+        'https://api.sbis.ru/retail/order/{external_id}/register-payment'
+    )
 
     def create_order(self, order: Order) -> dict:
         nomenclatures = self._build_nomenclatures(order)
@@ -325,6 +420,71 @@ class SabyOrderService:
 
         return saby_response
 
+    def register_payment(self, order: Order) -> dict:
+        amount = order.payment_amount or order.total_price
+
+        if amount <= 0:
+            raise SabyOrderError(
+                'Сумма оплаты для Saby должна быть больше 0.'
+            )
+
+        external_id = saby_external_id(order)
+        payload = {
+            'bankSum': amount,
+            'paymentType': 'full',
+        }
+
+        retail_place = (getattr(settings, 'SABY_RETAIL_PLACE', '') or '').strip()
+        if retail_place:
+            payload['retailPlace'] = retail_place
+
+        token = SabyCatalogService().get_token()
+        url = self.REGISTER_PAYMENT_URL.format(external_id=external_id)
+
+        logger.info(
+            'Saby register-payment payload for order #%s: %s',
+            order.id,
+            payload,
+        )
+
+        response = requests.post(
+            url,
+            headers={
+                'X-SBISAccessToken': token,
+                'Content-Type': 'application/json',
+            },
+            json=payload,
+            timeout=60,
+        )
+
+        logger.info(
+            'Saby register-payment response for order #%s: status=%s body=%s',
+            order.id,
+            response.status_code,
+            response.text,
+        )
+
+        try:
+            saby_response = response.json()
+        except ValueError as exc:
+            raise SabyOrderError(
+                'Saby вернул не-JSON ответ при регистрации оплаты '
+                f'(HTTP {response.status_code}).'
+            ) from exc
+
+        if response.status_code >= 400:
+            raise SabyOrderError(
+                self._extract_error_message(saby_response, response.status_code)
+            )
+
+        result_code = saby_response.get('resultCode')
+        if result_code not in (0, '0', None):
+            raise SabyOrderError(
+                self._extract_error_message(saby_response, response.status_code)
+            )
+
+        return saby_response
+
     def _build_nomenclatures(self, order: Order) -> list[dict]:
         nomenclatures = []
 
@@ -356,7 +516,7 @@ class SabyOrderService:
         return {
             'product': 'delivery',
             'pointId': settings.SABY_POINT_ID,
-            'externalId': str(order.id),
+            'externalId': saby_external_id(order),
             'comment': build_saby_comment(order),
             'customer': {
                 'name': order.customer_name or 'Клиент',
@@ -425,7 +585,10 @@ class SabyOrderService:
                 except ValueError:
                     continue
 
-        return timezone.localtime() + timedelta(hours=2)
+        return min_delivery_datetime(
+            timezone.localtime(),
+            order.delivery_type,
+        )
 
     def _extract_error_message(self, payload: dict, status_code: int) -> str:
         message = (

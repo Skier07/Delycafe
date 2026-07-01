@@ -4,12 +4,15 @@ import 'package:delycafe/services/address_service.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/order_service.dart';
+import 'package:delycafe/utils/app_timezone.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  initializeAppTimezone();
 
   await initHive();
 
