@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import requests
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -173,41 +174,47 @@ def save_saby_order_response(order: Order, saby_response: dict) -> None:
 
 def register_saby_payment(order: Order) -> dict | None:
     """Регистрирует онлайн-оплату в Saby и пробивает чек (кнопка «Оплачено»)."""
-    if order.saby_payment_registered:
-        logger.info(
-            'Order #%s Saby payment already registered, skipping',
-            order.id,
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
+
+        if locked_order.saby_payment_registered:
+            logger.info(
+                'Order #%s Saby payment already registered, skipping',
+                locked_order.id,
+            )
+            return None
+
+        if locked_order.payment_status != Order.PaymentStatus.PAID:
+            logger.warning(
+                'Order #%s is not paid, skipping Saby payment registration',
+                locked_order.id,
+            )
+            return None
+
+        if not order_already_in_saby(locked_order):
+            raise SabyOrderError(
+                'Нельзя зарегистрировать оплату в Saby: заказ ещё не создан.'
+            )
+
+        try:
+            response = SabyOrderService().register_payment(locked_order)
+        except SabyOrderError as exc:
+            locked_order.saby_payment_error = str(exc)
+            locked_order.save(
+                update_fields=['saby_payment_error', 'updated_at'],
+            )
+            raise
+
+        locked_order.saby_payment_registered = True
+        locked_order.saby_payment_error = ''
+        locked_order.save(
+            update_fields=[
+                'saby_payment_registered',
+                'saby_payment_error',
+                'updated_at',
+            ]
         )
-        return None
 
-    if order.payment_status != Order.PaymentStatus.PAID:
-        logger.warning(
-            'Order #%s is not paid, skipping Saby payment registration',
-            order.id,
-        )
-        return None
-
-    if not order_already_in_saby(order):
-        raise SabyOrderError(
-            'Нельзя зарегистрировать оплату в Saby: заказ ещё не создан.'
-        )
-
-    try:
-        response = SabyOrderService().register_payment(order)
-    except SabyOrderError as exc:
-        order.saby_payment_error = str(exc)
-        order.save(update_fields=['saby_payment_error', 'updated_at'])
-        raise
-
-    order.saby_payment_registered = True
-    order.saby_payment_error = ''
-    order.save(
-        update_fields=[
-            'saby_payment_registered',
-            'saby_payment_error',
-            'updated_at',
-        ]
-    )
     return response
 
 
@@ -221,10 +228,13 @@ def _try_register_saby_payment(order: Order) -> None:
         )
 
 
-def dispatch_order_to_saby(order: Order) -> dict | None:
-    """Отправляет оплаченный заказ в Saby. Повторный вызов безопасен."""
+def _dispatch_order_to_saby_core(order: Order) -> dict | None:
+    """Создаёт заказ в Saby. Вызывать только под блокировкой строки заказа."""
     if order_already_in_saby(order):
-        logger.info('Order #%s already exists in Saby, skipping dispatch', order.id)
+        logger.info(
+            'Order #%s already exists in Saby, skipping dispatch',
+            order.id,
+        )
         return None
 
     if order.payment_status != Order.PaymentStatus.PAID:
@@ -246,38 +256,46 @@ def dispatch_order_to_saby(order: Order) -> dict | None:
         raise
 
 
+def dispatch_order_to_saby(order: Order) -> dict | None:
+    """Отправляет оплаченный заказ в Saby. Повторный вызов безопасен."""
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        return _dispatch_order_to_saby_core(locked_order)
+
+
 def confirm_order_paid(order: Order) -> Order:
     """Фиксирует оплату и отправляет заказ в Saby."""
-    was_paid = order.payment_status == Order.PaymentStatus.PAID
-    update_fields = []
+    order_id = order.pk
 
-    if not was_paid:
-        order.payment_status = Order.PaymentStatus.PAID
-        update_fields.append('payment_status')
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order_id)
+        update_fields = []
 
-        if order.status == Order.Status.NEW:
-            order.status = Order.Status.ACCEPTED
-            update_fields.append('status')
+        if locked_order.payment_status != Order.PaymentStatus.PAID:
+            locked_order.payment_status = Order.PaymentStatus.PAID
+            update_fields.append('payment_status')
 
-        if not order.paid_at:
-            order.paid_at = timezone.now()
-            update_fields.append('paid_at')
+            if locked_order.status == Order.Status.NEW:
+                locked_order.status = Order.Status.ACCEPTED
+                update_fields.append('status')
 
-    if update_fields:
-        update_fields.append('updated_at')
-        order.save(update_fields=update_fields)
+            if not locked_order.paid_at:
+                locked_order.paid_at = timezone.now()
+                update_fields.append('paid_at')
 
-    order.refresh_from_db()
+        if update_fields:
+            update_fields.append('updated_at')
+            locked_order.save(update_fields=update_fields)
 
-    if not order_already_in_saby(order):
-        try:
-            dispatch_order_to_saby(order)
-        except SabyOrderError:
-            pass
-    elif not order.saby_payment_registered:
-        _try_register_saby_payment(order)
+        if not order_already_in_saby(locked_order):
+            try:
+                _dispatch_order_to_saby_core(locked_order)
+            except SabyOrderError:
+                pass
+        elif not locked_order.saby_payment_registered:
+            _try_register_saby_payment(locked_order)
 
-    order.refresh_from_db()
+    order = Order.objects.get(pk=order_id)
 
     if order_already_in_saby(order):
         try:
@@ -289,6 +307,16 @@ def confirm_order_paid(order: Order) -> Order:
                 'Failed to sync Saby status for order #%s after payment',
                 order.id,
             )
+
+    try:
+        from orders.order_notification_service import try_send_admin_order_email
+
+        try_send_admin_order_email(order.id)
+    except Exception:
+        logger.exception(
+            'Failed to send admin email for order #%s after payment',
+            order.id,
+        )
 
     return order
 

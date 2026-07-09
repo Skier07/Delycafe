@@ -166,6 +166,12 @@ class Order(models.Model):
         verbose_name='Ошибка регистрации оплаты в Saby',
     )
 
+    admin_email_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Письмо администратору отправлено',
+    )
+
     paid_at = models.DateTimeField(
         null=True,
         blank=True,

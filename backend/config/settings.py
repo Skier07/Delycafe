@@ -282,3 +282,27 @@ SMSAERO_OTP_MESSAGE = os.getenv(
 
 # Используется только при SMSAERO_ENABLED=false (локальная разработка).
 SMSAERO_DEV_CODE = os.getenv('SMSAERO_DEV_CODE', '1234')
+
+# Уведомления администратору об оплаченных заказах (Mail.ru SMTP).
+ORDER_ADMIN_EMAIL_ENABLED = (
+    os.getenv('ORDER_ADMIN_EMAIL_ENABLED', 'True').lower() == 'true'
+)
+ORDER_ADMIN_EMAIL = os.getenv(
+    'ORDER_ADMIN_EMAIL',
+    'pizzaozersk@mail.ru',
+)
+
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend',
+)
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.mail.ru')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465'))
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'True').lower() == 'true'
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() == 'true'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL',
+    EMAIL_HOST_USER or ORDER_ADMIN_EMAIL,
+)
