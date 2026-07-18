@@ -1,5 +1,6 @@
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/models/user.dart';
+import 'package:delycafe/screens/account_deletion_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
@@ -138,6 +139,30 @@ class ProfileScreen extends StatelessWidget {
                 style: _subtleStyle,
               ),
             ),
+            if (user != null) ...[
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AccountDeletionScreen(
+                          phone: user.phone,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Удалить аккаунт',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             SafeArea(
               child: GestureDetector(

@@ -49,6 +49,31 @@ class Customer(models.Model):
         null=True,
         verbose_name='Дата синхронизации с Saby',
     )
+    terms_accepted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Пользовательское соглашение принято',
+    )
+    privacy_accepted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Политика конфиденциальности принята',
+    )
+    pd_consent_accepted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Согласие на обработку ПД',
+    )
+    marketing_consent_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Согласие на рекламные сообщения',
+    )
+    legal_docs_version = models.CharField(
+        max_length=32,
+        blank=True,
+        verbose_name='Версия юридических документов',
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания',

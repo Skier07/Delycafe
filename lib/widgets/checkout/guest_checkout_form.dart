@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/customer_address.dart';
+import 'package:delycafe/screens/legal_policy_screen.dart';
+import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
@@ -11,6 +13,7 @@ import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 enum DeliveryType {
   ozersk,
@@ -180,7 +183,12 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   bool get _canSubmit {
-    return _isPhoneComplete && !_isSubmitting && _isOrderingOpen;
+    final legalConsent = context.read<LegalConsentService>();
+
+    return _isPhoneComplete &&
+        !_isSubmitting &&
+        _isOrderingOpen &&
+        legalConsent.canPlaceOrder;
   }
 
   bool get _needsAddress {
@@ -565,6 +573,25 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       return;
     }
 
+    final legalConsent = context.read<LegalConsentService>();
+
+    if (!legalConsent.canPlaceOrder) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Примите условия в разделе «Меню → Политика».',
+          ),
+        ),
+      );
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LegalPolicyScreen(),
+        ),
+      );
+      return;
+    }
+
     final phoneDigits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
 
     if (phoneDigits.length != 10) {
@@ -577,6 +604,19 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     }
 
     final fullPhone = '+7$phoneDigits';
+
+    try {
+      await legalConsent.ensureSyncedForOrder(fullPhone);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Не удалось сохранить согласия: $error'),
+        ),
+      );
+      return;
+    }
 
     final data = GuestCheckoutData(
       name: _nameController.text.trim(),
@@ -622,6 +662,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   @override
   Widget build(BuildContext context) {
+    final legalConsent = context.watch<LegalConsentService>();
+
     return Form(
       key: _formKey,
       child: Column(
@@ -1018,7 +1060,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   ? 'Оформляем...'
                   : !_isOrderingOpen
                       ? DeliverySchedule.closedSubmitButtonLabel(_now)
-                      : 'Оформить заказ',
+                      : !legalConsent.canPlaceOrder
+                          ? 'Примите политику в меню'
+                          : 'Оформить заказ',
               onPressed: _canSubmit ? _submit : null,
             ),
           ),

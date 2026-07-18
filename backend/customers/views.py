@@ -15,6 +15,7 @@ from .services.saby_customer_service import (
     upsert_customer_from_saby,
 )
 from .services.otp_auth_service import OtpAuthError, OtpAuthService
+from .services.account_deletion_service import delete_customer_account
 
 try:
     from orders.promotions import APP_FIRST_ORDER_DISCOUNT_ENABLED
@@ -546,6 +547,63 @@ class CustomerOtpStatusAPIView(APIView):
                     session.Status.PENDING,
                 },
             },
+        )
+
+
+class CustomerAccountDeleteAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        code = str(request.data.get('code') or '').strip()
+        phone = request.data.get('phone')
+
+        if not session_id:
+            return Response(
+                {'detail': 'Передайте session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not code:
+            return Response(
+                {'detail': 'Передайте code.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = OtpAuthService()
+
+        try:
+            session = service.verify_code(
+                session_id=int(session_id),
+                code=code,
+                phone=phone,
+            )
+        except OtpAuthError as error:
+            return _otp_error_response(error)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'Некорректный session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        normalized_phone = normalize_phone(session.phone)
+        customer = Customer.objects.filter(phone=normalized_phone).first()
+
+        if customer is None:
+            return Response(
+                {'detail': 'Аккаунт не найден.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        delete_customer_account(customer)
+
+        return Response(
+            {
+                'deleted': True,
+                'phone': SabyCustomerService().format_phone_for_app(normalized_phone),
+            },
+            status=status.HTTP_200_OK,
         )
 
 

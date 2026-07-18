@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    CustomerAccountDeleteAPIView,
     CustomerAddressDetailAPIView,
     CustomerAddressesAPIView,
     CustomerAuthMatchAPIView,
@@ -55,6 +56,11 @@ urlpatterns = [
         'bonuses/',
         CustomerBonusesAPIView.as_view(),
         name='customer-bonuses',
+    ),
+    path(
+        'account/delete/',
+        CustomerAccountDeleteAPIView.as_view(),
+        name='customer-account-delete',
     ),
     path(
         'addresses/',

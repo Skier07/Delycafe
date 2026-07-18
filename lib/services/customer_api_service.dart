@@ -264,6 +264,24 @@ class CustomerApiService {
     _decodeResponse(response);
   }
 
+  Future<void> deleteAccount({
+    required String phone,
+    required int sessionId,
+    required String code,
+  }) async {
+    final response = await http.post(
+      ApiConfig.uri('/api/customers/account/delete/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'phone': phone,
+        'session_id': sessionId,
+        'code': code,
+      }),
+    );
+
+    _decodeResponse(response);
+  }
+
   Map<String, dynamic> _decodeResponse(http.Response response) {
     final decodedBody = utf8.decode(response.bodyBytes);
 

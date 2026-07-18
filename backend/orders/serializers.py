@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
+from legal.services import LegalConsentError, ensure_customer_can_place_order
 from .delivery_schedule import validate_order_delivery_window
 from .models import Order, OrderItem
 from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
@@ -246,6 +247,14 @@ class OrderCreateSerializer(serializers.Serializer):
                     ),
                 }
             )
+
+        phone = normalize_phone(attrs.get('phone'))
+        customer = Customer.objects.filter(phone=phone).first()
+
+        try:
+            ensure_customer_can_place_order(customer)
+        except LegalConsentError as error:
+            raise serializers.ValidationError({'detail': str(error)}) from error
 
         return attrs
 

@@ -3,6 +3,7 @@ import 'package:delycafe/screens/splash_screen.dart';
 import 'package:delycafe/services/address_service.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/services/order_service.dart';
 import 'package:delycafe/utils/app_timezone.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => AddressService(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => LegalConsentService(),
         ),
       ],
       child: const MyApp(),

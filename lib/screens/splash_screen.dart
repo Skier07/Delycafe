@@ -2,6 +2,7 @@ import 'package:delycafe/root_screen.dart';
 import 'package:delycafe/screens/pin_unlock_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/catalog_repository.dart';
+import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -58,6 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _startSplash() async {
     final auth = context.read<AuthService>();
+    final legalConsent = context.read<LegalConsentService>();
 
     await Future.wait([
       _controller.forward(),
@@ -65,6 +67,8 @@ class _SplashScreenState extends State<SplashScreen>
       auth.waitForSessionReady(),
       _warmCatalogCache(),
     ]);
+
+    await legalConsent.initialize(phone: auth.registeredPhone);
 
     if (!mounted) return;
 

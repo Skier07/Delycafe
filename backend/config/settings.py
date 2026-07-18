@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'catalog',
     'orders',
     'customers',
+    'legal',
 ]
 
 

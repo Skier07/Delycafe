@@ -8,6 +8,7 @@ import 'package:delycafe/screens/bonuses_screen.dart';
 import 'package:delycafe/screens/checkout_screens.dart';
 import 'package:delycafe/screens/contacts_screen.dart';
 import 'package:delycafe/screens/delivery_screen.dart';
+import 'package:delycafe/screens/legal_policy_screen.dart';
 import 'package:delycafe/screens/news_promos/news_and_promo_screen.dart';
 import 'package:delycafe/screens/orders_screen.dart';
 import 'package:delycafe/screens/profile_screen.dart';
@@ -181,6 +182,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (!mounted) return;
 
                 _openOverlay(HomeOverlayType.menu);
+              },
+            ),
+            const DarkGlassSheetDivider(),
+            DarkGlassSheetItem(
+              title: 'Политика',
+              onTap: () {
+                _closeOverlay();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const LegalPolicyScreen(),
+                  ),
+                );
               },
             ),
           ],

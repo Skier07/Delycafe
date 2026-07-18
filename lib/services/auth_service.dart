@@ -292,6 +292,30 @@ class AuthService extends ChangeNotifier {
     await logout(clearPin: false);
   }
 
+  Future<void> sendAccountDeletionCode(String phone) async {
+    await sendCode(phone);
+  }
+
+  Future<void> deleteAccount({
+    required String phone,
+    required String code,
+  }) async {
+    final sessionId = _otpSessionId ?? await _readSavedSessionId();
+
+    if (sessionId == null) {
+      throw Exception('Сессия не найдена. Запросите код повторно.');
+    }
+
+    await _customerApiService.deleteAccount(
+      phone: phone,
+      sessionId: sessionId,
+      code: code,
+    );
+
+    await logout(clearPin: true);
+    await _clearOtpSession();
+  }
+
   Future<void> logout({bool clearPin = true}) async {
     final phone = _registeredPhone ?? _currentUser?.phone;
 

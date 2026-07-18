@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:delycafe/screens/checkout_screens.dart';
+import 'package:delycafe/screens/legal_policy_screen.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
@@ -44,6 +46,8 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
+    final legalConsent = context.watch<LegalConsentService>();
+    final canCheckout = _isOrderingOpen && legalConsent.canPlaceOrder;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -280,7 +284,7 @@ class _CartScreenState extends State<CartScreen> {
                         Expanded(
                           flex: 3,
                           child: GestureDetector(
-                            onTap: _isOrderingOpen
+                            onTap: canCheckout
                                 ? () {
                                     Navigator.push(
                                       context,
@@ -289,31 +293,51 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                     );
                                   }
-                                : null,
+                                : _isOrderingOpen
+                                    ? () {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Примите условия в разделе «Меню → Политика».',
+                                            ),
+                                          ),
+                                        );
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const LegalPolicyScreen(),
+                                          ),
+                                        );
+                                      }
+                                    : null,
                             child: Container(
                               alignment: Alignment.center,
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
                               decoration: BoxDecoration(
-                                color: _isOrderingOpen
+                                color: canCheckout
                                     ? AppColors.header
                                     : Colors.black.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
-                                _isOrderingOpen
+                                canCheckout
                                     ? 'Оформить'
-                                    : DeliverySchedule
-                                        .closedSubmitButtonLabel(_now),
+                                    : _isOrderingOpen
+                                        ? 'Примите политику'
+                                        : DeliverySchedule
+                                            .closedSubmitButtonLabel(_now),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: _isOrderingOpen
+                                  color: canCheckout
                                       ? Colors.white
                                       : Colors.black.withValues(alpha: 0.55),
                                   fontWeight: FontWeight.w700,
-                                  fontSize: _isOrderingOpen ? 16 : 13,
+                                  fontSize: canCheckout ? 16 : 13,
                                 ),
                               ),
                             ),
