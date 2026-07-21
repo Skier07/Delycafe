@@ -52,6 +52,39 @@ class OtpVerifyResult {
   }
 }
 
+class OtpStatusResult {
+  const OtpStatusResult({
+    required this.sessionId,
+    required this.status,
+    required this.verified,
+    required this.awaitingCode,
+  });
+
+  final int sessionId;
+  final String status;
+  final bool verified;
+  final bool awaitingCode;
+
+  factory OtpStatusResult.fromJson(Map<String, dynamic> json) {
+    return OtpStatusResult(
+      sessionId: json['session_id'] as int,
+      status: json['status']?.toString() ?? '',
+      verified: json['verified'] == true,
+      awaitingCode: json['awaiting_code'] == true,
+    );
+  }
+}
+
+class OtpApiException implements Exception {
+  const OtpApiException(this.message, {this.code});
+
+  final String message;
+  final String? code;
+
+  @override
+  String toString() => message;
+}
+
 class CustomerApiService {
   Future<OtpSendResult> sendOtp({
     required String phone,
@@ -84,9 +117,38 @@ class CustomerApiService {
       }),
     );
 
+    final decodedBody = utf8.decode(response.bodyBytes);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(decodedBody);
+
+      if (data is Map<String, dynamic>) {
+        return OtpVerifyResult.fromJson(data);
+      }
+
+      throw Exception('Сервер вернул неожиданный формат данных.');
+    }
+
+    throw _parseOtpApiException(decodedBody);
+  }
+
+  Future<OtpStatusResult> fetchOtpStatus({
+    required int sessionId,
+    required String phone,
+  }) async {
+    final response = await http.get(
+      ApiConfig.uri(
+        '/api/customers/auth/otp/status/',
+        queryParameters: {
+          'session_id': sessionId.toString(),
+          'phone': phone,
+        },
+      ),
+    );
+
     final data = _decodeResponse(response);
 
-    return OtpVerifyResult.fromJson(data);
+    return OtpStatusResult.fromJson(data);
   }
 
   Future<User> fetchProfile({
@@ -343,6 +405,29 @@ class CustomerApiService {
       return data.toString();
     } catch (_) {
       return decodedBody;
+    }
+  }
+
+  OtpApiException _parseOtpApiException(String decodedBody) {
+    if (decodedBody.isEmpty) {
+      return const OtpApiException('Ошибка сервера.');
+    }
+
+    try {
+      final data = jsonDecode(decodedBody);
+
+      if (data is Map<String, dynamic>) {
+        final detail = data['detail'];
+
+        return OtpApiException(
+          detail?.toString() ?? 'Ошибка сервера.',
+          code: data['code']?.toString(),
+        );
+      }
+
+      return OtpApiException(decodedBody);
+    } catch (_) {
+      return OtpApiException(decodedBody);
     }
   }
 

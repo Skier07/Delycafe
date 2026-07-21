@@ -20,6 +20,7 @@ class _CodeScreenState extends State<CodeScreen> {
 
   bool _isVerifying = false;
   String? _errorMessage;
+  String? _statusMessage;
 
   String get _enterCode => _controllers.map((c) => c.text).join();
 
@@ -52,6 +53,16 @@ class _CodeScreenState extends State<CodeScreen> {
     return KeyEventResult.ignored;
   }
 
+  Future<void> _goToPinSetup() async {
+    await Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PinSetupScreen(phone: widget.phoneNumber),
+      ),
+      (route) => false,
+    );
+  }
+
   Future<void> _verifyCode() async {
     if (_enterCode.length != 4 || _isVerifying) {
       return;
@@ -60,6 +71,7 @@ class _CodeScreenState extends State<CodeScreen> {
     setState(() {
       _isVerifying = true;
       _errorMessage = null;
+      _statusMessage = 'Проверяем код...';
     });
 
     final authService = context.read<AuthService>();
@@ -68,6 +80,15 @@ class _CodeScreenState extends State<CodeScreen> {
       final isValid = await authService.verifyCode(
         widget.phoneNumber,
         _enterCode,
+        onProgress: (message) {
+          if (!mounted) {
+            return;
+          }
+
+          setState(() {
+            _statusMessage = message;
+          });
+        },
       );
 
       if (!mounted) {
@@ -75,18 +96,13 @@ class _CodeScreenState extends State<CodeScreen> {
       }
 
       if (isValid) {
-        await Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PinSetupScreen(phone: widget.phoneNumber),
-          ),
-          (route) => false,
-        );
+        await _goToPinSetup();
         return;
       }
 
       setState(() {
         _isVerifying = false;
+        _statusMessage = null;
         _errorMessage = 'Неверный код. Попробуйте ещё раз.';
       });
     } catch (error) {
@@ -96,6 +112,7 @@ class _CodeScreenState extends State<CodeScreen> {
 
       setState(() {
         _isVerifying = false;
+        _statusMessage = null;
         _errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
     }
@@ -137,7 +154,23 @@ class _CodeScreenState extends State<CodeScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            if (_isVerifying) const CircularProgressIndicator(),
+            if (_isVerifying) ...[
+              const CircularProgressIndicator(),
+              if (_statusMessage != null) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    _statusMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
             if (!_isVerifying)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

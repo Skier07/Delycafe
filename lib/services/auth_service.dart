@@ -66,26 +66,74 @@ class AuthService extends ChangeNotifier {
     await prefs.setInt(_otpSessionIdKey, result.sessionId);
   }
 
-  Future<bool> verifyCode(String phone, String code) async {
+  Future<bool> verifyCode(
+    String phone,
+    String code, {
+    void Function(String message)? onProgress,
+  }) async {
     final sessionId = _otpSessionId ?? await _readSavedSessionId();
 
     if (sessionId == null) {
       throw Exception('Сессия не найдена. Запросите код повторно.');
     }
 
-    final result = await _customerApiService.verifyOtp(
-      sessionId: sessionId,
-      phone: phone,
-      code: code,
-    );
+    try {
+      final result = await _customerApiService.verifyOtp(
+        sessionId: sessionId,
+        phone: phone,
+        code: code,
+      );
 
-    if (!result.verified) {
-      return false;
+      if (!result.verified) {
+        return false;
+      }
+
+      await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
+      await _clearOtpSession();
+      return true;
+    } on OtpApiException catch (error) {
+      if (error.code == 'pending') {
+        onProgress?.call('Подтверждаем вход...');
+        await _waitForOtpVerification(
+          phone: phone,
+          sessionId: sessionId,
+        );
+        return true;
+      }
+
+      throw Exception(error.message);
+    }
+  }
+
+  Future<void> _waitForOtpVerification({
+    required String phone,
+    required int sessionId,
+  }) async {
+    const maxAttempts = 30;
+    const pollInterval = Duration(seconds: 2);
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) {
+        await Future.delayed(pollInterval);
+      }
+
+      final status = await _customerApiService.fetchOtpStatus(
+        sessionId: sessionId,
+        phone: phone,
+      );
+
+      if (status.verified) {
+        await signInAfterOtp(phone);
+        await _clearOtpSession();
+        return;
+      }
+
+      if (status.status == 'failed') {
+        throw Exception('Верификация не пройдена. Запросите код заново.');
+      }
     }
 
-    await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
-    await _clearOtpSession();
-    return true;
+    throw Exception('Не удалось подтвердить вход. Запросите код заново.');
   }
 
   Future<void> signInAfterOtp(String phone) async {
