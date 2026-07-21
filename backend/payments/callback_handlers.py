@@ -88,7 +88,13 @@ def is_alfa_callback_failed(data: dict[str, str]) -> bool:
 
 
 def handle_alfa_callback(data: dict[str, str]) -> dict:
-    logger.info('Alfa callback payload: %s', data)
+    logger.info(
+        'Alfa callback received for orderNumber=%s mdOrder=%s operation=%s status=%s',
+        data.get('orderNumber') or data.get('order_number'),
+        data.get('mdOrder') or data.get('orderId') or data.get('order_id'),
+        data.get('operation'),
+        data.get('status'),
+    )
 
     order = find_order_for_alfa_callback(data)
     if order is None:
@@ -99,18 +105,42 @@ def handle_alfa_callback(data: dict[str, str]) -> dict:
         }
 
     if is_alfa_callback_paid(data):
-        confirm_order_paid(order)
-        order.refresh_from_db()
-        logger.info(
-            'Alfa callback: order #%s marked paid (%s)',
+        if order.payment_external_id:
+            try:
+                get_alfa_payment_status(order)
+                order.refresh_from_db()
+            except AlfaPaymentError as error:
+                logger.warning(
+                    'Alfa callback: paid signal ignored for order #%s: %s',
+                    order.id,
+                    error,
+                )
+                return {
+                    'result': 'ignored',
+                    'order_id': order.id,
+                    'payment_status': order.payment_status,
+                }
+
+        if order.payment_status == Order.PaymentStatus.PAID:
+            logger.info(
+                'Alfa callback: order #%s confirmed paid via bank API',
+                order.id,
+            )
+            return {
+                'result': 'ok',
+                'order_id': order.id,
+                'payment_status': order.payment_status,
+                'status': order.status,
+            }
+
+        logger.warning(
+            'Alfa callback: paid signal rejected for order #%s',
             order.id,
-            order.payment_status,
         )
         return {
-            'result': 'ok',
+            'result': 'ignored',
             'order_id': order.id,
             'payment_status': order.payment_status,
-            'status': order.status,
         }
 
     if is_alfa_callback_failed(data):

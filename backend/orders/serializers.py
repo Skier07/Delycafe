@@ -6,7 +6,9 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from customers.models import BonusTransaction, Customer
-from legal.services import LegalConsentError, ensure_customer_can_place_order
+from legal.services import LegalConsentError, ensure_customer_can_place_order, save_customer_consents
+from legal.services import customer_has_required_consents
+from .catalog_pricing import apply_validated_item_prices
 from .delivery_schedule import validate_order_delivery_window
 from .models import Order, OrderItem
 from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
@@ -173,6 +175,11 @@ class OrderCreateSerializer(serializers.Serializer):
         min_value=0,
     )
 
+    terms_accepted = serializers.BooleanField(required=False, default=False)
+    privacy_accepted = serializers.BooleanField(required=False, default=False)
+    pd_consent_accepted = serializers.BooleanField(required=False, default=False)
+    marketing_consent_accepted = serializers.BooleanField(required=False, default=False)
+
     items = OrderItemCreateSerializer(many=True)
 
     def validate_phone(self, value):
@@ -248,18 +255,55 @@ class OrderCreateSerializer(serializers.Serializer):
                 }
             )
 
-        phone = normalize_phone(attrs.get('phone'))
-        customer = Customer.objects.filter(phone=phone).first()
+        attrs['items'] = apply_validated_item_prices(items)
 
-        try:
-            ensure_customer_can_place_order(customer)
-        except LegalConsentError as error:
-            raise serializers.ValidationError({'detail': str(error)}) from error
+        phone = normalize_phone(attrs.get('phone'))
+        customer, _ = Customer.objects.get_or_create(
+            phone=phone,
+            defaults={
+                'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
+                'first_order_discount_used': False,
+            },
+        )
+
+        if not customer_has_required_consents(customer):
+            if (
+                attrs.get('terms_accepted')
+                and attrs.get('privacy_accepted')
+                and attrs.get('pd_consent_accepted')
+            ):
+                save_customer_consents(
+                    customer=customer,
+                    terms=True,
+                    privacy=True,
+                    pd_consent=attrs.get('pd_consent_accepted'),
+                    marketing=bool(attrs.get('marketing_consent_accepted')),
+                )
+            else:
+                try:
+                    ensure_customer_can_place_order(customer)
+                except LegalConsentError as error:
+                    raise serializers.ValidationError({'detail': str(error)}) from error
+        else:
+            try:
+                ensure_customer_can_place_order(customer)
+            except LegalConsentError as error:
+                raise serializers.ValidationError({'detail': str(error)}) from error
 
         return attrs
 
     def save(self, **kwargs):
-        return self.create_or_reuse(self.validated_data)
+        validated_data = dict(self.validated_data)
+
+        for key in (
+            'terms_accepted',
+            'privacy_accepted',
+            'pd_consent_accepted',
+            'marketing_consent_accepted',
+        ):
+            validated_data.pop(key, None)
+
+        return self.create_or_reuse(validated_data)
 
     def _build_checkout_items_signature(self, items_data):
         signatures = []
@@ -530,6 +574,8 @@ class OrderCreateSerializer(serializers.Serializer):
             )
             order.customer = customer
 
+        customer = Customer.objects.select_for_update().get(pk=customer.pk)
+
         self._sync_customer_for_checkout(
             customer=customer,
             customer_name=customer_name,
@@ -604,6 +650,7 @@ class OrderCreateSerializer(serializers.Serializer):
                 'first_order_discount_used': False,
             },
         )
+        customer = Customer.objects.select_for_update().get(pk=customer.pk)
 
         self._sync_customer_for_checkout(
             customer=customer,

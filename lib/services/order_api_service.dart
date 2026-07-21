@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:delycafe/config/api_config.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:http/http.dart' as http;
 
 class OrderCreateResult {
@@ -11,6 +12,7 @@ class OrderCreateResult {
   final String paymentType;
   final String paymentUrl;
   final String? paymentError;
+  final String orderAccessToken;
 
   const OrderCreateResult({
     required this.id,
@@ -20,6 +22,7 @@ class OrderCreateResult {
     required this.paymentType,
     required this.paymentUrl,
     this.paymentError,
+    this.orderAccessToken = '',
   });
 
   factory OrderCreateResult.fromJson(Map<String, dynamic> json) {
@@ -31,6 +34,7 @@ class OrderCreateResult {
       paymentType: json['payment_type']?.toString() ?? '',
       paymentUrl: json['payment_url']?.toString() ?? '',
       paymentError: json['payment_error']?.toString(),
+      orderAccessToken: json['order_access_token']?.toString() ?? '',
     );
   }
 
@@ -59,6 +63,10 @@ class OrderApiService {
     required String comment,
     required List<Map<String, dynamic>> items,
     int bonusSpent = 0,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
+    bool pdConsentAccepted = false,
+    bool marketingConsentAccepted = false,
   }) async {
     final uri = ApiConfig.uri('/api/orders/');
 
@@ -77,13 +85,15 @@ class OrderApiService {
       'comment': comment,
       'bonus_spent': bonusSpent,
       'items': items,
+      'terms_accepted': termsAccepted,
+      'privacy_accepted': privacyAccepted,
+      'pd_consent_accepted': pdConsentAccepted,
+      'marketing_consent_accepted': marketingConsentAccepted,
     };
 
     final response = await http.post(
       uri,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
+      headers: ApiAuthStorage.instance.headers(jsonContentType: true),
       body: jsonEncode(body),
     );
 

@@ -591,7 +591,7 @@ class __LoginBannerContentState extends State<_LoginBannerContent> {
       onTap: () {
         final auth = context.read<AuthService>();
         final nextScreen = auth.needsPinUnlock
-            ? const PinUnlockScreen(allowGuest: true)
+            ? const PinUnlockScreen()
             : const AuthScreen();
 
         Navigator.push(

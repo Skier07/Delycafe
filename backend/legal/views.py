@@ -4,8 +4,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from customers.models import Customer
-from customers.views import get_or_create_customer_by_phone, normalize_phone
+from customers.authenticated_views import AuthenticatedCustomerAPIView
+from customers.authentication import get_request_customer
 from legal.documents import LEGAL_DOCS_VERSION, get_document, document_html_path
 from legal.documents import LEGAL_DOCUMENTS
 from legal.services import LegalConsentError, consent_status_payload, save_customer_consents
@@ -53,32 +53,15 @@ class LegalDocumentHTMLAPIView(APIView):
         return HttpResponse(content, content_type='text/html; charset=utf-8')
 
 
-class LegalConsentStatusAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class LegalConsentStatusAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
-        phone = request.query_params.get('phone')
-        customer = None
-
-        if phone:
-            normalized_phone = normalize_phone(phone)
-            if normalized_phone:
-                customer = Customer.objects.filter(phone=normalized_phone).first()
-
+        customer = get_request_customer(request)
         return Response(consent_status_payload(customer))
 
 
-class LegalConsentSaveAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class LegalConsentSaveAPIView(AuthenticatedCustomerAPIView):
     def post(self, request):
-        phone = request.data.get('phone')
-        customer, error_response = get_or_create_customer_by_phone(phone)
-
-        if error_response is not None:
-            return error_response
+        customer = get_request_customer(request)
 
         terms = bool(request.data.get('terms_accepted'))
         privacy = bool(request.data.get('privacy_accepted'))

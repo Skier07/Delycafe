@@ -4,6 +4,7 @@ import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/screens/legal_policy_screen.dart';
+import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -605,17 +606,19 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
     final fullPhone = '+7$phoneDigits';
 
-    try {
-      await legalConsent.ensureSyncedForOrder(fullPhone);
-    } catch (error) {
-      if (!mounted) return;
+    if (context.read<AuthService>().isLoggedIn) {
+      try {
+        await legalConsent.ensureSyncedForOrder();
+      } catch (error) {
+        if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Не удалось сохранить согласия: $error'),
-        ),
-      );
-      return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Не удалось сохранить согласия: $error'),
+          ),
+        );
+        return;
+      }
     }
 
     final data = GuestCheckoutData(

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/order.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,22 +16,18 @@ class OrderService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<void> loadOrders({
-    required String phone,
-  }) async {
+  Future<void> loadOrders() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final uri = ApiConfig.uri(
-        '/api/orders/history/',
-        queryParameters: {
-          'phone': phone,
-        },
-      );
+      final uri = ApiConfig.uri('/api/orders/history/');
 
-      final response = await http.get(uri);
+      final response = await http.get(
+        uri,
+        headers: ApiAuthStorage.instance.headers(),
+      );
       final decodedBody = utf8.decode(response.bodyBytes);
 
       if (response.statusCode < 200 || response.statusCode >= 300) {

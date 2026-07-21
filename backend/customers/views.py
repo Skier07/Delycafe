@@ -1,8 +1,13 @@
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from django.conf import settings
+
+from .authenticated_views import AuthenticatedCustomerAPIView
+from .authentication import CustomerTokenAuthentication, get_request_customer
 from .models import BonusTransaction, Customer, CustomerAddress
 from .serializers import (
     BonusTransactionSerializer,
@@ -16,6 +21,7 @@ from .services.saby_customer_service import (
 )
 from .services.otp_auth_service import OtpAuthError, OtpAuthService
 from .services.account_deletion_service import delete_customer_account
+from .services.auth_token_service import create_customer_access_token
 
 try:
     from orders.promotions import APP_FIRST_ORDER_DISCOUNT_ENABLED
@@ -81,13 +87,17 @@ def sync_customer_from_saby(phone: str):
     return upsert_customer_from_saby(saby_data)
 
 
-class CustomerSabyLookupAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class CustomerSabyLookupAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
-        phone = request.query_params.get('phone')
+        phone = request.query_params.get('phone') or get_request_customer(request).phone
         normalized_phone = normalize_phone(phone)
+        customer = get_request_customer(request)
+
+        if normalize_phone(customer.phone) != normalized_phone:
+            return Response(
+                {'detail': 'Нет доступа.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         if not normalized_phone:
             return Response(
@@ -97,9 +107,9 @@ class CustomerSabyLookupAPIView(APIView):
 
         try:
             customer = sync_customer_from_saby(normalized_phone)
-        except Exception as exc:
+        except Exception:
             return Response(
-                {'detail': f'Ошибка Saby: {exc}'},
+                {'detail': 'Ошибка синхронизации с Saby.'},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
@@ -125,6 +135,10 @@ class CustomerSabyLookupAPIView(APIView):
 class CustomerAuthMatchAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = 'auth_match'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
 
     def post(self, request):
         raw_phones = request.data.get('phones')
@@ -173,16 +187,9 @@ class CustomerAuthMatchAPIView(APIView):
         )
 
 
-class CustomerProfileAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class CustomerProfileAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
-        phone = request.query_params.get('phone')
-        customer, error_response = get_or_create_customer_by_phone(phone)
-
-        if error_response:
-            return error_response
+        customer = get_request_customer(request)
 
         if request.query_params.get('sync_saby') == '1':
             try:
@@ -202,11 +209,7 @@ class CustomerProfileAPIView(APIView):
         return self._update_profile(request)
 
     def _update_profile(self, request):
-        phone = request.data.get('phone')
-        customer, error_response = get_or_create_customer_by_phone(phone)
-
-        if error_response:
-            return error_response
+        customer = get_request_customer(request)
 
         name = request.data.get('name')
 
@@ -245,16 +248,9 @@ class CustomerProfileAPIView(APIView):
         return Response(CustomerProfileSerializer(customer).data)
 
 
-class CustomerBonusesAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class CustomerBonusesAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
-        phone = request.query_params.get('phone')
-        customer, error_response = get_or_create_customer_by_phone(phone)
-
-        if error_response:
-            return error_response
+        customer = get_request_customer(request)
 
         transactions = customer.bonus_transactions.all()[:50]
 
@@ -271,27 +267,16 @@ class CustomerBonusesAPIView(APIView):
         )
 
 
-class CustomerAddressesAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class CustomerAddressesAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
-        phone = request.query_params.get('phone')
-        customer, error_response = get_or_create_customer_by_phone(phone)
-
-        if error_response:
-            return error_response
+        customer = get_request_customer(request)
 
         addresses = customer.addresses.all()
 
         return Response(CustomerAddressSerializer(addresses, many=True).data)
 
     def post(self, request):
-        phone = request.data.get('phone')
-        customer, error_response = get_or_create_customer_by_phone(phone)
-
-        if error_response:
-            return error_response
+        customer = get_request_customer(request)
 
         serializer = CustomerAddressSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -318,9 +303,23 @@ class CustomerAddressesAPIView(APIView):
         )
 
 
-class CustomerAddressDetailAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+def _ensure_address_belongs_to_customer(address_obj, customer):
+    if address_obj is None:
+        return Response(
+            {'detail': 'Адрес не найден.'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if address_obj.customer_id != customer.id:
+        return Response(
+            {'detail': 'Нет доступа к этому адресу.'},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    return None
+
+
+class CustomerAddressDetailAPIView(AuthenticatedCustomerAPIView):
 
     def patch(self, request, address_id):
         return self._update_address(request, address_id)
@@ -329,13 +328,12 @@ class CustomerAddressDetailAPIView(APIView):
         return self._update_address(request, address_id)
 
     def delete(self, request, address_id):
+        customer = get_request_customer(request)
         address_obj = CustomerAddress.objects.filter(id=address_id).first()
+        error_response = _ensure_address_belongs_to_customer(address_obj, customer)
 
-        if address_obj is None:
-            return Response(
-                {'detail': 'Адрес не найден.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        if error_response is not None:
+            return error_response
 
         customer = address_obj.customer
         was_default = address_obj.is_default
@@ -355,13 +353,12 @@ class CustomerAddressDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _update_address(self, request, address_id):
+        customer = get_request_customer(request)
         address_obj = CustomerAddress.objects.filter(id=address_id).first()
+        error_response = _ensure_address_belongs_to_customer(address_obj, customer)
 
-        if address_obj is None:
-            return Response(
-                {'detail': 'Адрес не найден.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        if error_response is not None:
+            return error_response
 
         customer = address_obj.customer
 
@@ -387,18 +384,14 @@ class CustomerAddressDetailAPIView(APIView):
         return Response(CustomerAddressSerializer(address_obj).data)
 
 
-class SetDefaultAddressAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
+class SetDefaultAddressAPIView(AuthenticatedCustomerAPIView):
     def post(self, request, address_id):
+        customer = get_request_customer(request)
         address_obj = CustomerAddress.objects.filter(id=address_id).first()
+        error_response = _ensure_address_belongs_to_customer(address_obj, customer)
 
-        if address_obj is None:
-            return Response(
-                {'detail': 'Адрес не найден.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        if error_response is not None:
+            return error_response
 
         customer = address_obj.customer
 
@@ -434,6 +427,10 @@ def _otp_error_response(error: OtpAuthError):
 class CustomerOtpSendAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = 'otp_send'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
 
     def post(self, request):
         phone = request.data.get('phone')
@@ -463,6 +460,10 @@ class CustomerOtpSendAPIView(APIView):
 class CustomerOtpVerifyAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = 'otp_verify'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
 
     def post(self, request):
         session_id = request.data.get('session_id')
@@ -502,10 +503,19 @@ class CustomerOtpVerifyAPIView(APIView):
         if error_response is not None:
             return error_response
 
+        verified_session_id = session.id
+        session.delete()
+
+        access_token = create_customer_access_token(
+            customer_id=customer.id,
+            phone=customer.phone,
+        )
+
         return Response(
             {
                 'verified': True,
-                'session_id': session.id,
+                'session_id': verified_session_id,
+                'access_token': access_token,
                 'customer': CustomerAuthAccountSerializer(customer).data,
             },
         )
@@ -514,6 +524,10 @@ class CustomerOtpVerifyAPIView(APIView):
 class CustomerOtpStatusAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = 'otp_verify'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
 
     def get(self, request):
         session_id = request.query_params.get('session_id')
@@ -550,11 +564,14 @@ class CustomerOtpStatusAPIView(APIView):
         )
 
 
-class CustomerAccountDeleteAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+class CustomerAccountDeleteAPIView(AuthenticatedCustomerAPIView):
+    throttle_scope = 'otp_verify'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
 
     def post(self, request):
+        customer = get_request_customer(request)
         session_id = request.data.get('session_id')
         code = str(request.data.get('code') or '').strip()
         phone = request.data.get('phone')
@@ -571,13 +588,19 @@ class CustomerAccountDeleteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if phone and normalize_phone(phone) != normalize_phone(customer.phone):
+            return Response(
+                {'detail': 'Нет доступа.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         service = OtpAuthService()
 
         try:
-            session = service.verify_code(
+            session = service.verify_code_for_deletion(
                 session_id=int(session_id),
                 code=code,
-                phone=phone,
+                phone=customer.phone,
             )
         except OtpAuthError as error:
             return _otp_error_response(error)
@@ -587,21 +610,13 @@ class CustomerAccountDeleteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        normalized_phone = normalize_phone(session.phone)
-        customer = Customer.objects.filter(phone=normalized_phone).first()
-
-        if customer is None:
-            return Response(
-                {'detail': 'Аккаунт не найден.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
+        session.delete()
         delete_customer_account(customer)
 
         return Response(
             {
                 'deleted': True,
-                'phone': SabyCustomerService().format_phone_for_app(normalized_phone),
+                'phone': SabyCustomerService().format_phone_for_app(customer.phone),
             },
             status=status.HTTP_200_OK,
         )
@@ -612,6 +627,16 @@ class CustomerMobileIdWebhookAPIView(APIView):
     authentication_classes = []
 
     def post(self, request):
+        if settings.SMSAERO_WEBHOOK_SECRET:
+            provided_secret = (
+                request.headers.get('X-SMSAero-Secret')
+                or request.data.get('secret')
+            )
+
+            if provided_secret != settings.SMSAERO_WEBHOOK_SECRET:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+        elif not settings.DEBUG:
+            return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
         payload = request.data
 
         smsaero_id = payload.get('id')

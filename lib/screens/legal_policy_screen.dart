@@ -1,6 +1,5 @@
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/screens/legal_document_screen.dart';
-import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/legal_api_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
@@ -105,13 +104,10 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
       return;
     }
 
-    final auth = context.read<AuthService>();
     final consentService = context.read<LegalConsentService>();
-    final phone = auth.registeredPhone ?? auth.currentUser?.phone;
 
     try {
       await consentService.saveConsents(
-        phone: phone,
         termsAccepted: _termsAccepted,
         privacyAccepted: _privacyAccepted,
         pdConsentAccepted: _pdConsentAccepted,

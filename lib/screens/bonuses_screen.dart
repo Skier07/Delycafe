@@ -40,11 +40,9 @@ class _BonusesScreenState extends State<BonusesScreen> {
     }
 
     try {
-      return await _bonusApiService
-          .fetchBonuses(
-            phone: user.phone,
-          )
-          .timeout(const Duration(seconds: 8));
+      return await _bonusApiService.fetchBonuses().timeout(
+            const Duration(seconds: 8),
+          );
     } catch (error) {
       return BonusSummary.fromUser(user);
     }

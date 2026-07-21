@@ -2,19 +2,14 @@ import 'dart:convert';
 
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/order.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:http/http.dart' as http;
 
 class OrderHistoryApiService {
-  Future<List<Order>> fetchOrders({
-    required String phone,
-  }) async {
+  Future<List<Order>> fetchOrders() async {
     final response = await http.get(
-      ApiConfig.uri(
-        '/api/orders/history/',
-        queryParameters: {
-          'phone': phone,
-        },
-      ),
+      ApiConfig.uri('/api/orders/history/'),
+      headers: ApiAuthStorage.instance.headers(),
     );
 
     final decodedBody = utf8.decode(response.bodyBytes);

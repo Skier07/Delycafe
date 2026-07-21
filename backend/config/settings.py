@@ -166,10 +166,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # CORS
-# Для разработки разрешаем запросы от Flutter/web.
-# В продакшне ограничим конкретным доменом.
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG and not CORS_ALLOWED_ORIGINS
 
 
 # Django default primary key field type
@@ -183,7 +187,48 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'customers.authentication.CustomerTokenAuthentication',
+        'customers.authentication.OrderAccessTokenAuthentication',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '300/hour',
+        'otp_send': '15/hour',
+        'otp_verify': '60/hour',
+        'auth_match': '30/hour',
+    },
 }
+
+CUSTOMER_ACCESS_TOKEN_DAYS = int(os.getenv('CUSTOMER_ACCESS_TOKEN_DAYS', '30'))
+ORDER_ACCESS_TOKEN_HOURS = int(os.getenv('ORDER_ACCESS_TOKEN_HOURS', '24'))
+
+SMSAERO_WEBHOOK_SECRET = os.getenv('SMSAERO_WEBHOOK_SECRET', '')
+
+PAYMENT_WEBVIEW_ALLOWED_HOSTS = [
+    host.strip().lower()
+    for host in os.getenv(
+        'PAYMENT_WEBVIEW_ALLOWED_HOSTS',
+        'payment.alfabank.ru,alfa.rbsuat.com',
+    ).split(',')
+    if host.strip()
+]
+
+LEGAL_WEBVIEW_ALLOWED_HOSTS = [
+    host.strip().lower()
+    for host in os.getenv(
+        'LEGAL_WEBVIEW_ALLOWED_HOSTS',
+        'api.delycafe.ru',
+    ).split(',')
+    if host.strip()
+]
+
+if not DEBUG:
+    if SECRET_KEY == 'unsafe-dev-key':
+        raise RuntimeError('DJANGO_SECRET_KEY must be set in production.')
 
 ALFA_PAYMENT_ENABLED = os.getenv(
     'ALFA_PAYMENT_ENABLED',

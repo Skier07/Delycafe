@@ -2,12 +2,19 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from customers.authentication import (
+    CustomerTokenAuthentication,
+    OrderAccessTokenAuthentication,
+)
+from customers.permissions import IsCustomerOrOrderAccess
 from orders.models import Order
 
+from .access import authorize_order_access
 from .callback_handlers import (
     extract_alfa_callback_data,
     handle_alfa_callback,
@@ -21,8 +28,11 @@ from .services import (
 
 
 class AlfaCreatePaymentAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    authentication_classes = [
+        CustomerTokenAuthentication,
+        OrderAccessTokenAuthentication,
+    ]
+    permission_classes = [IsCustomerOrOrderAccess]
 
     def post(self, request):
         order_id = request.data.get('order_id')
@@ -42,10 +52,18 @@ class AlfaCreatePaymentAPIView(APIView):
             )
 
         try:
-            data = create_alfa_payment(order)
-        except AlfaPaymentError as error:
+            authorize_order_access(request, order)
+        except PermissionDenied as error:
             return Response(
-                {'detail': str(error)},
+                {'detail': str(error.detail if hasattr(error, 'detail') else error)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            data = create_alfa_payment(order)
+        except AlfaPaymentError:
+            return Response(
+                {'detail': 'Не удалось создать оплату. Попробуйте позже.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -53,8 +71,11 @@ class AlfaCreatePaymentAPIView(APIView):
 
 
 class AlfaPaymentStatusAPIView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    authentication_classes = [
+        CustomerTokenAuthentication,
+        OrderAccessTokenAuthentication,
+    ]
+    permission_classes = [IsCustomerOrOrderAccess]
 
     def get(self, request):
         order_id = request.query_params.get('order_id')
@@ -74,11 +95,19 @@ class AlfaPaymentStatusAPIView(APIView):
             )
 
         try:
+            authorize_order_access(request, order)
+        except PermissionDenied as error:
+            return Response(
+                {'detail': str(error.detail if hasattr(error, 'detail') else error)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
             get_alfa_payment_status(order)
             order.refresh_from_db()
-        except AlfaPaymentError as error:
+        except AlfaPaymentError:
             return Response(
-                {'detail': str(error)},
+                {'detail': 'Не удалось проверить оплату. Попробуйте позже.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

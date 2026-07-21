@@ -51,9 +51,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       return;
     }
 
-    await context.read<OrderService>().loadOrders(
-          phone: user.phone,
-        );
+    await context.read<OrderService>().loadOrders();
   }
 
   Future<void> _loadCatalog() async {

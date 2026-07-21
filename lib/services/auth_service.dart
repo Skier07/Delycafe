@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:delycafe/models/user.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:delycafe/services/biometric_auth_service.dart';
 import 'package:delycafe/services/customer_api_service.dart';
 import 'package:delycafe/services/pin_credential_service.dart';
@@ -88,6 +89,10 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
+      if (result.accessToken.isNotEmpty) {
+        await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
+      }
+
       await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
       await _clearOtpSession();
       return true;
@@ -97,6 +102,7 @@ class AuthService extends ChangeNotifier {
         await _waitForOtpVerification(
           phone: phone,
           sessionId: sessionId,
+          code: code,
         );
         return true;
       }
@@ -108,6 +114,7 @@ class AuthService extends ChangeNotifier {
   Future<void> _waitForOtpVerification({
     required String phone,
     required int sessionId,
+    required String code,
   }) async {
     const maxAttempts = 30;
     const pollInterval = Duration(seconds: 2);
@@ -123,7 +130,19 @@ class AuthService extends ChangeNotifier {
       );
 
       if (status.verified) {
-        await signInAfterOtp(phone);
+        final result = await _customerApiService.verifyOtp(
+          sessionId: sessionId,
+          phone: phone,
+          code: code,
+        );
+
+        if (result.accessToken.isNotEmpty) {
+          await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
+        }
+
+        await signInAfterOtp(
+          result.phone.isNotEmpty ? result.phone : phone,
+        );
         await _clearOtpSession();
         return;
       }
@@ -213,6 +232,10 @@ class AuthService extends ChangeNotifier {
 
     await _unlockRegisteredAccount(targetPhone);
     return true;
+  }
+
+  Future<bool> canSetupBiometricUnlock() async {
+    return _biometricAuthService.isDeviceSupported();
   }
 
   Future<bool> canUseBiometricUnlock({String? phone}) async {
@@ -329,6 +352,14 @@ class AuthService extends ChangeNotifier {
     await loadCustomerProfile(phone, keepLocked: keepLocked);
   }
 
+  Future<void> beginSmsRecovery() async {
+    await ApiAuthStorage.instance.clearAccessToken();
+    _currentUser = null;
+    _isUnlocked = false;
+    _guestSession = false;
+    notifyListeners();
+  }
+
   Future<void> resetAccountAccess() async {
     final phone = _registeredPhone ?? _currentUser?.phone;
 
@@ -385,6 +416,8 @@ class AuthService extends ChangeNotifier {
       await _profileCacheService.clear(phone);
     }
 
+    await ApiAuthStorage.instance.clearAll();
+
     notifyListeners();
   }
 
@@ -405,6 +438,8 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _loadSavedSession() async {
     try {
+      await ApiAuthStorage.instance.load();
+
       final prefs = await SharedPreferences.getInstance();
       final savedPhone = prefs.getString(_savedPhoneKey);
       _otpSessionId = prefs.getInt(_otpSessionIdKey);

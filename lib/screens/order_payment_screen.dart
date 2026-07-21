@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -109,6 +110,16 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
       setState(() {
         _errorMessage = 'Ссылка на оплату не получена';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (!isAllowedPaymentUrl(paymentUrl)) {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = 'Недопустимая ссылка на оплату';
         _isLoading = false;
       });
       return;
@@ -245,6 +256,10 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     }
 
     if (_handleExternalUrl(url, fromNavigationRequest: true)) {
+      return NavigationDecision.prevent;
+    }
+
+    if (!isAllowedPaymentUrl(url) && !_isPaymentReturnUrl(url)) {
       return NavigationDecision.prevent;
     }
 

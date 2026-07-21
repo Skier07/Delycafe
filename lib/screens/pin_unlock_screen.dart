@@ -8,12 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class PinUnlockScreen extends StatefulWidget {
-  const PinUnlockScreen({
-    super.key,
-    this.allowGuest = true,
-  });
-
-  final bool allowGuest;
+  const PinUnlockScreen({super.key});
 
   @override
   State<PinUnlockScreen> createState() => _PinUnlockScreenState();
@@ -127,23 +122,9 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     );
   }
 
-  Future<void> _continueAsGuest() async {
-    final auth = context.read<AuthService>();
-    auth.skipPinUnlockForSession();
-
-    if (!mounted) {
-      return;
-    }
-
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const RootScreen()),
-    );
-  }
-
   Future<void> _resetWithSms() async {
     final auth = context.read<AuthService>();
-    await auth.resetAccountAccess();
+    await auth.beginSmsRecovery();
 
     if (!mounted) {
       return;
@@ -205,13 +186,6 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                 text: 'Забыли PIN? Войти по SMS',
                 onPressed: _isUnlocking ? null : _resetWithSms,
               ),
-              if (widget.allowGuest) ...[
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: _isUnlocking ? null : _continueAsGuest,
-                  child: const Text('Продолжить как гость'),
-                ),
-              ],
             ],
           ),
         ),

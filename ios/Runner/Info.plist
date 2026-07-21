@@ -5,7 +5,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Delycafe</string>
+		<string>Деликафе</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -43,6 +43,6 @@
 		<key>UIStatusBarHidden</key>
 		<false/>
 		<key>NSFaceIDUsageDescription</key>
-		<string>Быстрый вход в аккаунт DelyCafe по Face ID</string>
+		<string>Быстрый вход в аккаунт Деликафе по Face ID</string>
 	</dict>
 </plist>

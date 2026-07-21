@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:delycafe/screens/order_payment_screen.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/services/order_api_service.dart';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
@@ -98,6 +100,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       user?.firstOrderDiscountAvailable ?? false,
                   onSubmit: (data) async {
                     final cartService = context.read<CartService>();
+                    final legalConsent = context.read<LegalConsentService>();
 
                     if (cartService.items.isEmpty) {
                       throw Exception('Корзина пуста');
@@ -118,7 +121,17 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       comment: data.comment,
                       items: cartService.toOrderApiItems(),
                       bonusSpent: data.bonusSpent,
+                      termsAccepted: legalConsent.termsAccepted,
+                      privacyAccepted: legalConsent.privacyAccepted,
+                      pdConsentAccepted: legalConsent.pdConsentAccepted,
+                      marketingConsentAccepted: legalConsent.marketingAccepted,
                     );
+
+                    if (order.orderAccessToken.isNotEmpty) {
+                      await ApiAuthStorage.instance.saveOrderAccessToken(
+                        order.orderAccessToken,
+                      );
+                    }
 
                     if (!context.mounted) return;
 
@@ -126,8 +139,6 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                     try {
                       if (auth.isLoggedIn) {
                         await auth.refreshCurrentUser();
-                      } else {
-                        await auth.signInWithPhone(data.phone);
                       }
                     } catch (error) {
                       debugPrint(
@@ -191,6 +202,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                     }
 
                     cartService.clearCart();
+                    await ApiAuthStorage.instance.clearOrderAccessToken();
 
                     if (!context.mounted) return;
 

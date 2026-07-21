@@ -1,4 +1,5 @@
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -19,15 +20,29 @@ class LegalDocumentScreen extends StatefulWidget {
 class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
 
+    if (!isAllowedLegalDocumentUrl(widget.url)) {
+      _errorMessage = 'Документ недоступен.';
+      _isLoading = false;
+      return;
+    }
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.disabled)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (request) {
+            if (isAllowedLegalDocumentUrl(request.url)) {
+              return NavigationDecision.navigate;
+            }
+
+            return NavigationDecision.prevent;
+          },
           onPageFinished: (_) {
             if (!mounted) return;
 
@@ -52,13 +67,23 @@ class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
           style: const TextStyle(fontSize: 18),
         ),
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator()),
-        ],
-      ),
+      body: _errorMessage != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          : Stack(
+              children: [
+                WebViewWidget(controller: _controller),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator()),
+              ],
+            ),
     );
   }
 }

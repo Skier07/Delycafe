@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:delycafe/config/api_config.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:http/http.dart' as http;
 
 class PaymentSession {
@@ -55,14 +56,19 @@ class PaymentStatusResult {
 }
 
 class PaymentApiService {
+  Map<String, String> _paymentHeaders({bool jsonContentType = false}) {
+    return ApiAuthStorage.instance.headers(
+      includeOrderAccess: true,
+      jsonContentType: jsonContentType,
+    );
+  }
+
   Future<PaymentSession> createPayment(int orderId) async {
     final uri = ApiConfig.uri('/api/payments/alfa/create/');
 
     final response = await http.post(
       uri,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
+      headers: _paymentHeaders(jsonContentType: true),
       body: jsonEncode({'order_id': orderId}),
     );
 
@@ -90,7 +96,10 @@ class PaymentApiService {
       },
     );
 
-    final response = await http.get(uri);
+    final response = await http.get(
+      uri,
+      headers: _paymentHeaders(),
+    );
 
     if (response.statusCode != 200) {
       throw Exception(

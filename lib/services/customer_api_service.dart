@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/models/user.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:http/http.dart' as http;
 
 class OtpSendResult {
@@ -35,10 +36,12 @@ class OtpVerifyResult {
   const OtpVerifyResult({
     required this.verified,
     required this.phone,
+    required this.accessToken,
   });
 
   final bool verified;
   final String phone;
+  final String accessToken;
 
   factory OtpVerifyResult.fromJson(Map<String, dynamic> json) {
     final customer = json['customer'];
@@ -48,6 +51,7 @@ class OtpVerifyResult {
       phone: customer is Map<String, dynamic>
           ? customer['phone']?.toString() ?? ''
           : '',
+      accessToken: json['access_token']?.toString() ?? '',
     );
   }
 }
@@ -159,10 +163,10 @@ class CustomerApiService {
       ApiConfig.uri(
         '/api/customers/profile/',
         queryParameters: {
-          'phone': phone,
           if (syncSaby) 'sync_saby': '1',
         },
       ),
+      headers: _authHeaders(),
     );
 
     final data = _decodeResponse(response);
@@ -175,9 +179,7 @@ class CustomerApiService {
     String? name,
     String? defaultAddress,
   }) async {
-    final body = <String, dynamic>{
-      'phone': phone,
-    };
+    final body = <String, dynamic>{};
 
     if (name != null) {
       body['name'] = name;
@@ -189,7 +191,7 @@ class CustomerApiService {
 
     final response = await http.patch(
       ApiConfig.uri('/api/customers/profile/'),
-      headers: _jsonHeaders,
+      headers: _authJsonHeaders,
       body: jsonEncode(body),
     );
 
@@ -202,12 +204,8 @@ class CustomerApiService {
     required String phone,
   }) async {
     final response = await http.get(
-      ApiConfig.uri(
-        '/api/customers/addresses/',
-        queryParameters: {
-          'phone': phone,
-        },
-      ),
+      ApiConfig.uri('/api/customers/addresses/'),
+      headers: _authHeaders(),
     );
 
     final data = _decodeListResponse(response);
@@ -230,10 +228,8 @@ class CustomerApiService {
   }) async {
     final response = await http.post(
       ApiConfig.uri('/api/customers/addresses/'),
-      headers: _jsonHeaders,
+      headers: _authJsonHeaders,
       body: jsonEncode({
-        'phone': phone,
-        'title': title,
         'address': address,
         'entrance': entrance,
         'floor': floor,
@@ -290,7 +286,7 @@ class CustomerApiService {
 
     final response = await http.patch(
       ApiConfig.uri('/api/customers/addresses/$addressId/'),
-      headers: _jsonHeaders,
+      headers: _authJsonHeaders,
       body: jsonEncode(body),
     );
 
@@ -304,7 +300,7 @@ class CustomerApiService {
   }) async {
     final response = await http.post(
       ApiConfig.uri('/api/customers/addresses/$addressId/set-default/'),
-      headers: _jsonHeaders,
+      headers: _authJsonHeaders,
     );
 
     final data = _decodeResponse(response);
@@ -317,6 +313,7 @@ class CustomerApiService {
   }) async {
     final response = await http.delete(
       ApiConfig.uri('/api/customers/addresses/$addressId/'),
+      headers: _authHeaders(),
     );
 
     if (response.statusCode == 204) {
@@ -333,7 +330,7 @@ class CustomerApiService {
   }) async {
     final response = await http.post(
       ApiConfig.uri('/api/customers/account/delete/'),
-      headers: _jsonHeaders,
+      headers: _authJsonHeaders,
       body: jsonEncode({
         'phone': phone,
         'session_id': sessionId,
@@ -430,6 +427,11 @@ class CustomerApiService {
       return OtpApiException(decodedBody);
     }
   }
+
+  Map<String, String> get _authJsonHeaders =>
+      ApiAuthStorage.instance.headers(jsonContentType: true);
+
+  Map<String, String> _authHeaders() => ApiAuthStorage.instance.headers();
 
   Map<String, String> get _jsonHeaders {
     return {

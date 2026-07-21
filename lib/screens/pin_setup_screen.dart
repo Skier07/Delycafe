@@ -36,7 +36,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
 
   Future<void> _loadBiometricAvailability() async {
     final auth = context.read<AuthService>();
-    final available = await auth.canUseBiometricUnlock();
+    final available = await auth.canSetupBiometricUnlock();
 
     if (!mounted) {
       return;

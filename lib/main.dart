@@ -1,6 +1,7 @@
 import 'package:delycafe/data/hive/hive_init.dart';
 import 'package:delycafe/screens/splash_screen.dart';
 import 'package:delycafe/services/address_service.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
@@ -16,6 +17,7 @@ void main() async {
   initializeAppTimezone();
 
   await initHive();
+  await ApiAuthStorage.instance.load();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:delycafe/config/api_config.dart';
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:http/http.dart' as http;
 
 class LegalDocumentInfo {
@@ -99,18 +100,12 @@ class LegalApiService {
         .toList();
   }
 
-  Future<LegalConsentStatus> fetchConsentStatus({String? phone}) async {
-    final queryParameters = <String, String>{};
-
-    if (phone != null && phone.trim().isNotEmpty) {
-      queryParameters['phone'] = phone.trim();
-    }
-
-    final uri = ApiConfig.uri(
-      '/api/legal/consent/status/',
-      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+  Future<LegalConsentStatus> fetchConsentStatus() async {
+    final uri = ApiConfig.uri('/api/legal/consent/status/');
+    final response = await http.get(
+      uri,
+      headers: ApiAuthStorage.instance.headers(),
     );
-    final response = await http.get(uri);
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -128,7 +123,6 @@ class LegalApiService {
   }
 
   Future<LegalConsentStatus> saveConsents({
-    required String phone,
     required bool termsAccepted,
     required bool privacyAccepted,
     required bool pdConsentAccepted,
@@ -137,11 +131,8 @@ class LegalApiService {
     final uri = ApiConfig.uri('/api/legal/consent/');
     final response = await http.post(
       uri,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
+      headers: ApiAuthStorage.instance.headers(jsonContentType: true),
       body: jsonEncode({
-        'phone': phone,
         'terms_accepted': termsAccepted,
         'privacy_accepted': privacyAccepted,
         'pd_consent_accepted': pdConsentAccepted,

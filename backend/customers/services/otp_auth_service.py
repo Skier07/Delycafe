@@ -86,6 +86,44 @@ class OtpAuthService:
         session.mark_verified()
         return session
 
+    def verify_code_for_deletion(
+        self,
+        *,
+        session_id: int,
+        code: str,
+        phone: str | None = None,
+    ) -> PhoneAuthSession:
+        """Подтверждение удаления аккаунта — всегда проверяет код заново."""
+        session = self._get_active_session(session_id, phone=phone)
+
+        if session.is_expired:
+            session.mark_failed()
+            raise OtpAuthError('Код истёк. Запросите новый.', code='expired')
+
+        if session.status == PhoneAuthSession.Status.VERIFIED:
+            raise OtpAuthError(
+                'Запросите новый код для удаления аккаунта.',
+                code='expired',
+            )
+
+        if session.verify_attempts >= settings.SMSAERO_MAX_VERIFY_ATTEMPTS:
+            session.mark_failed()
+            raise OtpAuthError(
+                'Превышено число попыток. Запросите новый код.',
+                code='too_many_attempts',
+            )
+
+        session.verify_attempts += 1
+        session.save(update_fields=['verify_attempts', 'updated_at'])
+
+        if self.mode == 'mobile_id':
+            self._verify_mobile_id(session, code)
+        else:
+            self._verify_sms_code(session, code)
+
+        session.mark_verified()
+        return session
+
     def apply_mobile_id_webhook(
         self,
         *,

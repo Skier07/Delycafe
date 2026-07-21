@@ -1,3 +1,4 @@
+import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:delycafe/services/legal_api_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,15 +35,21 @@ class LegalConsentService extends ChangeNotifier {
     await _loadLocal();
 
     if (phone != null && phone.trim().isNotEmpty) {
-      await refreshFromServer(phone: phone);
+      await refreshFromServer();
     }
 
     notifyListeners();
   }
 
-  Future<void> refreshFromServer({required String phone}) async {
+  Future<void> refreshFromServer() async {
+    final token = ApiAuthStorage.instance.accessToken;
+
+    if (token == null || token.isEmpty) {
+      return;
+    }
+
     try {
-      final status = await _apiService.fetchConsentStatus(phone: phone);
+      final status = await _apiService.fetchConsentStatus();
       _applyStatus(status);
       await _saveLocal();
     } catch (_) {
@@ -64,13 +71,13 @@ class LegalConsentService extends ChangeNotifier {
     _pdConsentAccepted = pdConsentAccepted;
     _marketingAccepted = marketingAccepted;
 
-    if (phone != null && phone.trim().isNotEmpty && canPlaceOrder) {
+    if (ApiAuthStorage.instance.accessToken?.isNotEmpty == true &&
+        canPlaceOrder) {
       _isLoading = true;
       notifyListeners();
 
       try {
         final status = await _apiService.saveConsents(
-          phone: phone.trim(),
           termsAccepted: termsAccepted,
           privacyAccepted: privacyAccepted,
           pdConsentAccepted: pdConsentAccepted,
@@ -86,13 +93,12 @@ class LegalConsentService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> ensureSyncedForOrder(String phone) async {
+  Future<void> ensureSyncedForOrder() async {
     if (!canPlaceOrder) {
       return;
     }
 
     await saveConsents(
-      phone: phone,
       termsAccepted: _termsAccepted,
       privacyAccepted: _privacyAccepted,
       pdConsentAccepted: _pdConsentAccepted,
