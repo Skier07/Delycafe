@@ -364,6 +364,7 @@ class _EditNameSheetState extends State<_EditNameSheet> {
             controller: _nameController,
             autofocus: true,
             keyboardType: RussianTextInput.text,
+            hintLocales: RussianTextInput.hintLocales,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) {

@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:ui' show Locale;
 
 import 'package:flutter/services.dart';
 
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 abstract final class RussianTextInput {
   static const TextInputType text = TextInputType.text;
   static const TextInputType multiline = TextInputType.multiline;
+  static const List<Locale> hintLocales = [Locale('ru', 'RU')];
 
   /// На Android цифровой `keyboardType` часто «залипает» и блокирует кириллицу
   /// в соседних текстовых полях. Поэтому для подъезда/этажа/квартиры оставляем

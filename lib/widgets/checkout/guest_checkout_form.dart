@@ -712,6 +712,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           TextFormField(
             controller: _nameController,
             keyboardType: RussianTextInput.text,
+            hintLocales: RussianTextInput.hintLocales,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             decoration: _inputDecoration('Имя'),
@@ -840,6 +841,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             TextFormField(
               controller: _addressController,
               keyboardType: RussianTextInput.text,
+              hintLocales: RussianTextInput.hintLocales,
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.next,
               decoration: _inputDecoration('Улица, дом'),
@@ -1039,6 +1041,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           TextFormField(
             controller: _commentController,
             keyboardType: RussianTextInput.multiline,
+            hintLocales: RussianTextInput.hintLocales,
             textCapitalization: TextCapitalization.sentences,
             maxLines: 3,
             decoration: _inputDecoration('Комментарий к заказу'),

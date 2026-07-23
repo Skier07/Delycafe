@@ -543,6 +543,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               TextFormField(
                 controller: _titleController,
                 keyboardType: RussianTextInput.text,
+                hintLocales: RussianTextInput.hintLocales,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
                   labelText: 'Название',
@@ -554,6 +555,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               TextFormField(
                 controller: _addressController,
                 keyboardType: RussianTextInput.text,
+                hintLocales: RussianTextInput.hintLocales,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Адрес',
@@ -612,6 +614,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               TextFormField(
                 controller: _commentController,
                 keyboardType: RussianTextInput.multiline,
+                hintLocales: RussianTextInput.hintLocales,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Комментарий',
