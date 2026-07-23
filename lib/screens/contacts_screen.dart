@@ -1,5 +1,6 @@
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:flutter/material.dart';
 
 class ContactsScreen extends StatelessWidget {
@@ -92,10 +93,10 @@ class ContactsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const _ContactCard(
-                  title: 'Время работы',
+                _ContactCard(
+                  title: 'Приём заказов в приложении',
                   child: Text(
-                    '09:00 до 21:00',
+                    'С 10:00, ${DeliverySchedule.acceptanceHoursShort}.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white,
@@ -104,14 +105,15 @@ class ContactsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _ContactCard(
-                  title: 'Внимание!',
+                const _ContactCard(
+                  title: 'Время работы кафе',
                   child: Text(
-                    'Кухня закрывается за 30 минут до конца рабочего дня.',
+                    'Ежедневно с 9:00 до 21:00, '
+                    'в пятницу и субботу — до 22:00.',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 16,
-                      height: 1.3,
+                      color: Colors.white,
+                      height: 1.5,
                     ),
                   ),
                 ),

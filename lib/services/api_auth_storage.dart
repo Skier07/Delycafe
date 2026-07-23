@@ -14,6 +14,8 @@ class ApiAuthStorage {
   String? get accessToken => _accessToken;
   String? get orderAccessToken => _orderAccessToken;
 
+  bool get hasAccessToken => _accessToken?.isNotEmpty == true;
+
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     _accessToken = prefs.getString(_accessTokenKey);
@@ -60,6 +62,7 @@ class ApiAuthStorage {
   Map<String, String> headers({
     bool includeOrderAccess = false,
     bool jsonContentType = false,
+    bool includeAccessToken = true,
   }) {
     final result = <String, String>{};
 
@@ -67,10 +70,12 @@ class ApiAuthStorage {
       result['Content-Type'] = 'application/json; charset=utf-8';
     }
 
-    final accessToken = _accessToken;
+    if (includeAccessToken) {
+      final accessToken = _accessToken;
 
-    if (accessToken != null && accessToken.isNotEmpty) {
-      result['Authorization'] = 'Bearer $accessToken';
+      if (accessToken != null && accessToken.isNotEmpty) {
+        result['Authorization'] = 'Bearer $accessToken';
+      }
     }
 
     if (includeOrderAccess) {

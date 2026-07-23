@@ -134,6 +134,7 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
   @override
   Widget build(BuildContext context) {
     final consentService = context.watch<LegalConsentService>();
+    final bottomSafeInset = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -163,7 +164,12 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + bottomSafeInset,
+        ),
         children: [
           if (_isLoadingDocuments)
             const Padding(

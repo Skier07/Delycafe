@@ -1,5 +1,6 @@
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -37,47 +38,44 @@ class DeliveryScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
+        children: [
           _SectionCard(
             title: 'Время работы',
             content: 'Приём заказов в приложении: с 10:00.\n'
-                'Последний слот доставки: вс–чт до 20:30, '
-                'пт–сб до 21:30.\n\n'
-                'Минимальное время: 1,5 часа (в Татыш — 2 часа).',
+                'Закрытие приёма: ${DeliverySchedule.acceptanceHoursShort}.\n\n'
+                'Минимальное время доставки: 1,5 часа (в Татыш — 2 часа).',
           ),
-          SizedBox(height: 16),
-          _SectionCard(
+          const SizedBox(height: 16),
+          const _SectionCard(
             title: 'Доставка и оплата',
             content: 'Оплата возможна через Мир, Visa, Mastercard и СБП.\n\n'
                 'Все платежи защищены SSL.\n'
                 'Данные карты не сохраняются.',
           ),
-          SizedBox(height: 16),
-          _SectionCard(
+          const SizedBox(height: 16),
+          const _SectionCard(
             title: 'Заказ по телефону',
             content: '+7 (900) 022-30-22\n\n'
                 'При заказе от 3000₽ — предоплата.\n'
                 'Можно оплатить в кафе.',
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _SectionCard(
             title: 'Доставка по Озёрску',
             content: 'от 1700₽ — бесплатно\n'
                 'от 1000 до 1700₽ — доставка 200₽\n'
                 '< 1000₽ — доставка 250₽\n\n'
-                'Приём заказов: с 10:00, последний слот до 20:30 (вс–чт) '
-                'или 21:30 (пт–сб)',
+                '${DeliverySchedule.acceptanceHoursLong}',
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _SectionCard(
             title: 'Доставка в Татыш',
             content: 'Стоимость: 450₽\n'
                 'Минимум: 2 часа\n'
-                'Приём заказов: с 10:00, последний слот до 20:30 (вс–чт) '
-                'или 21:30 (пт–сб)',
+                '${DeliverySchedule.acceptanceHoursLong}',
           ),
-          SizedBox(height: 16),
-          _WarningCard(
+          const SizedBox(height: 16),
+          const _WarningCard(
             text: 'Если нет лифта — подъём до 5 этажа бесплатный.\n'
                 'Далее — 50₽/этаж.',
           ),

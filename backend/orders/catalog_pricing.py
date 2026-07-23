@@ -5,8 +5,43 @@ from rest_framework import serializers
 from catalog.models import Product, ProductVariant
 
 
-def resolve_catalog_unit_price(item_data: dict) -> int:
+def _extract_product_pk(product_api_id: str) -> int | None:
+    raw = str(product_api_id or '').strip()
+
+    if not raw:
+        return None
+
+    if raw.isdigit():
+        return int(raw)
+
+    if raw.startswith('api_'):
+        suffix = raw[4:]
+
+        if suffix.isdigit():
+            return int(suffix)
+
+    return None
+
+
+def _extract_saby_id(item_data: dict) -> int | None:
     saby_id = item_data.get('saby_id')
+
+    if saby_id is not None:
+        return int(saby_id)
+
+    product_api_id = str(item_data.get('product_api_id') or '').strip()
+
+    if product_api_id.startswith('saby_'):
+        suffix = product_api_id[5:]
+
+        if suffix.isdigit():
+            return int(suffix)
+
+    return None
+
+
+def resolve_catalog_unit_price(item_data: dict) -> int:
+    saby_id = _extract_saby_id(item_data)
 
     if saby_id:
         variant = (
@@ -14,7 +49,6 @@ def resolve_catalog_unit_price(item_data: dict) -> int:
                 saby_id=saby_id,
                 is_active=True,
                 product__is_active=True,
-                product__show_in_app=True,
             )
             .select_related('product')
             .first()
@@ -26,19 +60,17 @@ def resolve_catalog_unit_price(item_data: dict) -> int:
         product = Product.objects.filter(
             saby_id=saby_id,
             is_active=True,
-            show_in_app=True,
         ).first()
 
         if product is not None and not product.has_variants:
             return int(product.price)
 
-    product_api_id = str(item_data.get('product_api_id') or '').strip()
+    product_pk = _extract_product_pk(str(item_data.get('product_api_id') or ''))
 
-    if product_api_id.isdigit():
+    if product_pk is not None:
         product = Product.objects.filter(
-            pk=int(product_api_id),
+            pk=product_pk,
             is_active=True,
-            show_in_app=True,
         ).first()
 
         if product is not None:
@@ -72,18 +104,6 @@ def apply_validated_item_prices(items_data: list[dict]) -> list[dict]:
 
     for item_data in items_data:
         server_price = resolve_catalog_unit_price(item_data)
-        client_price = int(item_data['price'])
-
-        if client_price != server_price:
-            title = str(item_data.get('product_title') or 'товар')
-            raise serializers.ValidationError(
-                {
-                    'items': (
-                        f'Цена для «{title}» устарела. '
-                        f'Актуальная цена: {server_price} ₽.'
-                    ),
-                },
-            )
 
         validated_item = dict(item_data)
         validated_item['price'] = server_price

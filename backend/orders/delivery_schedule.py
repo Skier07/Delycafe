@@ -5,8 +5,9 @@ from django.utils import timezone
 from orders.models import Order
 
 OPEN_TIME = time(10, 0)
-SLOT_WEEKEND = time(21, 30)
-SLOT_WEEKDAY = time(20, 30)
+# Вс–чт: приём заказов до 20:30, пт–сб: до 21:30.
+SLOT_SUNDAY_THROUGH_THURSDAY = time(20, 30)
+SLOT_FRIDAY_SATURDAY = time(21, 30)
 LEAD_DEFAULT = timedelta(hours=1, minutes=30)
 LEAD_TATYSH = timedelta(hours=2)
 SLOT_INTERVAL = timedelta(minutes=5)
@@ -20,10 +21,11 @@ def lead_for_delivery_type(delivery_type: str) -> timedelta:
 
 
 def last_slot_for_date(day: date) -> time:
+    # Python weekday: пн=0 … вс=6. Пт=4, сб=5 — до 21:30, вс–чт — до 20:30.
     if day.weekday() in (4, 5):
-        return SLOT_WEEKEND
+        return SLOT_FRIDAY_SATURDAY
 
-    return SLOT_WEEKDAY
+    return SLOT_SUNDAY_THROUGH_THURSDAY
 
 
 def combine_local(day: date, value: time) -> datetime:
@@ -76,6 +78,11 @@ def is_kitchen_closed(now: datetime) -> bool:
 
 
 def is_ordering_open(now: datetime, delivery_type: str) -> bool:
+    """Приём заказов открыт по расписанию кухни (без учёта lead time)."""
+    return not is_kitchen_closed(now)
+
+
+def has_delivery_slots_today(now: datetime, delivery_type: str) -> bool:
     if is_kitchen_closed(now):
         return False
 
@@ -99,12 +106,15 @@ def next_ordering_opens_at(now: datetime) -> datetime:
 
 
 def available_slot_times(now: datetime, delivery_type: str) -> list[str]:
-    if not is_ordering_open(now, delivery_type):
+    if is_kitchen_closed(now):
         return []
 
     local_now = timezone.localtime(now)
     min_slot = _round_up_to_interval(min_delivery_datetime(local_now, delivery_type))
     max_slot = max_delivery_datetime(local_now)
+
+    if min_slot > max_slot:
+        return [max_slot.strftime('%H:%M')]
 
     slots: list[str] = []
     cursor = min_slot
@@ -125,7 +135,7 @@ def validate_order_delivery_window(
 ) -> None:
     from rest_framework import serializers
 
-    if not is_ordering_open(now, delivery_type):
+    if is_kitchen_closed(now):
         opens_at = next_ordering_opens_at(now)
         raise serializers.ValidationError(
             'Приём заказов сейчас закрыт. '

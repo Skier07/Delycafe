@@ -1,5 +1,6 @@
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/models/order.dart';
+import 'package:delycafe/utils/catalog_ids.dart';
 
 class RepeatOrderMatch {
   final CatalogItem product;
@@ -96,8 +97,14 @@ class RepeatOrderService {
     List<CatalogItem> catalog,
   ) {
     if (orderItem.productApiId.isNotEmpty) {
+      final orderProductId =
+          CatalogIds.orderProductApiId(orderItem.productApiId);
+
       for (final product in catalog) {
-        if (product.id == orderItem.productApiId) {
+        if (product.id == orderItem.productApiId ||
+            (orderProductId.isNotEmpty &&
+                CatalogIds.orderProductApiId(product.id) ==
+                    orderProductId)) {
           return product;
         }
       }

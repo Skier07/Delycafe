@@ -54,8 +54,8 @@ class OrderingClosedBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Заказы принимаем с 10:00. Последний слот: '
-                  'вс–чт до 20:30, пт–сб до 21:30.',
+                  'Заказы принимаем с 10:00. Приём заказов: '
+                  '${DeliverySchedule.acceptanceHoursShort}.',
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.35,

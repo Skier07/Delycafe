@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:delycafe/screens/checkout_screens.dart';
-import 'package:delycafe/screens/legal_policy_screen.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
@@ -41,13 +40,13 @@ class _CartScreenState extends State<CartScreen> {
 
   DateTime get _now => DeliverySchedule.now;
 
-  bool get _isOrderingOpen => DeliverySchedule.isAnyOrderingOpen(_now);
+  bool get _isAcceptingOrders => DeliverySchedule.isAcceptingOrders(_now);
 
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
     final legalConsent = context.watch<LegalConsentService>();
-    final canCheckout = _isOrderingOpen && legalConsent.canPlaceOrder;
+    final canCheckout = _isAcceptingOrders && legalConsent.canPlaceOrder;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -86,7 +85,7 @@ class _CartScreenState extends State<CartScreen> {
           ? const _EmptyCart()
           : Column(
               children: [
-                if (!_isOrderingOpen) ...[
+                if (!_isAcceptingOrders) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: OrderingClosedBanner(now: _now),
@@ -96,7 +95,7 @@ class _CartScreenState extends State<CartScreen> {
                   child: ListView.separated(
                     padding: EdgeInsets.fromLTRB(
                       16,
-                      _isOrderingOpen ? 16 : 12,
+                      _isAcceptingOrders ? 16 : 12,
                       16,
                       120,
                     ),
@@ -293,21 +292,13 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                     );
                                   }
-                                : _isOrderingOpen
+                                : _isAcceptingOrders
                                     ? () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Примите условия в разделе «Меню → Политика».',
-                                            ),
-                                          ),
-                                        );
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                const LegalPolicyScreen(),
+                                                const CheckoutScreens(),
                                           ),
                                         );
                                       }
@@ -325,8 +316,8 @@ class _CartScreenState extends State<CartScreen> {
                               child: Text(
                                 canCheckout
                                     ? 'Оформить'
-                                    : _isOrderingOpen
-                                        ? 'Примите политику'
+                                    : _isAcceptingOrders
+                                        ? 'Примите условия ниже'
                                         : DeliverySchedule
                                             .closedSubmitButtonLabel(_now),
                                 textAlign: TextAlign.center,

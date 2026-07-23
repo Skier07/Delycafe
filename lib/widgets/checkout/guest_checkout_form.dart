@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/customer_address.dart';
-import 'package:delycafe/screens/legal_policy_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
+import 'package:delycafe/utils/russian_text_input.dart';
+import 'package:delycafe/widgets/checkout/legal_consent_checkout_section.dart';
 import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -164,6 +165,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   bool _useBonuses = false;
   bool _isSubmitting = false;
+  bool _consentNoticeShown = false;
   Timer? _scheduleTimer;
 
   static const int _promDeliveryPrice = 350;
@@ -176,19 +178,14 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   DateTime get _now => DeliverySchedule.now;
 
-  bool get _isOrderingOpen {
-    return DeliverySchedule.isOrderingOpen(
-      _now,
-      _deliveryType.apiValue,
-    );
-  }
+  bool get _isAcceptingOrders => DeliverySchedule.isAcceptingOrders(_now);
 
   bool get _canSubmit {
     final legalConsent = context.read<LegalConsentService>();
 
     return _isPhoneComplete &&
         !_isSubmitting &&
-        _isOrderingOpen &&
+        _isAcceptingOrders &&
         legalConsent.canPlaceOrder;
   }
 
@@ -304,7 +301,43 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       if (!mounted) return;
 
       setState(_syncDeliveryTimeWithSchedule);
+      _showFirstOrderConsentNoticeIfNeeded();
     });
+  }
+
+  void _showFirstOrderConsentNoticeIfNeeded() {
+    if (!mounted || _consentNoticeShown) {
+      return;
+    }
+
+    final consent = context.read<LegalConsentService>();
+
+    if (consent.canPlaceOrder) {
+      return;
+    }
+
+    _consentNoticeShown = true;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Примите условия'),
+          content: const Text(
+            'Для первого заказа отметьте согласия в форме ниже: '
+            'пользовательское соглашение, политику конфиденциальности, '
+            'обработку персональных данных и при желании — рассылку. '
+            'После принятия они сохранятся автоматически.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Понятно'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _syncDeliveryTimeWithSchedule() {
@@ -313,7 +346,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       _deliveryType.apiValue,
     );
 
-    if (!_isOrderingOpen) {
+    if (!_isAcceptingOrders) {
       _timeController.text = previewTime;
       return;
     }
@@ -442,7 +475,11 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(DeliverySchedule.closedMessage(_now)),
+          content: Text(
+            DeliverySchedule.isKitchenClosed(_now)
+                ? DeliverySchedule.closedSubmitButtonLabel(_now)
+                : DeliverySchedule.closedMessage(_now),
+          ),
         ),
       );
       return;
@@ -565,7 +602,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_isOrderingOpen) {
+    if (!_isAcceptingOrders) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(DeliverySchedule.closedMessage(_now)),
@@ -580,14 +617,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Примите условия в разделе «Меню → Политика».',
+            'Отметьте все обязательные согласия ниже, чтобы оформить заказ.',
           ),
-        ),
-      );
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LegalPolicyScreen(),
         ),
       );
       return;
@@ -672,7 +703,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!_isOrderingOpen) ...[
+          if (!_isAcceptingOrders) ...[
             OrderingClosedBanner(now: _now),
             const SizedBox(height: 20),
           ],
@@ -680,6 +711,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _nameController,
+            keyboardType: RussianTextInput.text,
+            textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             decoration: _inputDecoration('Имя'),
             validator: (value) {
@@ -806,6 +839,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _addressController,
+              keyboardType: RussianTextInput.text,
+              textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.next,
               decoration: _inputDecoration('Улица, дом'),
               validator: (value) {
@@ -825,8 +860,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   child: TextFormField(
                     controller: _entranceController,
                     textInputAction: TextInputAction.next,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    keyboardType: RussianTextInput.digitsKeyboardType,
+                    inputFormatters: RussianTextInput.digitsOnlyFormatters,
                     decoration: _inputDecoration('Подъезд'),
                   ),
                 ),
@@ -835,8 +870,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   child: TextFormField(
                     controller: _floorController,
                     textInputAction: TextInputAction.next,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    keyboardType: RussianTextInput.digitsKeyboardType,
+                    inputFormatters: RussianTextInput.digitsOnlyFormatters,
                     decoration: _inputDecoration('Этаж'),
                   ),
                 ),
@@ -845,6 +880,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   child: TextFormField(
                     controller: _apartmentController,
                     textInputAction: TextInputAction.next,
+                    keyboardType: RussianTextInput.digitsKeyboardType,
+                    inputFormatters: RussianTextInput.digitsOnlyFormatters,
                     decoration: _inputDecoration('Квартира'),
                   ),
                 ),
@@ -876,7 +913,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
               Expanded(
                 child: _ChoiceCard(
                   title: 'Ко времени',
-                  subtitle: _isOrderingOpen
+                  subtitle: _isAcceptingOrders
                       ? (_timeController.text.trim().isNotEmpty
                           ? _timeController.text.trim()
                           : 'выберите')
@@ -905,7 +942,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.black.withValues(
-                  alpha: _isOrderingOpen ? 0.62 : 0.45,
+                  alpha: _isAcceptingOrders ? 0.62 : 0.45,
                 ),
                 fontWeight: FontWeight.w500,
               ),
@@ -916,10 +953,10 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             TextFormField(
               controller: _timeController,
               readOnly: true,
-              onTap: _isOrderingOpen ? _pickTime : null,
+              onTap: _isAcceptingOrders ? _pickTime : null,
               decoration: _inputDecoration('Выберите время'),
               validator: (value) {
-                if (!_isOrderingOpen) {
+                if (!_isAcceptingOrders) {
                   return null;
                 }
 
@@ -1001,6 +1038,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _commentController,
+            keyboardType: RussianTextInput.multiline,
+            textCapitalization: TextCapitalization.sentences,
             maxLines: 3,
             decoration: _inputDecoration('Комментарий к заказу'),
           ),
@@ -1056,15 +1095,17 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             ),
           ),
           const SizedBox(height: 24),
+          const LegalConsentCheckoutSection(),
+          const SizedBox(height: 24),
           SafeArea(
             top: false,
             child: AuthButton(
               text: _isSubmitting
                   ? 'Оформляем...'
-                  : !_isOrderingOpen
+                  : !_isAcceptingOrders
                       ? DeliverySchedule.closedSubmitButtonLabel(_now)
                       : !legalConsent.canPlaceOrder
-                          ? 'Примите политику в меню'
+                          ? 'Примите условия ниже'
                           : 'Оформить заказ',
               onPressed: _canSubmit ? _submit : null,
             ),

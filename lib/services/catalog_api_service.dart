@@ -40,7 +40,7 @@ class CatalogApiService {
         : <ProductVariant>[];
 
     return CatalogItem(
-      id: 'api_${json['id']}',
+      id: json['id']?.toString() ?? '',
       sabyId: _toNullableInt(json['saby_id']),
       title: json['title']?.toString() ?? '',
       category: json['category']?.toString() ?? 'Другое',

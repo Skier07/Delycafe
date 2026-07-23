@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:delycafe/exceptions/auth_required_exception.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:delycafe/services/biometric_auth_service.dart';
@@ -39,10 +40,13 @@ class AuthService extends ChangeNotifier {
   bool _isLoadingSession = true;
   bool _isUnlocked = false;
   bool _guestSession = false;
+  bool _needsAccessTokenRefresh = false;
 
   User? get currentUser => _isUnlocked ? _currentUser : null;
   bool get isLoggedIn => _currentUser != null && _isUnlocked;
   bool get isLoadingSession => _isLoadingSession;
+  bool get needsAccessTokenRefresh =>
+      _needsAccessTokenRefresh && _registeredPhone != null;
   int? get otpSessionId => _otpSessionId;
   String? get registeredPhone => _registeredPhone;
   bool get needsPinUnlock =>
@@ -91,6 +95,7 @@ class AuthService extends ChangeNotifier {
 
       if (result.accessToken.isNotEmpty) {
         await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
+        _needsAccessTokenRefresh = false;
       }
 
       await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
@@ -138,6 +143,7 @@ class AuthService extends ChangeNotifier {
 
         if (result.accessToken.isNotEmpty) {
           await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
+          _needsAccessTokenRefresh = false;
         }
 
         await signInAfterOtp(
@@ -291,6 +297,23 @@ class AuthService extends ChangeNotifier {
   }) async {
     final normalizedPhone = _normalizePhone(phone);
 
+    if (!ApiAuthStorage.instance.hasAccessToken) {
+      _needsAccessTokenRefresh = true;
+      final cachedUser = _profileCacheService.read(normalizedPhone);
+
+      if (cachedUser != null) {
+        _currentUser = cachedUser;
+
+        if (!keepLocked) {
+          _isUnlocked = true;
+        }
+
+        notifyListeners();
+      }
+
+      return;
+    }
+
     try {
       final user = await _customerApiService
           .fetchProfile(
@@ -299,6 +322,7 @@ class AuthService extends ChangeNotifier {
           .timeout(_profileRequestTimeout);
 
       _currentUser = user;
+      _needsAccessTokenRefresh = false;
 
       await _savePhone(user.phone);
       await _profileCacheService.save(user);
@@ -308,6 +332,20 @@ class AuthService extends ChangeNotifier {
       }
 
       notifyListeners();
+    } on AuthRequiredException {
+      _needsAccessTokenRefresh = true;
+
+      final cachedUser = _profileCacheService.read(normalizedPhone);
+
+      if (cachedUser != null) {
+        _currentUser = cachedUser;
+
+        if (!keepLocked) {
+          _isUnlocked = true;
+        }
+
+        notifyListeners();
+      }
     } catch (error) {
       debugPrint('Ошибка загрузки профиля клиента: $error');
 
@@ -332,13 +370,32 @@ class AuthService extends ChangeNotifier {
       return;
     }
 
+    if (!ApiAuthStorage.instance.hasAccessToken) {
+      _needsAccessTokenRefresh = true;
+      notifyListeners();
+      throw const AuthRequiredException(
+        'Сессия истекла. Войдите по SMS для сохранения изменений.',
+      );
+    }
+
     final updatedUser = await _customerApiService.updateProfile(
       phone: user.phone,
       name: name,
     );
 
     _currentUser = updatedUser;
+    _needsAccessTokenRefresh = false;
     await _profileCacheService.save(updatedUser);
+    notifyListeners();
+  }
+
+  void markAccessTokenRefreshRequired() {
+    _needsAccessTokenRefresh = true;
+    notifyListeners();
+  }
+
+  void clearAccessTokenRefreshRequired() {
+    _needsAccessTokenRefresh = false;
     notifyListeners();
   }
 
@@ -357,6 +414,7 @@ class AuthService extends ChangeNotifier {
     _currentUser = null;
     _isUnlocked = false;
     _guestSession = false;
+    _needsAccessTokenRefresh = true;
     notifyListeners();
   }
 
@@ -403,6 +461,7 @@ class AuthService extends ChangeNotifier {
     _registeredPhone = null;
     _isUnlocked = false;
     _guestSession = false;
+    _needsAccessTokenRefresh = false;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_savedPhoneKey);

@@ -4,6 +4,7 @@ import 'package:delycafe/services/customer_api_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -541,6 +542,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
+                keyboardType: RussianTextInput.text,
+                textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
                   labelText: 'Название',
                   hintText: 'Дом, работа, к маме',
@@ -550,6 +553,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressController,
+                keyboardType: RussianTextInput.text,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Адрес',
                   hintText: 'Озёрск, ул. Ленина, 1',
@@ -569,6 +574,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _entranceController,
+                      keyboardType: RussianTextInput.digitsKeyboardType,
+                      inputFormatters: RussianTextInput.digitsOnlyFormatters,
                       decoration: const InputDecoration(
                         labelText: 'Подъезд',
                         border: OutlineInputBorder(),
@@ -579,6 +586,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _floorController,
+                      keyboardType: RussianTextInput.digitsKeyboardType,
+                      inputFormatters: RussianTextInput.digitsOnlyFormatters,
                       decoration: const InputDecoration(
                         labelText: 'Этаж',
                         border: OutlineInputBorder(),
@@ -589,6 +598,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _apartmentController,
+                      keyboardType: RussianTextInput.digitsKeyboardType,
+                      inputFormatters: RussianTextInput.digitsOnlyFormatters,
                       decoration: const InputDecoration(
                         labelText: 'Кв.',
                         border: OutlineInputBorder(),
@@ -600,6 +611,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _commentController,
+                keyboardType: RussianTextInput.multiline,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Комментарий',
                   hintText: 'Домофон, ориентир, пожелания',

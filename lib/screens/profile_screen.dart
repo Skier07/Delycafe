@@ -1,10 +1,13 @@
 import 'package:delycafe/constants/app_features.dart';
+import 'package:delycafe/exceptions/auth_required_exception.dart';
+import 'package:delycafe/features/auth/auth_screen.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/screens/account_deletion_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -63,6 +66,19 @@ class ProfileScreen extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           children: [
+            if (auth.needsAccessTokenRefresh) ...[
+              _SessionRefreshBanner(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AuthScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
             _ProfileHeaderCard(
               name: name,
               subtitle: user == null ? 'Гость' : 'Клиент DelyCafe',
@@ -294,6 +310,17 @@ class _EditNameSheetState extends State<_EditNameSheet> {
       if (!mounted) return;
 
       Navigator.pop(context);
+    } on AuthRequiredException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
     } catch (error) {
       if (!mounted) return;
 
@@ -336,6 +363,8 @@ class _EditNameSheetState extends State<_EditNameSheet> {
           TextField(
             controller: _nameController,
             autofocus: true,
+            keyboardType: RussianTextInput.text,
+            textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) {
               if (!_isSaving) {
@@ -561,3 +590,53 @@ const TextStyle _subtleStyle = TextStyle(
   height: 1.4,
   color: Colors.black54,
 );
+
+class _SessionRefreshBanner extends StatelessWidget {
+  const _SessionRefreshBanner({
+    required this.onPressed,
+  });
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.orange.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Нужно подтвердить вход по SMS',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'PIN и Face ID защищают вход в приложение. Серверная сессия '
+            'действует 6 месяцев после входа по SMS. Если сессия истекла — '
+            'нужен повторный вход по SMS один раз.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: onPressed,
+            child: const Text('Войти по SMS'),
+          ),
+        ],
+      ),
+    );
+  }
+}

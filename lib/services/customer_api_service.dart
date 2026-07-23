@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:delycafe/config/api_config.dart';
+import 'package:delycafe/exceptions/auth_required_exception.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/api_auth_storage.dart';
@@ -344,6 +346,13 @@ class CustomerApiService {
   Map<String, dynamic> _decodeResponse(http.Response response) {
     final decodedBody = utf8.decode(response.bodyBytes);
 
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      unawaited(ApiAuthStorage.instance.clearAccessToken());
+      throw const AuthRequiredException(
+        'Сессия истекла. Войдите по SMS для продолжения.',
+      );
+    }
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (decodedBody.isEmpty) {
         return <String, dynamic>{};
@@ -363,6 +372,13 @@ class CustomerApiService {
 
   List<dynamic> _decodeListResponse(http.Response response) {
     final decodedBody = utf8.decode(response.bodyBytes);
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      unawaited(ApiAuthStorage.instance.clearAccessToken());
+      throw const AuthRequiredException(
+        'Сессия истекла. Войдите по SMS для продолжения.',
+      );
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (decodedBody.isEmpty) {

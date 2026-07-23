@@ -1,5 +1,6 @@
 import 'package:delycafe/models/cart_item.dart';
 import 'package:delycafe/models/catalog_item.dart';
+import 'package:delycafe/utils/catalog_ids.dart';
 import 'package:flutter/material.dart';
 
 class CartService extends ChangeNotifier {
@@ -79,12 +80,16 @@ class CartService extends ChangeNotifier {
       final variant = cartItem.variant;
 
       final price = variant?.price ?? product.price;
-      final sabyId = variant?.sabyId ?? product.sabyId;
+      final sabyId = CatalogIds.orderSabyId(
+        catalogProductId: product.id,
+        productSabyId: product.sabyId,
+        variantSabyId: variant?.sabyId,
+      );
 
       return {
         'product_title': product.title,
         'variant_title': variant?.title ?? '',
-        'product_api_id': product.id,
+        'product_api_id': CatalogIds.orderProductApiId(product.id),
         'saby_id': sabyId,
         'quantity': cartItem.quantity,
         'price': price,

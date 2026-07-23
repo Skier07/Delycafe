@@ -70,7 +70,7 @@ class OrderApiService {
   }) async {
     final uri = ApiConfig.uri('/api/orders/');
 
-    final body = {
+    final body = jsonEncode({
       'phone': phone,
       'customer_name': customerName,
       'delivery_type': deliveryType,
@@ -89,13 +89,26 @@ class OrderApiService {
       'privacy_accepted': privacyAccepted,
       'pd_consent_accepted': pdConsentAccepted,
       'marketing_consent_accepted': marketingConsentAccepted,
-    };
+    });
 
-    final response = await http.post(
+    var response = await http.post(
       uri,
       headers: ApiAuthStorage.instance.headers(jsonContentType: true),
-      body: jsonEncode(body),
+      body: body,
     );
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      await ApiAuthStorage.instance.clearAccessToken();
+
+      response = await http.post(
+        uri,
+        headers: ApiAuthStorage.instance.headers(
+          jsonContentType: true,
+          includeAccessToken: false,
+        ),
+        body: body,
+      );
+    }
 
     if (response.statusCode != 201) {
       throw Exception(

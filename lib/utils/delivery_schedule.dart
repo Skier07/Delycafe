@@ -8,6 +8,18 @@ class DeliverySchedule {
   static const int openMinute = 0;
   static const int slotIntervalMinutes = 5;
 
+  static const int sundayThroughThursdayCloseHour = 20;
+  static const int sundayThroughThursdayCloseMinute = 30;
+  static const int fridaySaturdayCloseHour = 21;
+  static const int fridaySaturdayCloseMinute = 30;
+
+  /// Текст для UI: вс–чт до 20:30, пт–сб до 21:30.
+  static const String acceptanceHoursShort =
+      'вс–чт до 20:30, пт–сб до 21:30';
+
+  static const String acceptanceHoursLong =
+      'Приём заказов: с 10:00, вс–чт до 20:30, пт–сб до 21:30';
+
   static DateTime get now => cafeNow();
 
   static Duration leadTime(String deliveryTypeApi) {
@@ -18,18 +30,18 @@ class DeliverySchedule {
     return const Duration(hours: 1, minutes: 30);
   }
 
-  static bool isAnyOrderingOpen(DateTime now) {
-    if (!_isWithinKitchenHours(now)) {
-      return false;
-    }
-
-    const types = ['ozersk', 'promploshadka', 'tatysh', 'pickup'];
-
-    return types.any((type) => _canDeliverToday(now, type));
+  /// Приём заказов открыт: с 10:00 до 20:30 (вс–чт) / 21:30 (пт–сб).
+  static bool isAcceptingOrders(DateTime now) {
+    return _isWithinKitchenHours(now);
   }
 
+  static bool isAnyOrderingOpen(DateTime now) {
+    return isAcceptingOrders(now);
+  }
+
+  /// Есть ли сегодня слот доставки с учётом lead time.
   static bool isOrderingOpen(DateTime now, String deliveryTypeApi) {
-    if (!_isWithinKitchenHours(now)) {
+    if (!isAcceptingOrders(now)) {
       return false;
     }
 
@@ -38,7 +50,7 @@ class DeliverySchedule {
 
   /// До 10:00 или с 20:30 (вс–чт) / 21:30 (пт–сб) — кухня закрыта.
   static bool isKitchenClosed(DateTime now) {
-    return !_isWithinKitchenHours(now);
+    return !isAcceptingOrders(now);
   }
 
   static bool _isWithinKitchenHours(DateTime now) {
@@ -86,7 +98,7 @@ class DeliverySchedule {
   }
 
   static List<DateTime> availableSlots(DateTime now, String deliveryTypeApi) {
-    if (!isOrderingOpen(now, deliveryTypeApi)) {
+    if (!isAcceptingOrders(now)) {
       return const [];
     }
 
@@ -95,6 +107,10 @@ class DeliverySchedule {
       slotIntervalMinutes,
     );
     final maxSlot = maxDeliveryTime(now);
+
+    if (minSlot.isAfter(maxSlot)) {
+      return [maxSlot];
+    }
 
     final slots = <DateTime>[];
     var cursor = minSlot;
@@ -151,9 +167,13 @@ class DeliverySchedule {
   }
 
   static DateTime displayAsapSlot(DateTime now, String deliveryTypeApi) {
-    if (isOrderingOpen(now, deliveryTypeApi)) {
+    if (isAcceptingOrders(now)) {
+      final earliest = minDeliveryTime(now, deliveryTypeApi);
+      final latest = maxDeliveryTime(now);
+      final target = earliest.isAfter(latest) ? latest : earliest;
+
       return _roundUpToInterval(
-        minDeliveryTime(now, deliveryTypeApi),
+        target,
         slotIntervalMinutes,
       );
     }
@@ -168,7 +188,7 @@ class DeliverySchedule {
     final slot = displayAsapSlot(now, deliveryTypeApi);
     final time = formatTime(slot);
 
-    if (isOrderingOpen(now, deliveryTypeApi)) {
+    if (isAcceptingOrders(now)) {
       return 'к $time';
     }
 
@@ -196,15 +216,23 @@ class DeliverySchedule {
   }
 
   static int _lastSlotHour(int weekday) {
-    if (weekday == DateTime.friday || weekday == DateTime.saturday) {
-      return 21;
+    if (_isFridayOrSaturday(weekday)) {
+      return fridaySaturdayCloseHour;
     }
 
-    return 20;
+    return sundayThroughThursdayCloseHour;
   }
 
   static int _lastSlotMinute(int weekday) {
-    return 30;
+    if (_isFridayOrSaturday(weekday)) {
+      return fridaySaturdayCloseMinute;
+    }
+
+    return sundayThroughThursdayCloseMinute;
+  }
+
+  static bool _isFridayOrSaturday(int weekday) {
+    return weekday == DateTime.friday || weekday == DateTime.saturday;
   }
 
   static DateTime _openOnDate(DateTime date) {
