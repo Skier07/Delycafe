@@ -6,6 +6,7 @@ import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
+import 'package:delycafe/utils/legal_consent_prompt.dart';
 import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -294,12 +295,8 @@ class _CartScreenState extends State<CartScreen> {
                                   }
                                 : _isAcceptingOrders
                                     ? () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                const CheckoutScreens(),
-                                          ),
+                                        unawaited(
+                                          showLegalConsentRequiredDialog(context),
                                         );
                                       }
                                     : null,
@@ -317,7 +314,7 @@ class _CartScreenState extends State<CartScreen> {
                                 canCheckout
                                     ? 'Оформить'
                                     : _isAcceptingOrders
-                                        ? 'Примите условия ниже'
+                                        ? 'Примите условия'
                                         : DeliverySchedule
                                             .closedSubmitButtonLabel(_now),
                                 textAlign: TextAlign.center,

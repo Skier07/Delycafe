@@ -9,6 +9,7 @@ import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
+import 'package:delycafe/utils/legal_consent_prompt.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:delycafe/widgets/checkout/legal_consent_checkout_section.dart';
 import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
@@ -317,27 +318,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     }
 
     _consentNoticeShown = true;
-
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Примите условия'),
-          content: const Text(
-            'Для первого заказа отметьте согласия в форме ниже: '
-            'пользовательское соглашение, политику конфиденциальности, '
-            'обработку персональных данных и при желании — рассылку. '
-            'После принятия они сохранятся автоматически.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Понятно'),
-            ),
-          ],
-        );
-      },
-    );
+    unawaited(showLegalConsentRequiredDialog(context));
   }
 
   void _syncDeliveryTimeWithSchedule() {
@@ -614,13 +595,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     final legalConsent = context.read<LegalConsentService>();
 
     if (!legalConsent.canPlaceOrder) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Отметьте все обязательные согласия ниже, чтобы оформить заказ.',
-          ),
-        ),
-      );
+      await showLegalConsentRequiredDialog(context);
       return;
     }
 
@@ -1108,9 +1083,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   : !_isAcceptingOrders
                       ? DeliverySchedule.closedSubmitButtonLabel(_now)
                       : !legalConsent.canPlaceOrder
-                          ? 'Примите условия ниже'
+                          ? 'Примите условия'
                           : 'Оформить заказ',
-              onPressed: _canSubmit ? _submit : null,
+              onPressed: _isSubmitting || !_isAcceptingOrders
+                  ? null
+                  : !legalConsent.canPlaceOrder
+                      ? () => showLegalConsentRequiredDialog(context)
+                      : _canSubmit
+                          ? _submit
+                          : null,
             ),
           ),
         ],
