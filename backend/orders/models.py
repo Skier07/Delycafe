@@ -130,6 +130,7 @@ class Order(models.Model):
 
     payment_url = models.URLField(
         blank=True,
+        max_length=512,
         verbose_name='Ссылка на оплату',
     )
 

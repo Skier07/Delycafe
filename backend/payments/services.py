@@ -287,6 +287,27 @@ def _ensure_payable_before_reuse(order):
     return order.payment_status == Order.PaymentStatus.UNPAID
 
 
+def _is_alfa_template_payment_url(payment_url):
+    payment_url = (payment_url or '').strip()
+    if not payment_url:
+        return False
+
+    template = (getattr(settings, 'ALFA_PAYMENT_FORM_URL', '') or '').strip()
+    if not template:
+        return False
+
+    template_prefix = re.sub(r'\{[^}]+\}', '', template)
+    template_prefix = re.sub(r'[?&=]+$', '', template_prefix)
+    return payment_url.startswith(template_prefix)
+
+
+def _usable_stored_alfa_payment_url(order):
+    stored = (order.payment_url or '').strip()
+    if not stored or _is_alfa_template_payment_url(stored):
+        return ''
+    return stored
+
+
 def _build_alfa_payment_url(external_id, order=None):
     external_id = (external_id or '').strip()
     if not external_id:
@@ -314,6 +335,30 @@ def _build_alfa_payment_url(external_id, order=None):
     return ''
 
 
+def _resolve_alfa_payment_url(external_id, order=None, form_url=''):
+    """Ссылка из ответа Альфы (formUrl) — основной источник; шаблон — запасной."""
+    normalized_form_url = _normalize_alfa_payment_url(form_url)
+    if normalized_form_url:
+        return normalized_form_url
+
+    return _build_alfa_payment_url(external_id, order)
+
+
+def _normalize_alfa_payment_url(payment_url):
+    payment_url = (payment_url or '').strip()
+
+    if not payment_url:
+        return ''
+
+    if payment_url.startswith('//'):
+        return f'https:{payment_url}'
+
+    if not re.match(r'^[a-zA-Z][a-zA-Z\d+\-.]*://', payment_url):
+        return f'https://{payment_url}'
+
+    return payment_url
+
+
 def _maybe_append_sbp_payment_way(order, payment_url):
     if order.payment_type != Order.PaymentType.SBP:
         return payment_url
@@ -339,6 +384,7 @@ def _alfa_session_matches_payment_type(order, payment_url):
 
 
 def _persist_alfa_payment_session(order, external_id, payment_url):
+    payment_url = _resolve_alfa_payment_url(external_id, order, payment_url)
     payment_url = _maybe_append_sbp_payment_way(order, payment_url)
 
     order.payment_provider = 'alfa'
@@ -404,10 +450,10 @@ def _lookup_alfa_order_by_number(order):
             close_unpaid_alfa_order(order)
         return None
 
-    payment_url = (
-        response.get('formUrl')
-        or response.get('form_url')
-        or _build_alfa_payment_url(external_id, order)
+    payment_url = _resolve_alfa_payment_url(
+        external_id,
+        order,
+        response.get('formUrl') or response.get('form_url') or '',
     )
 
     if not payment_url:
@@ -428,9 +474,19 @@ def _try_reuse_existing_alfa_session(order, *, amount_value=None):
     if not external_id:
         return None
 
-    payment_url = (order.payment_url or '').strip()
-    if not payment_url:
-        payment_url = _build_alfa_payment_url(external_id, order)
+    form_url = ''
+    response = _fetch_alfa_status_response(order)
+    if response:
+        form_url = response.get('formUrl') or response.get('form_url') or ''
+        external_id = str(
+            response.get('orderId') or response.get('order_id') or external_id,
+        ).strip()
+
+    payment_url = _resolve_alfa_payment_url(
+        external_id,
+        order,
+        form_url or _usable_stored_alfa_payment_url(order),
+    )
 
     if not payment_url:
         return None
@@ -438,7 +494,7 @@ def _try_reuse_existing_alfa_session(order, *, amount_value=None):
     if not _alfa_session_matches_payment_type(order, payment_url):
         return None
 
-    payment_url = _persist_alfa_payment_session(order, external_id, payment_url)
+    payment_url = _persist_alfa_payment_session(order, external_id, form_url or payment_url)
     result = _build_payment_result(order, reused=True)
     result['amount'] = amount_value or result['amount']
     return result

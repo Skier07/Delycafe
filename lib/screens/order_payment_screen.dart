@@ -88,12 +88,12 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   }
 
   Future<void> _initializePayment() async {
-    var paymentUrl = widget.paymentUrl.trim();
+    var paymentUrl = normalizePaymentUrl(widget.paymentUrl);
 
     if (paymentUrl.isEmpty) {
       try {
         final session = await _paymentApi.createPayment(widget.orderId);
-        paymentUrl = session.paymentUrl;
+        paymentUrl = normalizePaymentUrl(session.paymentUrl);
       } catch (error) {
         if (!mounted) return;
 
@@ -102,6 +102,19 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
           _isLoading = false;
         });
         return;
+      }
+    }
+
+    if (!isAllowedPaymentUrl(paymentUrl)) {
+      try {
+        final session = await _paymentApi.createPayment(widget.orderId);
+        final refreshed = normalizePaymentUrl(session.paymentUrl);
+
+        if (refreshed.isNotEmpty && isAllowedPaymentUrl(refreshed)) {
+          paymentUrl = refreshed;
+        }
+      } catch (_) {
+        // Keep the original URL and show a clear allowlist error below.
       }
     }
 
@@ -119,7 +132,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = 'Недопустимая ссылка на оплату';
+        _errorMessage = paymentUrlRejectionHint(paymentUrl);
         _isLoading = false;
       });
       return;
@@ -326,10 +339,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   bool _isAlfaPaymentHost(Uri uri) {
     final host = uri.host.toLowerCase();
 
-    return host.contains('alfabank.ru') &&
-        (host.startsWith('payment.') ||
-            host.startsWith('pay.') ||
-            host.contains('ecom'));
+    return host.contains('alfabank') ||
+        host.contains('rbsuat') ||
+        host.contains('securepayecom');
   }
 
   bool _isBankSbpPaymentUrl(Uri uri) {

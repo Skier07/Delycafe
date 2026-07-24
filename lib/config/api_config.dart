@@ -29,6 +29,26 @@ class ApiConfig {
     );
   }
 
+  static const String _paymentAllowedHostsRaw = String.fromEnvironment(
+    'PAYMENT_ALLOWED_HOSTS',
+    defaultValue:
+        'payment.alfabank.ru,pay.alfabank.ru,alfa.rbsuat.com,web.rbsuat.com,securepayecom.com',
+  );
+
+  static List<String> get paymentAllowedHosts {
+    return _paymentAllowedHostsRaw
+        .split(',')
+        .map((host) => host.trim().toLowerCase())
+        .where((host) => host.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  static const List<String> paymentAllowedHostSuffixes = [
+    '.alfabank.ru',
+    '.rbsuat.com',
+    '.securepayecom.com',
+  ];
+
   /// Rewrites legacy local dev media URLs to the configured API host.
   static String normalizeMediaUrl(String value) {
     final imagePath = value.trim();

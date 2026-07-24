@@ -9,6 +9,7 @@ import 'package:delycafe/services/order_api_service.dart';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:delycafe/widgets/checkout/guest_checkout_form.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -148,14 +149,30 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
 
                     if (!context.mounted) return;
 
-                    var paymentUrl = order.paymentUrl.trim();
+                    var paymentUrl = normalizePaymentUrl(order.paymentUrl);
                     var paymentError = order.paymentError?.trim();
 
                     if (paymentUrl.isEmpty) {
                       try {
                         final session =
                             await PaymentApiService().createPayment(order.id);
-                        paymentUrl = session.paymentUrl.trim();
+                        paymentUrl = normalizePaymentUrl(session.paymentUrl);
+                      } catch (error) {
+                        paymentError ??= error.toString();
+                      }
+                    }
+
+                    if (paymentUrl.isNotEmpty && !isAllowedPaymentUrl(paymentUrl)) {
+                      try {
+                        final session =
+                            await PaymentApiService().createPayment(order.id);
+                        final refreshed =
+                            normalizePaymentUrl(session.paymentUrl);
+
+                        if (refreshed.isNotEmpty &&
+                            isAllowedPaymentUrl(refreshed)) {
+                          paymentUrl = refreshed;
+                        }
                       } catch (error) {
                         paymentError ??= error.toString();
                       }
@@ -172,6 +189,10 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                             : 'Не удалось получить ссылку на оплату '
                                 'для заказа №${order.id}.',
                       );
+                    }
+
+                    if (!isAllowedPaymentUrl(paymentUrl)) {
+                      throw Exception(paymentUrlRejectionHint(paymentUrl));
                     }
 
                     final paid = await Navigator.push<bool>(

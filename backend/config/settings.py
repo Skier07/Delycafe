@@ -212,7 +212,7 @@ PAYMENT_WEBVIEW_ALLOWED_HOSTS = [
     host.strip().lower()
     for host in os.getenv(
         'PAYMENT_WEBVIEW_ALLOWED_HOSTS',
-        'payment.alfabank.ru,alfa.rbsuat.com',
+        'payment.alfabank.ru,pay.alfabank.ru,alfa.rbsuat.com,web.rbsuat.com,securepayecom.com',
     ).split(',')
     if host.strip()
 ]
@@ -271,6 +271,7 @@ ALFA_STATUS_URL = os.getenv(
 
 ALFA_PAYMENT_FORM_URL = os.getenv(
     'ALFA_PAYMENT_FORM_URL',
+    # Запасной URL, если register.do не вернул formUrl.
     'https://payment.alfabank.ru/payment/merchants/r-pizzaozersk/payment_ru.html?mdOrder={mdOrder}',
 )
 
