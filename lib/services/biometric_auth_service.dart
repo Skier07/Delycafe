@@ -25,26 +25,60 @@ class BiometricAuthService {
     }
   }
 
+  /// Биометрия реально доступна: устройство поддерживает и отпечаток/Face ID настроен.
+  Future<bool> isBiometricReady() async {
+    try {
+      if (!await isDeviceSupported()) {
+        return false;
+      }
+
+      if (!await canCheckBiometrics()) {
+        return false;
+      }
+
+      final biometrics = await _localAuth.getAvailableBiometrics();
+      return biometrics.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> authenticate({
     String reason = 'Подтвердите вход в DelyCafe',
   }) async {
     try {
-      final canAuthenticate = await canCheckBiometrics();
-
-      if (!canAuthenticate) {
+      if (!await isBiometricReady()) {
         return false;
       }
 
       return await _localAuth.authenticate(
         localizedReason: reason,
         options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: false,
+          stickyAuth: false,
+          biometricOnly: true,
         ),
       );
     } on PlatformException catch (error) {
-      debugPrint('Биометрия недоступна: $error');
+      if (_isUserCancellation(error)) {
+        return false;
+      }
+
+      debugPrint('Биометрия недоступна: ${error.code} ${error.message}');
       return false;
     }
+  }
+
+  bool _isUserCancellation(PlatformException error) {
+    const cancelCodes = {
+      'UserCancel',
+      'UserCanceled',
+      'userCanceled',
+      'canceled',
+      'cancelled',
+      'auth_in_progress',
+      'AuthenticationCanceled',
+    };
+
+    return cancelCodes.contains(error.code);
   }
 }

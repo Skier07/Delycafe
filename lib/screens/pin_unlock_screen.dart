@@ -17,10 +17,13 @@ class PinUnlockScreen extends StatefulWidget {
 class _PinUnlockScreenState extends State<PinUnlockScreen> {
   final GlobalKey<PinCodeInputState> _pinInputKey = GlobalKey<PinCodeInputState>();
 
-  bool _isUnlocking = false;
+  bool _isSubmittingPin = false;
+  bool _isBiometricInProgress = false;
   bool _biometricEnabled = false;
   String? _errorMessage;
   bool _autoBiometricAttempted = false;
+
+  bool get _isBusy => _isSubmittingPin || _isBiometricInProgress;
 
   @override
   void initState() {
@@ -50,17 +53,17 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
 
     if (canUseBiometric && !_autoBiometricAttempted) {
       _autoBiometricAttempted = true;
-      await _unlockWithBiometric();
+      await _unlockWithBiometric(autoAttempt: true);
     }
   }
 
   Future<void> _unlockWithPin(String pin) async {
-    if (_isUnlocking) {
+    if (_isBusy) {
       return;
     }
 
     setState(() {
-      _isUnlocking = true;
+      _isSubmittingPin = true;
       _errorMessage = null;
     });
 
@@ -77,20 +80,20 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     }
 
     setState(() {
-      _isUnlocking = false;
+      _isSubmittingPin = false;
       _errorMessage = 'Неверный PIN.';
     });
 
     _pinInputKey.currentState?.clear();
   }
 
-  Future<void> _unlockWithBiometric() async {
-    if (_isUnlocking) {
+  Future<void> _unlockWithBiometric({bool autoAttempt = false}) async {
+    if (_isBusy) {
       return;
     }
 
     setState(() {
-      _isUnlocking = true;
+      _isBiometricInProgress = true;
       _errorMessage = null;
     });
 
@@ -107,8 +110,14 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     }
 
     setState(() {
-      _isUnlocking = false;
+      _isBiometricInProgress = false;
     });
+
+    if (!autoAttempt && mounted) {
+      setState(() {
+        _errorMessage = 'Биометрия не подтверждена. Введите PIN.';
+      });
+    }
   }
 
   Future<void> _goToHome() async {
@@ -155,18 +164,23 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Введите PIN или используйте биометрию',
+              Text(
+                _biometricEnabled
+                    ? 'Введите PIN или используйте биометрию'
+                    : 'Введите PIN для входа',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              if (!_isUnlocking)
-                PinCodeInput(
-                  key: _pinInputKey,
-                  length: PinCredentialService.pinLength,
-                  onCompleted: _unlockWithPin,
-                ),
-              if (_isUnlocking) const CircularProgressIndicator(),
+              PinCodeInput(
+                key: _pinInputKey,
+                length: PinCredentialService.pinLength,
+                enabled: !_isSubmittingPin,
+                onCompleted: _unlockWithPin,
+              ),
+              if (_isSubmittingPin) ...[
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(),
+              ],
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -177,14 +191,16 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
               const Spacer(),
               if (_biometricEnabled) ...[
                 AuthButton(
-                  text: 'Войти по биометрии',
-                  onPressed: _isUnlocking ? null : _unlockWithBiometric,
+                  text: _isBiometricInProgress
+                      ? 'Подтвердите биометрию…'
+                      : 'Войти по биометрии',
+                  onPressed: _isBusy ? null : _unlockWithBiometric,
                 ),
                 const SizedBox(height: 12),
               ],
               AuthButton(
                 text: 'Забыли PIN? Войти по SMS',
-                onPressed: _isUnlocking ? null : _resetWithSms,
+                onPressed: _isBusy ? null : _resetWithSms,
               ),
             ],
           ),

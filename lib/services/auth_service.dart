@@ -241,7 +241,7 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<bool> canSetupBiometricUnlock() async {
-    return _biometricAuthService.isDeviceSupported();
+    return _biometricAuthService.isBiometricReady();
   }
 
   Future<bool> canUseBiometricUnlock({String? phone}) async {
@@ -257,7 +257,7 @@ class AuthService extends ChangeNotifier {
       return false;
     }
 
-    return _biometricAuthService.isDeviceSupported();
+    return _biometricAuthService.isBiometricReady();
   }
 
   void skipPinUnlockForSession() {
