@@ -287,6 +287,19 @@ def confirm_order_paid(order: Order) -> Order:
             update_fields.append('updated_at')
             locked_order.save(update_fields=update_fields)
 
+    try:
+        from orders.order_notification_service import try_send_admin_order_email
+
+        try_send_admin_order_email(order_id)
+    except Exception:
+        logger.exception(
+            'Failed to send admin email for order #%s after payment',
+            order_id,
+        )
+
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order_id)
+
         if not order_already_in_saby(locked_order):
             try:
                 _dispatch_order_to_saby_core(locked_order)
@@ -307,16 +320,6 @@ def confirm_order_paid(order: Order) -> Order:
                 'Failed to sync Saby status for order #%s after payment',
                 order.id,
             )
-
-    try:
-        from orders.order_notification_service import try_send_admin_order_email
-
-        try_send_admin_order_email(order.id)
-    except Exception:
-        logger.exception(
-            'Failed to send admin email for order #%s after payment',
-            order.id,
-        )
 
     return order
 

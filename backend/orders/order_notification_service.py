@@ -36,9 +36,6 @@ def _should_send_admin_email(order: Order) -> bool:
     if order.status == Order.Status.CANCELED:
         return False
 
-    if not (order.saby_sale_id or order.saby_order_number):
-        return False
-
     return True
 
 

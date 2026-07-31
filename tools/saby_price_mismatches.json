@@ -1,0 +1,62 @@
+[
+  {
+    "saby_id": 537,
+    "title": "Соус сырный",
+    "price": 40,
+    "weight": "",
+    "saby_name": "Соус сырный",
+    "saby_price": 257,
+    "saby_unit": "кг",
+    "diff": 217
+  },
+  {
+    "saby_id": 525,
+    "title": "Соус барбекю",
+    "price": 40,
+    "weight": "",
+    "saby_name": "Соус Барбекю",
+    "saby_price": 226,
+    "saby_unit": "кг",
+    "diff": 186
+  },
+  {
+    "saby_id": 535,
+    "title": "Соус Сальса средне-острый",
+    "price": 50,
+    "weight": "",
+    "saby_name": "Соус Сальсо",
+    "saby_price": 226,
+    "saby_unit": "кг",
+    "diff": 176
+  },
+  {
+    "saby_id": 598,
+    "title": "Соус диабло острый",
+    "price": 40,
+    "weight": "",
+    "saby_name": "Соус дьябло",
+    "saby_price": 150,
+    "saby_unit": "кг",
+    "diff": 110
+  },
+  {
+    "saby_id": 177,
+    "title": "Кетчуп",
+    "price": 40,
+    "weight": "",
+    "saby_name": "Кетчуп 1уп",
+    "saby_price": 55,
+    "saby_unit": "шт",
+    "diff": 15
+  },
+  {
+    "saby_id": 138,
+    "title": "Капучино 200мл",
+    "price": 140,
+    "weight": "",
+    "saby_name": "Капучино 200мл",
+    "saby_price": 130,
+    "saby_unit": "шт",
+    "diff": -10
+  }
+]
