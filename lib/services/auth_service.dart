@@ -71,6 +71,50 @@ class AuthService extends ChangeNotifier {
     await prefs.setInt(_otpSessionIdKey, result.sessionId);
   }
 
+  Future<OtpStatusResult> fetchOtpStatus(String phone) async {
+    final sessionId = _otpSessionId ?? await _readSavedSessionId();
+
+    if (sessionId == null) {
+      throw Exception('Сессия не найдена. Запросите код повторно.');
+    }
+
+    return _customerApiService.fetchOtpStatus(
+      sessionId: sessionId,
+      phone: phone,
+    );
+  }
+
+  Future<bool> completeVerifiedOtp(
+    String phone, {
+    void Function(String message)? onProgress,
+  }) async {
+    final sessionId = _otpSessionId ?? await _readSavedSessionId();
+
+    if (sessionId == null) {
+      throw Exception('Сессия не найдена. Запросите код повторно.');
+    }
+
+    onProgress?.call('Входим в приложение...');
+
+    final result = await _customerApiService.completeOtpSession(
+      sessionId: sessionId,
+      phone: phone,
+    );
+
+    if (!result.verified) {
+      return false;
+    }
+
+    if (result.accessToken.isNotEmpty) {
+      await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
+      _needsAccessTokenRefresh = false;
+    }
+
+    await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
+    await _clearOtpSession();
+    return true;
+  }
+
   Future<bool> verifyCode(
     String phone,
     String code, {

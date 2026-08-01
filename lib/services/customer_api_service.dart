@@ -64,12 +64,22 @@ class OtpStatusResult {
     required this.status,
     required this.verified,
     required this.awaitingCode,
+    required this.phase,
+    required this.message,
+    required this.showCodeInput,
+    required this.smsFallbackUsed,
+    this.retryAfter,
   });
 
   final int sessionId;
   final String status;
   final bool verified;
   final bool awaitingCode;
+  final String phase;
+  final String message;
+  final bool showCodeInput;
+  final bool smsFallbackUsed;
+  final int? retryAfter;
 
   factory OtpStatusResult.fromJson(Map<String, dynamic> json) {
     return OtpStatusResult(
@@ -77,6 +87,11 @@ class OtpStatusResult {
       status: json['status']?.toString() ?? '',
       verified: json['verified'] == true,
       awaitingCode: json['awaiting_code'] == true,
+      phase: json['phase']?.toString() ?? 'pending',
+      message: json['message']?.toString() ?? '',
+      showCodeInput: json['show_code_input'] == true,
+      smsFallbackUsed: json['sms_fallback_used'] == true,
+      retryAfter: json['retry_after'] is int ? json['retry_after'] as int : null,
     );
   }
 }
@@ -155,6 +170,34 @@ class CustomerApiService {
     final data = _decodeResponse(response);
 
     return OtpStatusResult.fromJson(data);
+  }
+
+  Future<OtpVerifyResult> completeOtpSession({
+    required int sessionId,
+    required String phone,
+  }) async {
+    final response = await http.post(
+      ApiConfig.uri('/api/customers/auth/otp/complete/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'session_id': sessionId,
+        'phone': phone,
+      }),
+    );
+
+    final decodedBody = utf8.decode(response.bodyBytes);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(decodedBody);
+
+      if (data is Map<String, dynamic>) {
+        return OtpVerifyResult.fromJson(data);
+      }
+
+      throw Exception('Сервер вернул неожиданный формат данных.');
+    }
+
+    throw _parseOtpApiException(decodedBody);
   }
 
   Future<User> fetchProfile({

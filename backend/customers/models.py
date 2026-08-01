@@ -256,6 +256,11 @@ class PhoneAuthSession(models.Model):
         blank=True,
         verbose_name='Подтверждено',
     )
+    sms_fallback_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Резервная SMS отправлена',
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Создано',

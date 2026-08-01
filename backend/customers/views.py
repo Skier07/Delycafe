@@ -407,6 +407,30 @@ class SetDefaultAddressAPIView(AuthenticatedCustomerAPIView):
         return Response(CustomerAddressSerializer(address_obj).data)
 
 
+def _finalize_verified_otp_session(session) -> Response:
+    customer, error_response = get_or_create_customer_by_phone(session.phone)
+
+    if error_response is not None:
+        return error_response
+
+    verified_session_id = session.id
+    session.delete()
+
+    access_token = create_customer_access_token(
+        customer_id=customer.id,
+        phone=customer.phone,
+    )
+
+    return Response(
+        {
+            'verified': True,
+            'session_id': verified_session_id,
+            'access_token': access_token,
+            'customer': CustomerAuthAccountSerializer(customer).data,
+        },
+    )
+
+
 def _otp_error_response(error: OtpAuthError):
     payload = {
         'detail': str(error),
@@ -453,6 +477,7 @@ class CustomerOtpSendAPIView(APIView):
             },
             'expires_at': session.expires_at.isoformat(),
         }
+        response_data.update(service.build_session_status_payload(session))
 
         return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -498,27 +523,44 @@ class CustomerOtpVerifyAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        customer, error_response = get_or_create_customer_by_phone(session.phone)
+        return _finalize_verified_otp_session(session)
 
-        if error_response is not None:
-            return error_response
 
-        verified_session_id = session.id
-        session.delete()
+class CustomerOtpCompleteAPIView(APIView):
+    """Завершить вход после SIM-PUSH (сессия уже verified, код не нужен)."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = 'otp_verify'
 
-        access_token = create_customer_access_token(
-            customer_id=customer.id,
-            phone=customer.phone,
-        )
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
 
-        return Response(
-            {
-                'verified': True,
-                'session_id': verified_session_id,
-                'access_token': access_token,
-                'customer': CustomerAuthAccountSerializer(customer).data,
-            },
-        )
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        phone = request.data.get('phone')
+
+        if not session_id:
+            return Response(
+                {'detail': 'Передайте session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = OtpAuthService()
+
+        try:
+            session = service.complete_verified_session(
+                session_id=int(session_id),
+                phone=phone,
+            )
+        except OtpAuthError as error:
+            return _otp_error_response(error)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': 'Некорректный session_id.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return _finalize_verified_otp_session(session)
 
 
 class CustomerOtpStatusAPIView(APIView):
@@ -551,17 +593,7 @@ class CustomerOtpStatusAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response(
-            {
-                'session_id': session.id,
-                'status': session.status,
-                'verified': session.status == session.Status.VERIFIED,
-                'awaiting_code': session.status in {
-                    session.Status.AWAITING_OTP,
-                    session.Status.PENDING,
-                },
-            },
-        )
+        return Response(service.build_session_status_payload(session))
 
 
 class CustomerAccountDeleteAPIView(AuthenticatedCustomerAPIView):

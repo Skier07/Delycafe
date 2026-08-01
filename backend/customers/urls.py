@@ -7,6 +7,7 @@ from .views import (
     CustomerAuthMatchAPIView,
     CustomerBonusesAPIView,
     CustomerMobileIdWebhookAPIView,
+    CustomerOtpCompleteAPIView,
     CustomerOtpSendAPIView,
     CustomerOtpStatusAPIView,
     CustomerOtpVerifyAPIView,
@@ -26,6 +27,11 @@ urlpatterns = [
         'auth/otp/verify/',
         CustomerOtpVerifyAPIView.as_view(),
         name='customer-otp-verify',
+    ),
+    path(
+        'auth/otp/complete/',
+        CustomerOtpCompleteAPIView.as_view(),
+        name='customer-otp-complete',
     ),
     path(
         'auth/otp/status/',

@@ -78,8 +78,11 @@ class OtpAuthService:
         session.verify_attempts += 1
         session.save(update_fields=['verify_attempts', 'updated_at'])
 
-        if self.mode == 'mobile_id':
-            self._verify_mobile_id(session, code)
+        if session.mode == PhoneAuthSession.Mode.MOBILE_ID:
+            if session.sms_fallback_sent_at:
+                self._verify_sms_code(session, code)
+            else:
+                self._verify_mobile_id(session, code)
         else:
             self._verify_sms_code(session, code)
 
@@ -116,8 +119,11 @@ class OtpAuthService:
         session.verify_attempts += 1
         session.save(update_fields=['verify_attempts', 'updated_at'])
 
-        if self.mode == 'mobile_id':
-            self._verify_mobile_id(session, code)
+        if session.mode == PhoneAuthSession.Mode.MOBILE_ID:
+            if session.sms_fallback_sent_at:
+                self._verify_sms_code(session, code)
+            else:
+                self._verify_mobile_id(session, code)
         else:
             self._verify_sms_code(session, code)
 
@@ -167,7 +173,12 @@ class OtpAuthService:
         return session
 
     def get_session_status(self, session_id: int, phone: str | None = None) -> PhoneAuthSession:
-        session = self._get_active_session(session_id, phone=phone, allow_verified=True)
+        session = self._get_active_session(
+            session_id,
+            phone=phone,
+            allow_verified=True,
+            allow_failed=True,
+        )
 
         if (
             session.mode == PhoneAuthSession.Mode.MOBILE_ID
@@ -177,10 +188,200 @@ class OtpAuthService:
                 PhoneAuthSession.Status.FAILED,
             }
             and settings.SMSAERO_ENABLED
+            and not session.sms_fallback_sent_at
         ):
             self._refresh_mobile_id_status(session)
+            session.refresh_from_db()
+
+        if session.mode == PhoneAuthSession.Mode.MOBILE_ID:
+            self._maybe_send_sms_fallback(session)
+            session.refresh_from_db()
 
         return session
+
+    def complete_verified_session(
+        self,
+        *,
+        session_id: int,
+        phone: str | None = None,
+    ) -> PhoneAuthSession:
+        session = self._get_active_session(
+            session_id,
+            phone=phone,
+            allow_verified=True,
+        )
+
+        if session.status != PhoneAuthSession.Status.VERIFIED:
+            raise OtpAuthError(
+                'Вход ещё не подтверждён. Подождите или введите код из SMS.',
+                code='pending',
+            )
+
+        return session
+
+    def build_session_status_payload(self, session: PhoneAuthSession) -> dict:
+        now = timezone.now()
+        retry_after = None
+
+        if session.status != PhoneAuthSession.Status.VERIFIED:
+            cooldown_from = now - timedelta(
+                seconds=settings.SMSAERO_SEND_COOLDOWN_SECONDS,
+            )
+            last_session = (
+                PhoneAuthSession.objects.filter(phone=session.phone)
+                .order_by('-created_at')
+                .first()
+            )
+            if last_session and last_session.created_at > cooldown_from:
+                retry_after = max(
+                    int(
+                        (
+                            last_session.created_at
+                            + timedelta(
+                                seconds=settings.SMSAERO_SEND_COOLDOWN_SECONDS,
+                            )
+                            - now
+                        ).total_seconds(),
+                    ),
+                    1,
+                )
+
+        phase = self._session_phase(session)
+        message = self._session_phase_message(session, phase)
+
+        return {
+            'session_id': session.id,
+            'mode': session.mode,
+            'status': session.status,
+            'phase': phase,
+            'message': message,
+            'verified': session.status == PhoneAuthSession.Status.VERIFIED,
+            'awaiting_code': session.status
+            == PhoneAuthSession.Status.AWAITING_OTP,
+            'show_code_input': session.status
+            == PhoneAuthSession.Status.AWAITING_OTP,
+            'sms_fallback_used': session.sms_fallback_sent_at is not None,
+            'retry_after': retry_after,
+        }
+
+    def _session_phase(self, session: PhoneAuthSession) -> str:
+        if session.status == PhoneAuthSession.Status.VERIFIED:
+            return 'verified'
+
+        if session.status == PhoneAuthSession.Status.FAILED:
+            return 'failed'
+
+        if session.status == PhoneAuthSession.Status.AWAITING_OTP:
+            if session.sms_fallback_sent_at:
+                return 'sms_fallback_sent'
+            return 'awaiting_otp'
+
+        if session.sms_fallback_sent_at:
+            return 'sms_fallback_sent'
+
+        return 'pending'
+
+    def _session_phase_message(self, session: PhoneAuthSession, phase: str) -> str:
+        if phase == 'verified':
+            return 'Номер подтверждён. Входим в приложение...'
+
+        if phase == 'failed':
+            return (
+                'Не удалось подтвердить номер. '
+                'Запросите код повторно.'
+            )
+
+        if phase == 'awaiting_otp':
+            return 'Введите код из SMS.'
+
+        if phase == 'sms_fallback_sent':
+            return 'Код отправлен по SMS. Введите его ниже.'
+
+        return (
+            'Подтверждаем номер с оператором. '
+            'Код в SMS придёт автоматически, если потребуется.'
+        )
+
+    def _maybe_send_sms_fallback(self, session: PhoneAuthSession) -> None:
+        if session.mode != PhoneAuthSession.Mode.MOBILE_ID:
+            return
+
+        if not settings.SMSAERO_ENABLED:
+            return
+
+        if session.sms_fallback_sent_at:
+            return
+
+        if session.status in {
+            PhoneAuthSession.Status.VERIFIED,
+            PhoneAuthSession.Status.AWAITING_OTP,
+        }:
+            return
+
+        elapsed = (timezone.now() - session.created_at).total_seconds()
+        timeout = settings.SMSAERO_MOBILE_ID_SMS_FALLBACK_SECONDS
+        should_fallback = session.status == PhoneAuthSession.Status.FAILED
+
+        if session.status == PhoneAuthSession.Status.PENDING and elapsed >= timeout:
+            should_fallback = True
+
+        if not should_fallback:
+            return
+
+        self._send_sms_fallback(session)
+
+    def _send_sms_fallback(self, session: PhoneAuthSession) -> None:
+        from django.db import transaction
+
+        try:
+            with transaction.atomic():
+                locked = (
+                    PhoneAuthSession.objects.select_for_update()
+                    .get(pk=session.pk)
+                )
+
+                if locked.sms_fallback_sent_at:
+                    return
+
+                if locked.status in {
+                    PhoneAuthSession.Status.VERIFIED,
+                    PhoneAuthSession.Status.AWAITING_OTP,
+                }:
+                    return
+
+                code = self._generate_code()
+                text = settings.SMSAERO_OTP_MESSAGE.format(code=code)
+
+                try:
+                    self.sms_client.send_sms(locked.phone, text)
+                except SmsAeroError as error:
+                    locked.mark_failed()
+                    logger.warning(
+                        'SMS fallback failed for session #%s: %s',
+                        locked.id,
+                        error,
+                    )
+                    return
+
+                locked.code_hash = self._hash_code(locked.phone, code)
+                locked.sms_fallback_sent_at = timezone.now()
+                locked.status = PhoneAuthSession.Status.AWAITING_OTP
+                locked.save(
+                    update_fields=[
+                        'code_hash',
+                        'sms_fallback_sent_at',
+                        'status',
+                        'updated_at',
+                    ],
+                )
+
+            logger.info(
+                'SMS fallback sent for mobile-id session #%s to %s',
+                session.id,
+                session.phone,
+            )
+        except PhoneAuthSession.DoesNotExist:
+            return
 
     def _send_sms_otp(self, phone: str) -> PhoneAuthSession:
         if settings.SMSAERO_ENABLED:
@@ -356,6 +557,7 @@ class OtpAuthService:
         *,
         phone: str | None = None,
         allow_verified: bool = False,
+        allow_failed: bool = False,
     ) -> PhoneAuthSession:
         try:
             session = PhoneAuthSession.objects.get(pk=session_id)
@@ -367,7 +569,7 @@ class OtpAuthService:
             if normalized_phone and normalized_phone != session.phone:
                 raise OtpAuthError('Сессия не найдена.', code='invalid_session')
 
-        if session.status == PhoneAuthSession.Status.FAILED:
+        if session.status == PhoneAuthSession.Status.FAILED and not allow_failed:
             raise OtpAuthError('Сессия недействительна. Запросите новый код.', code='expired')
 
         if session.is_expired and session.status != PhoneAuthSession.Status.VERIFIED:
