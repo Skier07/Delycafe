@@ -4,6 +4,7 @@ import 'package:delycafe/screens/order_payment_screen.dart';
 import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/checkout_draft_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/services/order_api_service.dart';
 import 'package:delycafe/services/payment_api_service.dart';
@@ -223,6 +224,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                     }
 
                     cartService.clearCart();
+                    await CheckoutDraftService.instance.clear();
                     await ApiAuthStorage.instance.clearOrderAccessToken();
 
                     if (!context.mounted) return;

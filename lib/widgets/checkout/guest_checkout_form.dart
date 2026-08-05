@@ -4,6 +4,7 @@ import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/services/checkout_draft_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -167,7 +168,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   bool _useBonuses = false;
   bool _isSubmitting = false;
   bool _consentNoticeShown = false;
+  bool _draftListenersAttached = false;
   Timer? _scheduleTimer;
+  Timer? _draftSaveTimer;
 
   static const int _promDeliveryPrice = 350;
   static const int _tatyshDeliveryPrice = 450;
@@ -304,6 +307,138 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       setState(_syncDeliveryTimeWithSchedule);
       _showFirstOrderConsentNoticeIfNeeded();
     });
+
+    unawaited(_restoreDraft());
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await CheckoutDraftService.instance.load();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (draft != null) {
+      setState(() {
+        _applyDraft(draft);
+      });
+    }
+
+    _attachDraftListeners();
+  }
+
+  void _applyDraft(CheckoutDraft draft) {
+    if (draft.name.trim().isNotEmpty) {
+      _nameController.text = draft.name.trim();
+    }
+
+    if (draft.phone.trim().isNotEmpty) {
+      _phoneController.text = PhoneInputFormatter.formatDigits(draft.phone);
+    }
+
+    if (draft.address.trim().isNotEmpty) {
+      _addressController.text = draft.address.trim();
+    }
+
+    if (draft.entrance.trim().isNotEmpty) {
+      _entranceController.text = draft.entrance.trim();
+    }
+
+    if (draft.floor.trim().isNotEmpty) {
+      _floorController.text = draft.floor.trim();
+    }
+
+    if (draft.apartment.trim().isNotEmpty) {
+      _apartmentController.text = draft.apartment.trim();
+    }
+
+    if (draft.comment.trim().isNotEmpty) {
+      _commentController.text = draft.comment.trim();
+    }
+
+    if (draft.deliveryTime.trim().isNotEmpty) {
+      _timeController.text = draft.deliveryTime.trim();
+    }
+
+    _deliveryType = _deliveryTypeFromApi(draft.deliveryType);
+    _urgency = _urgencyFromApi(draft.urgency);
+    _paymentMethod = _paymentMethodFromApi(draft.paymentMethod);
+    _useManualAddress = draft.useManualAddress;
+
+    if (_useManualAddress) {
+      _selectedSavedAddress = null;
+    }
+  }
+
+  DeliveryType _deliveryTypeFromApi(String value) {
+    switch (value) {
+      case 'promploshadka':
+        return DeliveryType.prom;
+      case 'tatysh':
+        return DeliveryType.tatysh;
+      case 'pickup':
+        return DeliveryType.pickup;
+      case 'ozersk':
+      default:
+        return DeliveryType.ozersk;
+    }
+  }
+
+  DeliveryUrgency _urgencyFromApi(String value) {
+    return value == 'by_time' ? DeliveryUrgency.byTime : DeliveryUrgency.asap;
+  }
+
+  PaymentMethod _paymentMethodFromApi(String value) {
+    return value == 'sbp' ? PaymentMethod.sbp : PaymentMethod.card;
+  }
+
+  void _attachDraftListeners() {
+    if (_draftListenersAttached) {
+      return;
+    }
+
+    _draftListenersAttached = true;
+
+    for (final controller in [
+      _nameController,
+      _phoneController,
+      _addressController,
+      _entranceController,
+      _floorController,
+      _apartmentController,
+      _commentController,
+      _timeController,
+    ]) {
+      controller.addListener(_scheduleDraftSave);
+    }
+  }
+
+  void _scheduleDraftSave() {
+    _draftSaveTimer?.cancel();
+    _draftSaveTimer = Timer(const Duration(milliseconds: 400), () {
+      unawaited(_saveDraft());
+    });
+  }
+
+  CheckoutDraft _buildDraft() {
+    return CheckoutDraft(
+      name: _nameController.text.trim(),
+      phone: _phoneController.text,
+      address: _addressController.text.trim(),
+      entrance: _entranceController.text.trim(),
+      floor: _floorController.text.trim(),
+      apartment: _apartmentController.text.trim(),
+      comment: _commentController.text.trim(),
+      deliveryTime: _timeController.text.trim(),
+      deliveryType: _deliveryType.apiValue,
+      urgency: _urgency.apiValue,
+      paymentMethod: _paymentMethod.apiValue,
+      useManualAddress: _useManualAddress,
+    );
+  }
+
+  Future<void> _saveDraft() async {
+    await CheckoutDraftService.instance.save(_buildDraft());
   }
 
   void _showFirstOrderConsentNoticeIfNeeded() {
@@ -407,11 +542,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       _useManualAddress = true;
       _selectedSavedAddress = null;
     });
+    _scheduleDraftSave();
   }
 
   @override
   void dispose() {
     _scheduleTimer?.cancel();
+    _draftSaveTimer?.cancel();
+    final draft = _buildDraft();
+    unawaited(CheckoutDraftService.instance.save(draft));
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
@@ -528,6 +667,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                               setState(() {
                                 _timeController.text = slotLabels[selectedIndex];
                               });
+                              _scheduleDraftSave();
 
                               Navigator.pop(context);
                             },
@@ -746,6 +886,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                     _deliveryType = type;
                     _syncDeliveryTimeWithSchedule();
                   });
+                  _scheduleDraftSave();
                 },
               );
             }).toList(),
@@ -797,6 +938,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                       setState(() {
                         _applySavedAddress(address);
                       });
+                      _scheduleDraftSave();
                     },
                   ),
                 );
@@ -883,6 +1025,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                       _urgency = DeliveryUrgency.asap;
                       _syncDeliveryTimeWithSchedule();
                     });
+                    _scheduleDraftSave();
                   },
                 ),
               ),
@@ -904,6 +1047,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                       _urgency = DeliveryUrgency.byTime;
                       _syncDeliveryTimeWithSchedule();
                     });
+                    _scheduleDraftSave();
                   },
                 ),
               ),
@@ -970,6 +1114,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                     setState(() {
                       _paymentMethod = PaymentMethod.card;
                     });
+                    _scheduleDraftSave();
                   },
                 ),
               ),
@@ -982,6 +1127,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                     setState(() {
                       _paymentMethod = PaymentMethod.sbp;
                     });
+                    _scheduleDraftSave();
                   },
                 ),
               ),
