@@ -33,18 +33,25 @@ def rollback_order(order: Order):
         return
 
     if order.bonus_earned > 0:
-        customer.bonus_balance -= order.bonus_earned
-
-        BonusTransaction.objects.create(
+        earn_was_credited = BonusTransaction.objects.filter(
             customer=customer,
-            transaction_type=BonusTransaction.TransactionType.REFUND,
-            amount=-order.bonus_earned,
             order_id=order.id,
-            comment=(
-                f'Отмена заказа №{order.id}. '
-                f'Отмена начисления бонусов.'
-            ),
-        )
+            transaction_type=BonusTransaction.TransactionType.EARN,
+        ).exists()
+
+        if earn_was_credited:
+            customer.bonus_balance -= order.bonus_earned
+
+            BonusTransaction.objects.create(
+                customer=customer,
+                transaction_type=BonusTransaction.TransactionType.REFUND,
+                amount=-order.bonus_earned,
+                order_id=order.id,
+                comment=(
+                    f'Отмена заказа №{order.id}. '
+                    f'Отмена начисления бонусов.'
+                ),
+            )
 
     if order.bonus_spent > 0:
         customer.bonus_balance += order.bonus_spent
@@ -119,6 +126,17 @@ def build_saby_comment(order: Order) -> str:
     else:
         lines.append('Время: Как можно скорее')
 
+    if order.discount_amount > 0:
+        if order.delivery_type == Order.DeliveryType.PICKUP:
+            lines.append(
+                f'Скидка самовывоза 5% (акция Saby): −{order.discount_amount} ₽'
+            )
+        else:
+            lines.append(f'Скидка: −{order.discount_amount} ₽')
+
+    if order.bonus_spent > 0:
+        lines.append(f'Списание бонусов: −{order.bonus_spent} ₽')
+
     lines.append('Источник: приложение Delycafe')
 
     header = '\n'.join(lines)
@@ -147,8 +165,11 @@ def save_saby_order_response(order: Order, saby_response: dict) -> None:
         saby_response.get('sale_id')
         or saby_response.get('saleId')
     )
+    # saleKey — UUID для bonus-write-off / register-payment.
     external_id = (
-        saby_response.get('externalId')
+        saby_response.get('saleKey')
+        or saby_response.get('sale_key')
+        or saby_response.get('externalId')
         or saby_response.get('external_id')
     )
 
@@ -197,6 +218,8 @@ def register_saby_payment(order: Order) -> dict | None:
             )
 
         try:
+            SabyOrderService().apply_bonuses(locked_order)
+            locked_order.refresh_from_db()
             response = SabyOrderService().register_payment(locked_order)
         except SabyOrderError as exc:
             locked_order.saby_payment_error = str(exc)
@@ -224,6 +247,52 @@ def _try_register_saby_payment(order: Order) -> None:
     except SabyOrderError:
         logger.exception(
             'Failed to register Saby payment for order #%s',
+            order.id,
+        )
+
+
+def _record_bonus_earn_from_saby(order: Order) -> None:
+    """Фиксирует начисление в истории после write-off (баланс — из Saby)."""
+    if order.bonus_earned <= 0 or order.customer_id is None:
+        return
+
+    already_recorded = BonusTransaction.objects.filter(
+        customer_id=order.customer_id,
+        order_id=order.id,
+        transaction_type=BonusTransaction.TransactionType.EARN,
+    ).exists()
+
+    if already_recorded:
+        return
+
+    BonusTransaction.objects.create(
+        customer_id=order.customer_id,
+        transaction_type=BonusTransaction.TransactionType.EARN,
+        amount=order.bonus_earned,
+        order_id=order.id,
+        comment=(
+            f'Начисление {order.bonus_earned} бонусов (3%) '
+            f'по заказу #{order.id}'
+        ),
+    )
+
+
+def _sync_customer_bonus_balance(order: Order) -> None:
+    if order.customer_id is None:
+        return
+
+    try:
+        from customers.services.saby_customer_service import (
+            SabyCustomerService,
+            upsert_customer_from_saby,
+        )
+
+        saby_data = SabyCustomerService().find_by_phone(order.customer.phone)
+        if saby_data is not None:
+            upsert_customer_from_saby(saby_data)
+    except Exception:
+        logger.exception(
+            'Failed to sync bonus balance from Saby for order #%s',
             order.id,
         )
 
@@ -384,6 +453,12 @@ class SabyOrderService:
     REGISTER_PAYMENT_URL = (
         'https://api.sbis.ru/retail/order/{external_id}/register-payment'
     )
+    BONUS_WRITE_OFF_URL = (
+        'https://api.sbis.ru/retail/order/{external_id}/bonus-write-off'
+    )
+    BONUS_READ_URL = (
+        'https://api.sbis.ru/retail/order/{external_id}/bonus-read'
+    )
 
     def create_order(self, order: Order) -> dict:
         nomenclatures = self._build_nomenclatures(order)
@@ -445,6 +520,90 @@ class SabyOrderService:
         order.refresh_from_db()
 
         if not order.saby_sale_id and not order.saby_order_number:
+            raise SabyOrderError(
+                self._extract_error_message(saby_response, response.status_code)
+            )
+
+        return saby_response
+
+    def apply_bonuses(self, order: Order) -> dict | None:
+        """Списывает или инициирует начисление бонусов в Saby (до оплаты)."""
+        if order.saby_bonus_applied:
+            logger.info(
+                'Order #%s Saby bonuses already applied, skipping',
+                order.id,
+            )
+            return None
+
+        if not order_already_in_saby(order):
+            raise SabyOrderError(
+                'Нельзя применить бонусы в Saby: заказ ещё не создан.'
+            )
+
+        response = self.write_off_bonuses(order)
+
+        order.saby_bonus_applied = True
+        order.save(update_fields=['saby_bonus_applied', 'updated_at'])
+
+        _record_bonus_earn_from_saby(order)
+        _sync_customer_bonus_balance(order)
+
+        return response
+
+    def write_off_bonuses(self, order: Order) -> dict:
+        """
+        POST bonus-write-off.
+
+        bonusDec > 0 — списание; 0/null — начисление по программе лояльности.
+        """
+        external_id = saby_external_id(order)
+        bonus_dec = int(order.bonus_spent or 0)
+        payload = {
+            # 0 — начислить по акции Saby без списания.
+            'bonusDec': bonus_dec if bonus_dec > 0 else 0,
+        }
+
+        token = SabyCatalogService().get_token()
+        url = self.BONUS_WRITE_OFF_URL.format(external_id=external_id)
+
+        logger.info(
+            'Saby bonus-write-off payload for order #%s: %s',
+            order.id,
+            payload,
+        )
+
+        response = requests.post(
+            url,
+            headers={
+                'X-SBISAccessToken': token,
+                'Content-Type': 'application/json',
+            },
+            json=payload,
+            timeout=60,
+        )
+
+        logger.info(
+            'Saby bonus-write-off response for order #%s: status=%s body=%s',
+            order.id,
+            response.status_code,
+            response.text,
+        )
+
+        try:
+            saby_response = response.json() if response.content else {}
+        except ValueError as exc:
+            raise SabyOrderError(
+                'Saby вернул не-JSON ответ при списании бонусов '
+                f'(HTTP {response.status_code}).'
+            ) from exc
+
+        if response.status_code >= 400:
+            raise SabyOrderError(
+                self._extract_error_message(saby_response, response.status_code)
+            )
+
+        result_code = saby_response.get('resultCode')
+        if result_code not in (0, '0', None):
             raise SabyOrderError(
                 self._extract_error_message(saby_response, response.status_code)
             )
@@ -517,6 +676,7 @@ class SabyOrderService:
         return saby_response
 
     def _build_nomenclatures(self, order: Order) -> list[dict]:
+        """Полные цены каталога. Скидку самовывоза 5% применяет акция Saby."""
         nomenclatures = []
 
         for item in order.items.all():

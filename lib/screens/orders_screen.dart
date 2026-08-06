@@ -320,9 +320,11 @@ class _OrderCard extends StatelessWidget {
               title: 'Доставка',
               value: order.deliveryPrice,
             ),
-          if (AppFeatures.firstOrderDiscountEnabled && order.discountAmount > 0)
+          if (order.discountAmount > 0)
             _PriceRow(
-              title: 'Скидка',
+              title: order.deliveryTypeLabel.toLowerCase().contains('самовывоз')
+                  ? 'Скидка самовывоза'
+                  : 'Скидка',
               value: -order.discountAmount,
             ),
           if (AppFeatures.bonusesEnabled && order.bonusSpent > 0)

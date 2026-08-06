@@ -250,14 +250,36 @@ class CustomerProfileAPIView(AuthenticatedCustomerAPIView):
 
 class CustomerBonusesAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
+        from orders.promotions import (
+            APP_FIRST_ORDER_DISCOUNT_ENABLED,
+            BONUS_EARN_PERCENT,
+            MAX_BONUS_SPEND_PERCENT,
+            PICKUP_DISCOUNT_PERCENT,
+        )
+
         customer = get_request_customer(request)
+
+        try:
+            synced = sync_customer_from_saby(customer.phone)
+            if synced is not None:
+                customer = synced
+        except Exception:
+            pass
 
         transactions = customer.bonus_transactions.all()[:50]
 
         return Response(
             {
+                'customer_id': customer.id,
+                'phone': customer.phone,
                 'bonus_balance': customer.bonus_balance,
-                'first_order_discount_available': customer.first_order_discount_available,
+                'earn_percent': BONUS_EARN_PERCENT,
+                'max_spend_percent': MAX_BONUS_SPEND_PERCENT,
+                'pickup_discount_percent': PICKUP_DISCOUNT_PERCENT,
+                'first_order_discount_available': (
+                    APP_FIRST_ORDER_DISCOUNT_ENABLED
+                    and customer.first_order_discount_available
+                ),
                 'first_order_discount_used': customer.first_order_discount_used,
                 'transactions': BonusTransactionSerializer(
                     transactions,

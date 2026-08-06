@@ -1,3 +1,5 @@
+import 'package:delycafe/constants/app_features.dart';
+import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/bonus_summary.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/auth_service.dart';
@@ -213,7 +215,8 @@ class _BalanceCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          if (summary.firstOrderDiscountAvailable) ...[
+          if (summary.firstOrderDiscountAvailable &&
+              AppFeatures.firstOrderDiscountEnabled) ...[
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.symmetric(
@@ -260,13 +263,19 @@ class _RulesCard extends StatelessWidget {
           const SizedBox(height: 12),
           _RuleRow(
             icon: CupertinoIcons.plus_circle_fill,
-            text: 'После заказа начисляется ${summary.earnPercent}% бонусами.',
+            text:
+                'После заказа начисляется ${summary.earnPercent}% бонусами от суммы заказа.',
+          ),
+          const SizedBox(height: 10),
+          const _RuleRow(
+            icon: CupertinoIcons.circle_grid_3x3_fill,
+            text: '1 бонус = 1 ₽.',
           ),
           const SizedBox(height: 10),
           _RuleRow(
             icon: CupertinoIcons.creditcard_fill,
             text:
-                'Бонусами можно оплатить до ${summary.maxSpendPercent}% суммы товаров.',
+                'Бонусами можно оплатить до ${summary.maxSpendPercent}% суммы заказа. Если бонусов меньше — спишутся все имеющиеся.',
           ),
           const SizedBox(height: 10),
           const _RuleRow(
@@ -274,9 +283,10 @@ class _RulesCard extends StatelessWidget {
             text: 'На доставку бонусы не списываются.',
           ),
           const SizedBox(height: 10),
-          const _RuleRow(
-            icon: CupertinoIcons.tag_fill,
-            text: 'Бонусы не списываются вместе со скидкой первого заказа.',
+          _RuleRow(
+            icon: CupertinoIcons.bag_fill,
+            text:
+                'При самовывозе действует скидка ${BonusRules.pickupDiscountPercent}% на сумму заказа.',
           ),
         ],
       ),

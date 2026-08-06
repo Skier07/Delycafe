@@ -162,6 +162,11 @@ class Order(models.Model):
         verbose_name='Оплата зарегистрирована в Saby',
     )
 
+    saby_bonus_applied = models.BooleanField(
+        default=False,
+        verbose_name='Бонусы применены в Saby',
+    )
+
     saby_payment_error = models.TextField(
         blank=True,
         verbose_name='Ошибка регистрации оплаты в Saby',

@@ -11,15 +11,17 @@ from legal.services import customer_has_required_consents
 from .catalog_pricing import apply_validated_item_prices
 from .delivery_schedule import validate_order_delivery_window
 from .models import Order, OrderItem
-from .promotions import APP_BONUSES_ENABLED, APP_FIRST_ORDER_DISCOUNT_ENABLED
+from .promotions import (
+    APP_BONUSES_ENABLED,
+    APP_FIRST_ORDER_DISCOUNT_ENABLED,
+    BONUS_EARN_PERCENT,
+    MAX_BONUS_SPEND_PERCENT,
+    PICKUP_DISCOUNT_PERCENT,
+)
 from .services import rollback_order
 from payments.services import evaluate_alfa_session_for_reuse
 
 UNPAID_ORDER_REUSE_HOURS = 24
-
-FIRST_ORDER_DISCOUNT_PERCENT = 20
-BONUS_EARN_PERCENT = 5
-MAX_BONUS_SPEND_PERCENT = 30
 
 
 def calculate_delivery_price(delivery_type, products_total):
@@ -407,44 +409,36 @@ class OrderCreateSerializer(serializers.Serializer):
         discount_amount = 0
         first_order_discount_applied = False
 
-        can_use_first_order_discount = (
-            APP_FIRST_ORDER_DISCOUNT_ENABLED
-            and customer.first_order_discount_available
-            and not customer.first_order_discount_used
-        )
-
-        if can_use_first_order_discount:
+        # Скидка первого заказа отключена. Постоянная скидка — только самовывоз.
+        if delivery_type == Order.DeliveryType.PICKUP:
             discount_amount = (
-                products_total * FIRST_ORDER_DISCOUNT_PERCENT // 100
+                products_total * PICKUP_DISCOUNT_PERCENT // 100
             )
-            first_order_discount_applied = True
+
+        products_after_discount = max(products_total - discount_amount, 0)
 
         bonus_spent = 0
 
-        if (
-            APP_BONUSES_ENABLED
-            and not first_order_discount_applied
-            and requested_bonus_spent > 0
-        ):
+        if APP_BONUSES_ENABLED and requested_bonus_spent > 0:
             max_bonus_spend = (
-                products_total * MAX_BONUS_SPEND_PERCENT // 100
+                products_after_discount * MAX_BONUS_SPEND_PERCENT // 100
             )
 
             bonus_spent = min(
                 requested_bonus_spent,
                 customer.bonus_balance,
                 max_bonus_spend,
-                products_total,
+                products_after_discount,
             )
 
         paid_products_total = max(
-            products_total - discount_amount - bonus_spent,
+            products_after_discount - bonus_spent,
             0,
         )
 
+        # Ожидаемое начисление Saby (3%); локально баланс не меняем.
         bonus_earned = 0
-
-        if APP_BONUSES_ENABLED:
+        if APP_BONUSES_ENABLED and paid_products_total > 0:
             bonus_earned = paid_products_total * BONUS_EARN_PERCENT // 100
 
         total_price = paid_products_total + delivery_price
@@ -703,38 +697,33 @@ class OrderCreateSerializer(serializers.Serializer):
 
         customer_bonus_update_fields = []
 
-        if pricing['first_order_discount_applied']:
-            customer.first_order_discount_available = False
-            customer.first_order_discount_used = True
-            customer_bonus_update_fields.extend([
-                'first_order_discount_available',
-                'first_order_discount_used',
-            ])
-
         if pricing['bonus_spent'] > 0:
             customer.bonus_balance -= pricing['bonus_spent']
+
+            product_titles = []
+            for item in order_items:
+                title = item.product_title
+                if item.variant_title:
+                    title = f'{title} ({item.variant_title})'
+                product_titles.append(f'{title} ×{item.quantity}')
+
+            products_label = (
+                ', '.join(product_titles) if product_titles else 'товары'
+            )
 
             BonusTransaction.objects.create(
                 customer=customer,
                 transaction_type=BonusTransaction.TransactionType.SPEND,
                 amount=-pricing['bonus_spent'],
                 order_id=order.id,
-                comment=f'Списание бонусов по заказу #{order.id}',
+                comment=(
+                    f'Списание по заказу #{order.id}: {products_label}'
+                ),
             )
-
-        if pricing['bonus_earned'] > 0:
-            customer.bonus_balance += pricing['bonus_earned']
-
-            BonusTransaction.objects.create(
-                customer=customer,
-                transaction_type=BonusTransaction.TransactionType.EARN,
-                amount=pricing['bonus_earned'],
-                order_id=order.id,
-                comment=f'Начисление бонусов по заказу #{order.id}',
-            )
-
-        if pricing['bonus_spent'] > 0 or pricing['bonus_earned'] > 0:
             customer_bonus_update_fields.append('bonus_balance')
+
+        # Начисление делает Saby (3%). Локально только фиксируем ожидаемую сумму
+        # в order.bonus_earned; транзакцию EARN создаём после write-off.
 
         if customer_bonus_update_fields:
             customer_bonus_update_fields.append('updated_at')

@@ -226,17 +226,33 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     return widget.cartTotal * BonusRules.firstOrderDiscountPercent ~/ 100;
   }
 
+  int get _pickupDiscount {
+    if (_deliveryType != DeliveryType.pickup) return 0;
+
+    return widget.cartTotal * BonusRules.pickupDiscountPercent ~/ 100;
+  }
+
+  int get _productsAfterDiscount {
+    final after =
+        widget.cartTotal - _firstOrderDiscount - _pickupDiscount;
+
+    if (after < 0) return 0;
+
+    return after;
+  }
+
   int get _maxBonusSpend {
     if (!AppFeatures.bonusesEnabled || _hasAutomaticFirstOrderDiscount) {
       return 0;
     }
 
-    final maxByPercent = widget.cartTotal * BonusRules.maxSpendPercent ~/ 100;
+    final maxByPercent =
+        _productsAfterDiscount * BonusRules.maxSpendPercent ~/ 100;
 
     final values = [
       widget.availableBonuses,
       maxByPercent,
-      widget.cartTotal,
+      _productsAfterDiscount,
     ];
 
     return values.reduce((a, b) => a < b ? a : b);
@@ -250,7 +266,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   int get _totalWithDelivery {
     final total =
-        widget.cartTotal - _firstOrderDiscount - _bonusSpent + _deliveryPrice;
+        _productsAfterDiscount - _bonusSpent + _deliveryPrice;
 
     if (total < 0) return 0;
 
@@ -269,7 +285,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
         return 'Татыш: доставка $_tatyshDeliveryPrice ₽, минимальное время - около 2 часов';
 
       case DeliveryType.pickup:
-        return 'Самовывоз: заберите заказ самостоятельно из кафе';
+        return 'Самовывоз: скидка ${BonusRules.pickupDiscountPercent}% на сумму заказа';
     }
   }
 
@@ -1197,6 +1213,14 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   ),
                   const SizedBox(height: 10),
                 ],
+                if (_pickupDiscount > 0) ...[
+                  _PriceRow(
+                    title:
+                        'Скидка самовывоза ${BonusRules.pickupDiscountPercent}%',
+                    value: '-$_pickupDiscount ₽',
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 if (AppFeatures.bonusesEnabled && _bonusSpent > 0) ...[
                   _PriceRow(
                     title: 'Списано бонусов',
@@ -1402,8 +1426,8 @@ class _BonusSpendCard extends StatelessWidget {
                 Text(
                   hasBonuses
                       ? useBonuses
-                          ? 'Будет списано: $bonusSpent бонусов'
-                          : 'Доступно: $availableBonuses бонусов'
+                          ? 'Спишется до ${BonusRules.maxSpendPercent}%: $bonusSpent бонусов'
+                          : 'Доступно: $availableBonuses · до ${BonusRules.maxSpendPercent}% суммы'
                       : 'Бонусов пока нет',
                   style: TextStyle(
                     fontSize: 13,

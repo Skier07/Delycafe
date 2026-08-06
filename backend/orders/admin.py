@@ -167,6 +167,7 @@ class OrderAdmin(admin.ModelAdmin):
                     'saby_sale_id',
                     'saby_external_id',
                     'saby_payment_registered',
+                    'saby_bonus_applied',
                     'saby_dispatch_error',
                     'saby_payment_error',
                     'admin_email_sent_at',

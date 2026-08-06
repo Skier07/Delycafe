@@ -2,9 +2,9 @@
 class AppFeatures {
   AppFeatures._();
 
-  /// Накопительные бонусы (экран, списание, начисление).
-  static const bool bonusesEnabled = false;
+  /// Накопительные бонусы (экран, списание, начисление в Saby).
+  static const bool bonusesEnabled = true;
 
-  /// Скидка 20% на первый заказ.
+  /// Скидка 20% на первый заказ — отключена.
   static const bool firstOrderDiscountEnabled = false;
 }
