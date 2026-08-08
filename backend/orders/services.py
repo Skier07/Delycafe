@@ -129,7 +129,7 @@ def build_saby_comment(order: Order) -> str:
     if order.discount_amount > 0:
         if order.delivery_type == Order.DeliveryType.PICKUP:
             lines.append(
-                f'Скидка самовывоза 5% (акция Saby): −{order.discount_amount} ₽'
+                f'Скидка самовывоза 5% (в ценах позиций): −{order.discount_amount} ₽'
             )
         else:
             lines.append(f'Скидка: −{order.discount_amount} ₽')
@@ -676,19 +676,38 @@ class SabyOrderService:
         return saby_response
 
     def _build_nomenclatures(self, order: Order) -> list[dict]:
-        """Полные цены каталога. Скидку самовывоза 5% применяет акция Saby."""
+        """
+        При самовывозе cost уже со скидкой 5% (зеркало расчёта в приложении).
+
+        Акция Saby «Скидка на самовывоз» на API-заказы обычно не срабатывает —
+        урезание cost нужно, чтобы bankSum = итог продажи и чек АТОЛ закрывался.
+        """
+        from orders.promotions import PICKUP_DISCOUNT_PERCENT
+
         nomenclatures = []
+        apply_pickup_discount = (
+            order.delivery_type == Order.DeliveryType.PICKUP
+            and order.discount_amount > 0
+            and PICKUP_DISCOUNT_PERCENT > 0
+        )
 
         for item in order.items.all():
             if not item.saby_id:
                 continue
+
+            unit_cost = item.price
+            if apply_pickup_discount:
+                unit_cost = max(
+                    0,
+                    item.price * (100 - PICKUP_DISCOUNT_PERCENT) // 100,
+                )
 
             entry = {
                 'id': item.saby_id,
                 'priceListId': settings.SABY_PRICE_LIST_ID,
                 'count': item.quantity,
                 'name': item.product_title,
-                'cost': item.price,
+                'cost': unit_cost,
             }
 
             if item.variant_title:

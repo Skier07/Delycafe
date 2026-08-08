@@ -279,11 +279,6 @@ class _RulesCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const _RuleRow(
-            icon: CupertinoIcons.car_detailed,
-            text: 'На доставку бонусы не списываются.',
-          ),
-          const SizedBox(height: 10),
-          _RuleRow(
             icon: CupertinoIcons.bag_fill,
             text:
                 'При самовывозе действует скидка ${BonusRules.pickupDiscountPercent}% на сумму заказа.',
