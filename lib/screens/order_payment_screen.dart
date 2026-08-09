@@ -40,6 +40,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   bool _isCheckingStatus = false;
   bool _paymentCompleted = false;
   bool _awaitingBankReturn = false;
+  bool _isClosing = false;
   String? _lastLaunchedExternalUrl;
   DateTime? _lastLaunchedAt;
   int _statusRetryGeneration = 0;
@@ -543,44 +544,93 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     Navigator.pop(context, true);
   }
 
+  /// Назад / системная кнопка: сначала сверяем статус с банком.
+  /// Иначе после успешной оплаты на промо-странице банка «Назад»
+  /// ошибочно помечает платёж как незавершённый.
+  Future<void> _onClosePressed() async {
+    if (_paymentCompleted || _isClosing) return;
+
+    setState(() {
+      _isClosing = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _checkPaymentStatusWithRetries();
+
+      if (!mounted) return;
+
+      if (_paymentCompleted) {
+        return;
+      }
+
+      Navigator.pop(context, false);
+    } finally {
+      if (mounted && !_paymentCompleted) {
+        setState(() {
+          _isClosing = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFEF7FF),
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppColors.header,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        toolbarHeight: 64,
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            ShaderGlassContainer(
-              borderRadius: 30,
-              onPressed: () => Navigator.pop(context, false),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(
-                CupertinoIcons.chevron_left_2,
-                color: Colors.white,
-                size: 24,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        unawaited(_onClosePressed());
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFEF7FF),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: AppColors.header,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          toolbarHeight: 64,
+          titleSpacing: 16,
+          title: Row(
+            children: [
+              ShaderGlassContainer(
+                borderRadius: 30,
+                onPressed:
+                    _isClosing ? null : () => unawaited(_onClosePressed()),
+                padding: const EdgeInsets.all(8),
+                child: _isClosing
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        CupertinoIcons.chevron_left_2,
+                        color: Colors.white,
+                        size: 24,
+                      ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Оплата заказа №${widget.orderId}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _isClosing
+                      ? 'Проверяем оплату…'
+                      : 'Оплата заказа №${widget.orderId}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 

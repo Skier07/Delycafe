@@ -214,8 +214,9 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Оплата не завершена. Оформите заказ снова из корзины — '
-                            'будет использован тот же заказ №${order.id}.',
+                            'Оплата не подтверждена. Если деньги списались, '
+                            'откройте «История заказов» или оформите снова — '
+                            'будет использован заказ №${order.id}.',
                           ),
                         ),
                       );

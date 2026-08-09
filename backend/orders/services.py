@@ -237,6 +237,12 @@ def register_saby_payment(order: Order) -> dict | None:
                 'updated_at',
             ]
         )
+        order_pk = locked_order.pk
+
+    # После оплаты Saby уже начислил 3% — баланс тянем здесь, не раньше.
+    paid_order = Order.objects.get(pk=order_pk)
+    _record_bonus_earn_from_saby(paid_order)
+    _sync_customer_bonus_balance(paid_order)
 
     return response
 
@@ -545,8 +551,7 @@ class SabyOrderService:
         order.saby_bonus_applied = True
         order.save(update_fields=['saby_bonus_applied', 'updated_at'])
 
-        _record_bonus_earn_from_saby(order)
-        _sync_customer_bonus_balance(order)
+        # История и баланс — после register-payment (см. register_saby_payment).
 
         return response
 

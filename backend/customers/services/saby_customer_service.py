@@ -123,11 +123,14 @@ class SabyCustomerService:
             parsed = self._parse_customer_payload(payload)
 
             if parsed is not None:
-                if parsed.bonus_balance is None and parsed.saby_external_id:
-                    parsed.bonus_balance = self._fetch_bonus_balance(
+                # Всегда дочитываем bonus-balance — find часто отдаёт 0/пусто.
+                if parsed.saby_external_id:
+                    fetched_balance = self._fetch_bonus_balance(
                         parsed.saby_external_id,
                         token,
                     )
+                    if fetched_balance is not None:
+                        parsed.bonus_balance = fetched_balance
 
                 return parsed
 
@@ -153,6 +156,14 @@ class SabyCustomerService:
             parsed = self._parse_customer_payload(payload)
 
             if parsed is not None:
+                if parsed.saby_external_id:
+                    fetched_balance = self._fetch_bonus_balance(
+                        parsed.saby_external_id,
+                        token,
+                    )
+                    if fetched_balance is not None:
+                        parsed.bonus_balance = fetched_balance
+
                 return parsed
 
         return None

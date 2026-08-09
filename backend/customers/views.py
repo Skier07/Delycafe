@@ -54,13 +54,21 @@ def get_or_create_customer_by_phone(phone):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    customer, _ = Customer.objects.get_or_create(
+    customer, created = Customer.objects.get_or_create(
         phone=normalized_phone,
         defaults={
             'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
             'first_order_discount_used': False,
         },
     )
+
+    # Подтянуть баланс/имя из Saby (и для новых, и при повторном входе).
+    try:
+        synced = sync_customer_from_saby(normalized_phone)
+        if synced is not None:
+            customer = synced
+    except Exception:
+        pass
 
     return customer, None
 
@@ -191,7 +199,9 @@ class CustomerProfileAPIView(AuthenticatedCustomerAPIView):
     def get(self, request):
         customer = get_request_customer(request)
 
-        if request.query_params.get('sync_saby') == '1':
+        # По умолчанию подтягиваем баланс из Saby; sync_saby=0 отключает.
+        sync_param = request.query_params.get('sync_saby', '1')
+        if sync_param != '0':
             try:
                 synced_customer = sync_customer_from_saby(customer.phone)
 
