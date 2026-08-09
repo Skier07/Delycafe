@@ -79,6 +79,9 @@ class CustomerAdmin(admin.ModelAdmin):
             {
                 'fields': (
                     'bonus_balance',
+                    'saby_external_id',
+                    'saby_customer_id',
+                    'saby_synced_at',
                 ),
             },
         ),
@@ -101,6 +104,41 @@ class CustomerAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    readonly_fields = (
+        'saby_synced_at',
+        'created_at',
+        'updated_at',
+    )
+
+    actions = ('sync_bonus_balance_from_saby',)
+
+    @admin.action(description='Подтянуть баланс бонусов из Saby')
+    def sync_bonus_balance_from_saby(self, request, queryset):
+        from customers.services.saby_customer_service import (
+            sync_customer_from_saby,
+        )
+
+        ok = 0
+        fail = 0
+
+        for customer in queryset:
+            try:
+                synced = sync_customer_from_saby(
+                    customer.phone,
+                    existing_customer=customer,
+                )
+                if synced is None:
+                    fail += 1
+                else:
+                    ok += 1
+            except Exception:
+                fail += 1
+
+        self.message_user(
+            request,
+            f'Синхронизация: успешно={ok}, без данных/ошибка={fail}',
+        )
 
     inlines = [
         BonusTransactionInline,

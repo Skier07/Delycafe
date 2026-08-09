@@ -105,7 +105,10 @@ class Command(BaseCommand):
         customer = upsert_customer_from_saby(saby_data)
         self.stdout.write(
             self.style.SUCCESS(
-                f'Сохранён: {customer.phone} — {customer.name or "без имени"}',
+                f'Сохранён: id={customer.id} phone={customer.phone} '
+                f'name={customer.name or "—"} '
+                f'balance={customer.bonus_balance} '
+                f'externalId={customer.saby_external_id or "—"}',
             ),
         )
         return 1, 1, 0

@@ -289,13 +289,14 @@ def _sync_customer_bonus_balance(order: Order) -> None:
 
     try:
         from customers.services.saby_customer_service import (
-            SabyCustomerService,
-            upsert_customer_from_saby,
+            sync_customer_from_saby,
         )
 
-        saby_data = SabyCustomerService().find_by_phone(order.customer.phone)
-        if saby_data is not None:
-            upsert_customer_from_saby(saby_data)
+        customer = order.customer
+        sync_customer_from_saby(
+            customer.phone,
+            existing_customer=customer,
+        )
     except Exception:
         logger.exception(
             'Failed to sync bonus balance from Saby for order #%s',

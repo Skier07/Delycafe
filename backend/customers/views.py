@@ -17,6 +17,7 @@ from .serializers import (
 )
 from .services.saby_customer_service import (
     SabyCustomerService,
+    sync_customer_from_saby,
     upsert_customer_from_saby,
 )
 from .services.otp_auth_service import OtpAuthError, OtpAuthService
@@ -64,7 +65,10 @@ def get_or_create_customer_by_phone(phone):
 
     # Подтянуть баланс/имя из Saby (и для новых, и при повторном входе).
     try:
-        synced = sync_customer_from_saby(normalized_phone)
+        synced = sync_customer_from_saby(
+            normalized_phone,
+            existing_customer=customer,
+        )
         if synced is not None:
             customer = synced
     except Exception:
@@ -83,16 +87,6 @@ def sync_customer_default_address(customer, address_obj=None):
         customer.default_address = address_obj.full_address
 
     customer.save(update_fields=['default_address', 'updated_at'])
-
-
-def sync_customer_from_saby(phone: str):
-    service = SabyCustomerService()
-    saby_data = service.find_by_phone(phone)
-
-    if saby_data is None:
-        return None
-
-    return upsert_customer_from_saby(saby_data)
 
 
 class CustomerSabyLookupAPIView(AuthenticatedCustomerAPIView):
@@ -114,7 +108,10 @@ class CustomerSabyLookupAPIView(AuthenticatedCustomerAPIView):
             )
 
         try:
-            customer = sync_customer_from_saby(normalized_phone)
+            customer = sync_customer_from_saby(
+                normalized_phone,
+                existing_customer=customer,
+            )
         except Exception:
             return Response(
                 {'detail': 'Ошибка синхронизации с Saby.'},
@@ -203,7 +200,10 @@ class CustomerProfileAPIView(AuthenticatedCustomerAPIView):
         sync_param = request.query_params.get('sync_saby', '1')
         if sync_param != '0':
             try:
-                synced_customer = sync_customer_from_saby(customer.phone)
+                synced_customer = sync_customer_from_saby(
+                    customer.phone,
+                    existing_customer=customer,
+                )
 
                 if synced_customer is not None:
                     customer = synced_customer
@@ -270,7 +270,10 @@ class CustomerBonusesAPIView(AuthenticatedCustomerAPIView):
         customer = get_request_customer(request)
 
         try:
-            synced = sync_customer_from_saby(customer.phone)
+            synced = sync_customer_from_saby(
+                customer.phone,
+                existing_customer=customer,
+            )
             if synced is not None:
                 customer = synced
         except Exception:
