@@ -722,8 +722,8 @@ class OrderCreateSerializer(serializers.Serializer):
             )
             customer_bonus_update_fields.append('bonus_balance')
 
-        # Начисление делает Saby (3%). Локально только фиксируем ожидаемую сумму
-        # в order.bonus_earned; транзакцию EARN создаём после write-off.
+        # Начисление 3% на локальный баланс — после оплаты (_record_bonus_earn).
+        # Здесь только фиксируем ожидаемую сумму в order.bonus_earned.
 
         if customer_bonus_update_fields:
             customer_bonus_update_fields.append('updated_at')

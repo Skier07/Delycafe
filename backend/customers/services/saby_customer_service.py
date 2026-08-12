@@ -642,6 +642,7 @@ def upsert_customer_from_saby(
     *,
     synced_at: datetime | None = None,
     existing_customer=None,
+    update_bonus_balance: bool = False,
 ):
     from customers.models import Customer
 
@@ -682,21 +683,23 @@ def upsert_customer_from_saby(
         customer.saby_customer_id = saby_data.saby_customer_id
         update_fields.append('saby_customer_id')
 
-    if saby_data.bonus_balance is not None:
-        new_balance = max(int(saby_data.bonus_balance), 0)
+    # По умолчанию локальный ledger не трогаем: find по телефону у Saby
+    # не отдаёт баланс, а 0/null затирал бы начисления приложения.
+    if update_bonus_balance:
+        if saby_data.bonus_balance is not None:
+            new_balance = max(int(saby_data.bonus_balance), 0)
 
-        if customer.bonus_balance != new_balance:
-            customer.bonus_balance = new_balance
-            update_fields.append('bonus_balance')
-    elif customer.saby_external_id:
-        # Есть UUID, но balance не пришёл в find — дочитываем явно.
-        fetched = service.fetch_bonus_balance_for_external_id(
-            customer.saby_external_id,
-        )
+            if customer.bonus_balance != new_balance:
+                customer.bonus_balance = new_balance
+                update_fields.append('bonus_balance')
+        elif customer.saby_external_id:
+            fetched = service.fetch_bonus_balance_for_external_id(
+                customer.saby_external_id,
+            )
 
-        if fetched is not None and customer.bonus_balance != fetched:
-            customer.bonus_balance = max(fetched, 0)
-            update_fields.append('bonus_balance')
+            if fetched is not None and customer.bonus_balance != fetched:
+                customer.bonus_balance = max(fetched, 0)
+                update_fields.append('bonus_balance')
 
     customer.saby_synced_at = synced_at
     update_fields.append('saby_synced_at')
@@ -712,22 +715,30 @@ def upsert_customer_from_saby(
             customer.save(update_fields=list(set(update_fields)))
 
     logger.info(
-        'Saby upsert customer id=%s phone=%s balance=%s externalId=%s',
+        'Saby upsert customer id=%s phone=%s balance=%s externalId=%s '
+        'update_balance=%s',
         customer.pk,
         customer.phone,
         customer.bonus_balance,
         customer.saby_external_id,
+        update_bonus_balance,
     )
 
     return customer
 
 
-def sync_customer_from_saby(phone: str, *, existing_customer=None):
+def sync_customer_from_saby(
+    phone: str,
+    *,
+    existing_customer=None,
+    update_bonus_balance: bool = False,
+):
     """
-    Подтянуть клиента и бонусный баланс из Saby.
+    Подтянуть клиента из Saby (имя / UUID).
 
-    existing_customer — текущий аккаунт в приложении, чтобы не создать дубликат
-    при разном написании телефона (+7 / 7 / 8).
+    Баланс бонусов по умолчанию не меняется — источник правды приложение.
+    update_bonus_balance=True только для явной сверки (админка), если
+    известен externalId и endpoint bonus-balance отвечает.
     """
     service = SabyCustomerService()
     lookup_phone = phone
@@ -739,7 +750,8 @@ def sync_customer_from_saby(phone: str, *, existing_customer=None):
 
     if saby_data is None:
         if (
-            existing_customer is not None
+            update_bonus_balance
+            and existing_customer is not None
             and existing_customer.saby_external_id
         ):
             balance = service.fetch_bonus_balance_for_external_id(
@@ -757,10 +769,15 @@ def sync_customer_from_saby(phone: str, *, existing_customer=None):
                 saby_customer_id=existing_customer.saby_customer_id,
                 bonus_balance=balance,
             )
+        elif existing_customer is not None:
+            # Клиент в Presto не найден по телефону — локальный аккаунт
+            # оставляем без изменений баланса.
+            return None
         else:
             return None
 
     return upsert_customer_from_saby(
         saby_data,
         existing_customer=existing_customer,
+        update_bonus_balance=update_bonus_balance,
     )

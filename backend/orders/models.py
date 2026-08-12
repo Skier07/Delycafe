@@ -307,3 +307,82 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f'{self.product_title} × {self.quantity}'
+
+
+class OrderReturn(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='returns',
+        verbose_name='Заказ',
+    )
+    comment = models.TextField(
+        blank=True,
+        verbose_name='Комментарий',
+    )
+    products_total = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Сумма возвращённых товаров',
+    )
+    bonus_earned_reversed = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Снято начисленных бонусов',
+    )
+    bonus_spent_restored = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Возвращено списанных бонусов',
+    )
+    bonuses_applied = models.BooleanField(
+        default=False,
+        verbose_name='Бонусы по возврату применены',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Возврат по заказу'
+        verbose_name_plural = 'Возвраты по заказам'
+
+    def __str__(self):
+        return f'Возврат #{self.id} по заказу #{self.order_id}'
+
+
+class OrderReturnItem(models.Model):
+    order_return = models.ForeignKey(
+        OrderReturn,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name='Возврат',
+    )
+    order_item = models.ForeignKey(
+        OrderItem,
+        on_delete=models.PROTECT,
+        related_name='return_items',
+        verbose_name='Позиция заказа',
+    )
+    quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name='Количество',
+    )
+    product_title = models.CharField(
+        max_length=180,
+        verbose_name='Товар',
+    )
+    price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Цена',
+    )
+    total_price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Сумма',
+    )
+
+    class Meta:
+        verbose_name = 'Позиция возврата'
+        verbose_name_plural = 'Позиции возврата'
+
+    def __str__(self):
+        return f'{self.product_title} × {self.quantity}'

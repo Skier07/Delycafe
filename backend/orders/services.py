@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import requests
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from catalog.services.saby_catalog_service import SabyCatalogService
@@ -19,73 +19,116 @@ class SabyOrderError(Exception):
     """Ошибка создания заказа в Saby Presto."""
 
 
+class OrderReturnError(Exception):
+    """Ошибка частичного возврата заказа."""
+
+
 def rollback_order(order: Order):
     """
-    Возвращает бонусы и при необходимости
-    восстанавливает скидку первого заказа.
+    Полный откат бонусов по заказу (отмена / полный возврат).
+
+    Учитывает уже оформленные частичные возвраты: откатывает только остаток
+    начисления и невозвращённую часть списания.
     """
+    from customers.models import Customer
+    from orders.models import OrderReturn
 
     if order.bonus_compensated:
         return
 
-    customer = order.customer
-    if customer is None:
+    if order.customer_id is None:
         return
 
-    if order.bonus_earned > 0:
-        earn_was_credited = BonusTransaction.objects.filter(
-            customer=customer,
-            order_id=order.id,
-            transaction_type=BonusTransaction.TransactionType.EARN,
-        ).exists()
+    with transaction.atomic():
+        locked_order = (
+            Order.objects.select_for_update()
+            .select_related('customer')
+            .get(pk=order.pk)
+        )
 
-        if earn_was_credited:
-            customer.bonus_balance -= order.bonus_earned
+        if locked_order.bonus_compensated:
+            return
+
+        customer = (
+            Customer.objects.select_for_update()
+            .get(pk=locked_order.customer_id)
+        )
+
+        already_reversed = (
+            OrderReturn.objects.filter(order_id=locked_order.id)
+            .aggregate(total=Sum('bonus_earned_reversed'))
+            .get('total')
+            or 0
+        )
+        already_restored = (
+            OrderReturn.objects.filter(order_id=locked_order.id)
+            .aggregate(total=Sum('bonus_spent_restored'))
+            .get('total')
+            or 0
+        )
+
+        earn_to_claw = max(int(locked_order.bonus_earned or 0) - already_reversed, 0)
+        spent_to_restore = max(int(locked_order.bonus_spent or 0) - already_restored, 0)
+
+        if earn_to_claw > 0:
+            earn_was_credited = BonusTransaction.objects.filter(
+                customer=customer,
+                order_id=locked_order.id,
+                transaction_type=BonusTransaction.TransactionType.EARN,
+            ).exists()
+
+            if earn_was_credited:
+                customer.bonus_balance = max(
+                    0,
+                    customer.bonus_balance - earn_to_claw,
+                )
+
+                BonusTransaction.objects.create(
+                    customer=customer,
+                    transaction_type=BonusTransaction.TransactionType.REFUND,
+                    amount=-earn_to_claw,
+                    order_id=locked_order.id,
+                    comment=(
+                        f'Отмена заказа №{locked_order.id}. '
+                        f'Отмена начисления бонусов.'
+                    ),
+                )
+
+        if spent_to_restore > 0:
+            customer.bonus_balance += spent_to_restore
 
             BonusTransaction.objects.create(
                 customer=customer,
                 transaction_type=BonusTransaction.TransactionType.REFUND,
-                amount=-order.bonus_earned,
-                order_id=order.id,
+                amount=spent_to_restore,
+                order_id=locked_order.id,
                 comment=(
-                    f'Отмена заказа №{order.id}. '
-                    f'Отмена начисления бонусов.'
+                    f'Отмена заказа №{locked_order.id}. '
+                    f'Возврат списанных бонусов.'
                 ),
             )
 
-    if order.bonus_spent > 0:
-        customer.bonus_balance += order.bonus_spent
-
-        BonusTransaction.objects.create(
-            customer=customer,
-            transaction_type=BonusTransaction.TransactionType.REFUND,
-            amount=order.bonus_spent,
-            order_id=order.id,
-            comment=(
-                f'Отмена заказа №{order.id}. '
-                f'Возврат списанных бонусов.'
-            ),
-        )
-
-    if order.first_order_discount_applied:
-        completed_discount_orders = (
-            Order.objects.filter(
-                customer=customer,
-                first_order_discount_applied=True,
-                status=Order.Status.DONE,
+        if locked_order.first_order_discount_applied:
+            completed_discount_orders = (
+                Order.objects.filter(
+                    customer=customer,
+                    first_order_discount_applied=True,
+                    status=Order.Status.DONE,
+                )
+                .exclude(id=locked_order.id)
+                .exists()
             )
-            .exclude(id=order.id)
-            .exists()
-        )
 
-        if not completed_discount_orders:
-            customer.first_order_discount_available = True
-            customer.first_order_discount_used = False
+            if not completed_discount_orders:
+                customer.first_order_discount_available = True
+                customer.first_order_discount_used = False
 
-    customer.save()
+        customer.save()
 
-    order.bonus_compensated = True
-    order.save(update_fields=['bonus_compensated'])
+        locked_order.bonus_compensated = True
+        locked_order.save(update_fields=['bonus_compensated'])
+
+        order.bonus_compensated = True
 
 
 def format_phone_for_saby(phone: str) -> str:
@@ -239,10 +282,9 @@ def register_saby_payment(order: Order) -> dict | None:
         )
         order_pk = locked_order.pk
 
-    # После оплаты Saby уже начислил 3% — баланс тянем здесь, не раньше.
+    # Локальный ledger: начисляем 3% в приложении (идемпотентно).
     paid_order = Order.objects.get(pk=order_pk)
-    _record_bonus_earn_from_saby(paid_order)
-    _sync_customer_bonus_balance(paid_order)
+    _record_bonus_earn(paid_order)
 
     return response
 
@@ -257,51 +299,380 @@ def _try_register_saby_payment(order: Order) -> None:
         )
 
 
-def _record_bonus_earn_from_saby(order: Order) -> None:
-    """Фиксирует начисление в истории после write-off (баланс — из Saby)."""
+def _record_bonus_earn(order: Order) -> None:
+    """Начисляет бонусы на локальный баланс после успешной оплаты."""
+    from customers.models import Customer
+
     if order.bonus_earned <= 0 or order.customer_id is None:
         return
 
-    already_recorded = BonusTransaction.objects.filter(
-        customer_id=order.customer_id,
-        order_id=order.id,
-        transaction_type=BonusTransaction.TransactionType.EARN,
-    ).exists()
+    with transaction.atomic():
+        customer = (
+            Customer.objects.select_for_update()
+            .get(pk=order.customer_id)
+        )
 
-    if already_recorded:
+        already_recorded = BonusTransaction.objects.filter(
+            customer_id=customer.pk,
+            order_id=order.id,
+            transaction_type=BonusTransaction.TransactionType.EARN,
+        ).exists()
+
+        if already_recorded:
+            return
+
+        BonusTransaction.objects.create(
+            customer=customer,
+            transaction_type=BonusTransaction.TransactionType.EARN,
+            amount=order.bonus_earned,
+            order_id=order.id,
+            comment=(
+                f'Начисление {order.bonus_earned} бонусов (3%) '
+                f'по заказу #{order.id}'
+            ),
+        )
+        customer.bonus_balance += order.bonus_earned
+        customer.save(update_fields=['bonus_balance', 'updated_at'])
+
+
+def apply_partial_order_return(
+    order: Order,
+    items: list[tuple],
+    *,
+    comment: str = '',
+):
+    """
+    Частичный возврат позиций с пропорциональным откатом бонусов.
+
+    items: список (OrderItem | id, quantity).
+    """
+    from customers.models import Customer
+    from orders.models import OrderItem, OrderReturn, OrderReturnItem
+
+    if not items:
+        raise OrderReturnError('Нужна хотя бы одна позиция возврата')
+
+    with transaction.atomic():
+        locked_order = (
+            Order.objects.select_for_update()
+            .select_related('customer')
+            .get(pk=order.pk)
+        )
+
+        if locked_order.bonus_compensated:
+            raise OrderReturnError(
+                'Заказ уже полностью компенсирован — частичный возврат невозможен',
+            )
+
+        if locked_order.payment_status not in (
+            Order.PaymentStatus.PAID,
+            Order.PaymentStatus.REFUNDED,
+        ):
+            raise OrderReturnError('Возврат только для оплаченных заказов')
+
+        already_reversed = (
+            OrderReturn.objects.filter(order_id=locked_order.id)
+            .aggregate(total=Sum('bonus_earned_reversed'))
+            .get('total')
+            or 0
+        )
+        already_restored = (
+            OrderReturn.objects.filter(order_id=locked_order.id)
+            .aggregate(total=Sum('bonus_spent_restored'))
+            .get('total')
+            or 0
+        )
+
+        remaining_earn = max(
+            int(locked_order.bonus_earned or 0) - already_reversed,
+            0,
+        )
+        remaining_spent = max(
+            int(locked_order.bonus_spent or 0) - already_restored,
+            0,
+        )
+
+        products_base = max(int(locked_order.products_total or 0), 1)
+        returned_sum = 0
+        normalized: list[tuple[OrderItem, int]] = []
+
+        for raw_item, qty in items:
+            qty = int(qty)
+            if qty <= 0:
+                raise OrderReturnError('Количество возврата должно быть > 0')
+
+            if isinstance(raw_item, OrderItem):
+                order_item = raw_item
+            else:
+                order_item = OrderItem.objects.get(pk=raw_item)
+
+            if order_item.order_id != locked_order.id:
+                raise OrderReturnError(
+                    f'Позиция #{order_item.id} не принадлежит заказу',
+                )
+
+            already_qty = (
+                OrderReturnItem.objects.filter(order_item_id=order_item.id)
+                .aggregate(total=Sum('quantity'))
+                .get('total')
+                or 0
+            )
+            if already_qty + qty > order_item.quantity:
+                raise OrderReturnError(
+                    f'По позиции «{order_item.product_title}» можно вернуть '
+                    f'ещё {order_item.quantity - already_qty} шт.',
+                )
+
+            line_total = int(order_item.price) * qty
+            returned_sum += line_total
+            normalized.append((order_item, qty))
+
+        earn_reverse = 0
+        if remaining_earn > 0 and locked_order.customer_id:
+            earn_was_credited = BonusTransaction.objects.filter(
+                customer_id=locked_order.customer_id,
+                order_id=locked_order.id,
+                transaction_type=BonusTransaction.TransactionType.EARN,
+            ).exists()
+            if earn_was_credited:
+                earn_reverse = min(
+                    remaining_earn,
+                    locked_order.bonus_earned * returned_sum // products_base,
+                )
+
+        spent_restore = 0
+        if remaining_spent > 0:
+            spent_restore = min(
+                remaining_spent,
+                locked_order.bonus_spent * returned_sum // products_base,
+            )
+
+        order_return = OrderReturn.objects.create(
+            order=locked_order,
+            comment=comment or '',
+            products_total=returned_sum,
+            bonus_earned_reversed=earn_reverse,
+            bonus_spent_restored=spent_restore,
+            bonuses_applied=True,
+        )
+
+        for order_item, qty in normalized:
+            OrderReturnItem.objects.create(
+                order_return=order_return,
+                order_item=order_item,
+                quantity=qty,
+                product_title=order_item.product_title,
+                price=order_item.price,
+                total_price=order_item.price * qty,
+            )
+
+        if locked_order.customer_id and (earn_reverse or spent_restore):
+            customer = (
+                Customer.objects.select_for_update()
+                .get(pk=locked_order.customer_id)
+            )
+            if earn_reverse > 0:
+                customer.bonus_balance = max(
+                    0,
+                    customer.bonus_balance - earn_reverse,
+                )
+                BonusTransaction.objects.create(
+                    customer=customer,
+                    transaction_type=BonusTransaction.TransactionType.REFUND,
+                    amount=-earn_reverse,
+                    order_id=locked_order.id,
+                    comment=(
+                        f'Частичный возврат заказа №{locked_order.id}. '
+                        f'Отмена начисления {earn_reverse} бонусов.'
+                    ),
+                )
+            if spent_restore > 0:
+                customer.bonus_balance += spent_restore
+                BonusTransaction.objects.create(
+                    customer=customer,
+                    transaction_type=BonusTransaction.TransactionType.REFUND,
+                    amount=spent_restore,
+                    order_id=locked_order.id,
+                    comment=(
+                        f'Частичный возврат заказа №{locked_order.id}. '
+                        f'Возврат {spent_restore} списанных бонусов.'
+                    ),
+                )
+            customer.save(update_fields=['bonus_balance', 'updated_at'])
+
+        return order_return
+
+
+def settle_order_return(order_return) -> None:
+    """Применяет бонусный откат к уже сохранённому возврату (админка)."""
+    from customers.models import Customer
+    from orders.models import OrderReturn, OrderReturnItem
+
+    if order_return.pk is None:
         return
 
-    BonusTransaction.objects.create(
-        customer_id=order.customer_id,
-        transaction_type=BonusTransaction.TransactionType.EARN,
-        amount=order.bonus_earned,
-        order_id=order.id,
-        comment=(
-            f'Начисление {order.bonus_earned} бонусов (3%) '
-            f'по заказу #{order.id}'
-        ),
-    )
+    with transaction.atomic():
+        locked_return = (
+            OrderReturn.objects.select_for_update().get(pk=order_return.pk)
+        )
+        if locked_return.bonuses_applied:
+            return
 
+        item_rows = list(
+            OrderReturnItem.objects.filter(order_return_id=locked_return.pk)
+            .select_related('order_item')
+        )
+        if not item_rows:
+            return
 
-def _sync_customer_bonus_balance(order: Order) -> None:
-    if order.customer_id is None:
-        return
-
-    try:
-        from customers.services.saby_customer_service import (
-            sync_customer_from_saby,
+        locked_order = (
+            Order.objects.select_for_update()
+            .select_related('customer')
+            .get(pk=locked_return.order_id)
         )
 
-        customer = order.customer
-        sync_customer_from_saby(
-            customer.phone,
-            existing_customer=customer,
+        if locked_order.bonus_compensated:
+            raise OrderReturnError(
+                'Заказ уже полностью компенсирован — частичный возврат невозможен',
+            )
+
+        if locked_order.payment_status not in (
+            Order.PaymentStatus.PAID,
+            Order.PaymentStatus.REFUNDED,
+        ):
+            raise OrderReturnError('Возврат только для оплаченных заказов')
+
+        other_returns = OrderReturn.objects.filter(
+            order_id=locked_order.id,
+        ).exclude(pk=locked_return.pk)
+
+        already_reversed = (
+            other_returns.aggregate(total=Sum('bonus_earned_reversed'))
+            .get('total')
+            or 0
         )
-    except Exception:
-        logger.exception(
-            'Failed to sync bonus balance from Saby for order #%s',
-            order.id,
+        already_restored = (
+            other_returns.aggregate(total=Sum('bonus_spent_restored'))
+            .get('total')
+            or 0
         )
+
+        remaining_earn = max(
+            int(locked_order.bonus_earned or 0) - already_reversed,
+            0,
+        )
+        remaining_spent = max(
+            int(locked_order.bonus_spent or 0) - already_restored,
+            0,
+        )
+
+        products_base = max(int(locked_order.products_total or 0), 1)
+        returned_sum = 0
+
+        for row in item_rows:
+            qty = int(row.quantity)
+            if qty <= 0:
+                raise OrderReturnError('Количество возврата должно быть > 0')
+
+            order_item = row.order_item
+            if order_item.order_id != locked_order.id:
+                raise OrderReturnError(
+                    f'Позиция #{order_item.id} не принадлежит заказу',
+                )
+
+            already_qty = (
+                OrderReturnItem.objects.filter(order_item_id=order_item.id)
+                .exclude(order_return_id=locked_return.pk)
+                .aggregate(total=Sum('quantity'))
+                .get('total')
+                or 0
+            )
+            if already_qty + qty > order_item.quantity:
+                raise OrderReturnError(
+                    f'По позиции «{order_item.product_title}» можно вернуть '
+                    f'ещё {order_item.quantity - already_qty} шт.',
+                )
+
+            returned_sum += int(order_item.price) * qty
+            row.product_title = order_item.product_title
+            row.price = order_item.price
+            row.total_price = order_item.price * qty
+            row.save(
+                update_fields=['product_title', 'price', 'total_price'],
+            )
+
+        earn_reverse = 0
+        if remaining_earn > 0 and locked_order.customer_id:
+            earn_was_credited = BonusTransaction.objects.filter(
+                customer_id=locked_order.customer_id,
+                order_id=locked_order.id,
+                transaction_type=BonusTransaction.TransactionType.EARN,
+            ).exists()
+            if earn_was_credited:
+                earn_reverse = min(
+                    remaining_earn,
+                    locked_order.bonus_earned * returned_sum // products_base,
+                )
+
+        spent_restore = 0
+        if remaining_spent > 0:
+            spent_restore = min(
+                remaining_spent,
+                locked_order.bonus_spent * returned_sum // products_base,
+            )
+
+        locked_return.products_total = returned_sum
+        locked_return.bonus_earned_reversed = earn_reverse
+        locked_return.bonus_spent_restored = spent_restore
+        locked_return.bonuses_applied = True
+        locked_return.save(
+            update_fields=[
+                'products_total',
+                'bonus_earned_reversed',
+                'bonus_spent_restored',
+                'bonuses_applied',
+            ],
+        )
+
+        if locked_order.customer_id and (earn_reverse or spent_restore):
+            customer = (
+                Customer.objects.select_for_update()
+                .get(pk=locked_order.customer_id)
+            )
+            if earn_reverse > 0:
+                customer.bonus_balance = max(
+                    0,
+                    customer.bonus_balance - earn_reverse,
+                )
+                BonusTransaction.objects.create(
+                    customer=customer,
+                    transaction_type=BonusTransaction.TransactionType.REFUND,
+                    amount=-earn_reverse,
+                    order_id=locked_order.id,
+                    comment=(
+                        f'Частичный возврат заказа №{locked_order.id}. '
+                        f'Отмена начисления {earn_reverse} бонусов.'
+                    ),
+                )
+            if spent_restore > 0:
+                customer.bonus_balance += spent_restore
+                BonusTransaction.objects.create(
+                    customer=customer,
+                    transaction_type=BonusTransaction.TransactionType.REFUND,
+                    amount=spent_restore,
+                    order_id=locked_order.id,
+                    comment=(
+                        f'Частичный возврат заказа №{locked_order.id}. '
+                        f'Возврат {spent_restore} списанных бонусов.'
+                    ),
+                )
+            customer.save(update_fields=['bonus_balance', 'updated_at'])
+
+        order_return.bonuses_applied = True
+        order_return.products_total = returned_sum
+        order_return.bonus_earned_reversed = earn_reverse
+        order_return.bonus_spent_restored = spent_restore
+
 
 
 def _dispatch_order_to_saby_core(order: Order) -> dict | None:
@@ -385,6 +756,7 @@ def confirm_order_paid(order: Order) -> Order:
             _try_register_saby_payment(locked_order)
 
     order = Order.objects.get(pk=order_id)
+    _record_bonus_earn(order)
 
     if order_already_in_saby(order):
         try:

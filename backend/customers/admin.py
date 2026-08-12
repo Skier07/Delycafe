@@ -127,6 +127,7 @@ class CustomerAdmin(admin.ModelAdmin):
                 synced = sync_customer_from_saby(
                     customer.phone,
                     existing_customer=customer,
+                    update_bonus_balance=True,
                 )
                 if synced is None:
                     fail += 1
@@ -137,7 +138,9 @@ class CustomerAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f'Синхронизация: успешно={ok}, без данных/ошибка={fail}',
+            f'Синхронизация баланса из Saby (нужен UUID): '
+            f'успешно={ok}, без данных/ошибка={fail}. '
+            f'По телефону API баланса у Saby нет — обычно правьте вручную.',
         )
 
     inlines = [

@@ -19,6 +19,10 @@ class Customer(models.Model):
     bonus_balance = models.PositiveIntegerField(
         default=0,
         verbose_name='Бонусный баланс',
+        help_text=(
+            'Локальный баланс приложения. API Saby по телефону недоступен — '
+            'сверка с Presto вручную; sync из Saby баланс не перезаписывает.'
+        ),
     )
     first_order_discount_available = models.BooleanField(
         default=True,

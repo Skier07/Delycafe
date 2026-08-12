@@ -1,8 +1,9 @@
 from django.contrib import admin
+from django.db import transaction
 from django.utils import timezone
-from orders.services import rollback_order
+from orders.services import OrderReturnError, rollback_order, settle_order_return
 
-from .models import Order, OrderItem
+from .models import Order, OrderItem, OrderReturn, OrderReturnItem
 
 
 class OrderItemInline(admin.TabularInline):
@@ -29,6 +30,24 @@ class OrderItemInline(admin.TabularInline):
     )
 
 
+class OrderReturnInline(admin.TabularInline):
+    model = OrderReturn
+    extra = 0
+    can_delete = False
+    show_change_link = True
+
+    fields = (
+        'id',
+        'products_total',
+        'bonus_earned_reversed',
+        'bonus_spent_restored',
+        'bonuses_applied',
+        'created_at',
+    )
+
+    readonly_fields = fields
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
@@ -50,6 +69,7 @@ class OrderAdmin(admin.ModelAdmin):
         'saby_order_number',
         'saby_sale_id',
         'saby_payment_registered',
+        'bonus_compensated',
         'created_at',
     )
 
@@ -69,6 +89,7 @@ class OrderAdmin(admin.ModelAdmin):
         'delivery_type',
         'payment_type',
         'first_order_discount_applied',
+        'bonus_compensated',
         'created_at',
     )
 
@@ -99,6 +120,7 @@ class OrderAdmin(admin.ModelAdmin):
         'saby_sale_id',
         'saby_external_id',
         'saby_payment_registered',
+        'saby_bonus_applied',
         'saby_dispatch_error',
         'saby_payment_error',
         'admin_email_sent_at',
@@ -109,6 +131,7 @@ class OrderAdmin(admin.ModelAdmin):
         'discount_amount',
         'bonus_spent',
         'bonus_earned',
+        'bonus_compensated',
         'first_order_discount_applied',
         'total_price',
         'created_at',
@@ -153,12 +176,12 @@ class OrderAdmin(admin.ModelAdmin):
                     'discount_amount',
                     'bonus_spent',
                     'bonus_earned',
+                    'bonus_compensated',
                     'first_order_discount_applied',
                     'total_price',
                 ),
             },
         ),
-
         (
             'Интеграция Saby',
             {
@@ -210,6 +233,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     inlines = [
         OrderItemInline,
+        OrderReturnInline,
     ]
 
     list_select_related = (
@@ -257,29 +281,46 @@ class OrderAdmin(admin.ModelAdmin):
             f'Заказов с ошибкой оплаты: {updated_count}',
         )
 
-    @admin.action(description='Пометить выбранные заказы как возврат')
+    @admin.action(
+        description='Полный возврат: refunded + отмена + откат бонусов',
+    )
     def mark_as_refunded(self, request, queryset):
-        updated_count = queryset.update(
-            payment_status=Order.PaymentStatus.REFUNDED,
-        )
+        updated_count = 0
+
+        for order in queryset:
+            with transaction.atomic():
+                locked = Order.objects.select_for_update().get(pk=order.pk)
+                locked.payment_status = Order.PaymentStatus.REFUNDED
+                if locked.status != Order.Status.CANCELED:
+                    locked.status = Order.Status.CANCELED
+                locked.save(
+                    update_fields=[
+                        'payment_status',
+                        'status',
+                        'updated_at',
+                    ],
+                )
+                rollback_order(locked)
+                updated_count += 1
 
         self.message_user(
             request,
-            f'Заказов с возвратом: {updated_count}',
+            f'Полный возврат с откатом бонусов: {updated_count}',
         )
 
     def save_model(self, request, obj, form, change):
-
         previous_status = None
+        previous_payment = None
 
         if change:
-            previous_status = (
-                Order.objects
-                .filter(pk=obj.pk)
-                .values_list('status', flat=True)
+            previous = (
+                Order.objects.filter(pk=obj.pk)
+                .values('status', 'payment_status')
                 .first()
             )
-
+            if previous:
+                previous_status = previous['status']
+                previous_payment = previous['payment_status']
 
         if (
             obj.payment_status == Order.PaymentStatus.PAID
@@ -293,6 +334,13 @@ class OrderAdmin(admin.ModelAdmin):
         ):
             obj.paid_at = None
 
+        if (
+            previous_payment != Order.PaymentStatus.REFUNDED
+            and obj.payment_status == Order.PaymentStatus.REFUNDED
+            and obj.status != Order.Status.CANCELED
+        ):
+            obj.status = Order.Status.CANCELED
+
         super().save_model(
             request,
             obj,
@@ -305,6 +353,104 @@ class OrderAdmin(admin.ModelAdmin):
             and obj.status == Order.Status.CANCELED
         ):
             rollback_order(obj)
+        elif (
+            previous_payment != Order.PaymentStatus.REFUNDED
+            and obj.payment_status == Order.PaymentStatus.REFUNDED
+        ):
+            rollback_order(obj)
+
+
+class OrderReturnItemInline(admin.TabularInline):
+    model = OrderReturnItem
+    extra = 1
+
+    fields = (
+        'order_item',
+        'quantity',
+        'product_title',
+        'price',
+        'total_price',
+    )
+
+    readonly_fields = (
+        'product_title',
+        'price',
+        'total_price',
+    )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'order_item' and field is not None:
+            order_id = request.resolver_match.kwargs.get('object_id')
+            parent_order = request.GET.get('order')
+            if parent_order:
+                field.queryset = OrderItem.objects.filter(order_id=parent_order)
+            elif order_id:
+                try:
+                    ret = OrderReturn.objects.get(pk=order_id)
+                    field.queryset = OrderItem.objects.filter(
+                        order_id=ret.order_id,
+                    )
+                except OrderReturn.DoesNotExist:
+                    pass
+        return field
+
+
+@admin.register(OrderReturn)
+class OrderReturnAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'order',
+        'products_total',
+        'bonus_earned_reversed',
+        'bonus_spent_restored',
+        'bonuses_applied',
+        'created_at',
+    )
+    list_filter = ('bonuses_applied', 'created_at')
+    search_fields = ('order__id', 'order__phone', 'comment')
+    readonly_fields = (
+        'products_total',
+        'bonus_earned_reversed',
+        'bonus_spent_restored',
+        'bonuses_applied',
+        'created_at',
+    )
+    autocomplete_fields = ('order',)
+    inlines = [OrderReturnItemInline]
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        order_return = form.instance
+        if order_return.bonuses_applied:
+            return
+
+        for row in order_return.items.select_related('order_item'):
+            if row.order_item_id and (
+                not row.product_title or row.price == 0
+            ):
+                item = row.order_item
+                row.product_title = item.product_title
+                row.price = item.price
+                row.total_price = item.price * row.quantity
+                row.save(
+                    update_fields=[
+                        'product_title',
+                        'price',
+                        'total_price',
+                    ],
+                )
+
+        try:
+            settle_order_return(order_return)
+        except OrderReturnError as exc:
+            self.message_user(request, str(exc), level='ERROR')
+        except Exception as exc:
+            self.message_user(
+                request,
+                f'Не удалось применить бонусы возврата: {exc}',
+                level='ERROR',
+            )
 
 
 @admin.register(OrderItem)
