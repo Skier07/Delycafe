@@ -19,6 +19,7 @@ import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/ui/tokens/app_radius.dart';
 import 'package:delycafe/ui/tokens/app_sizes.dart';
+import 'package:delycafe/ui/tokens/banner_scale.dart';
 import 'package:delycafe/widgets/catalog/catalog_section.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -282,6 +283,7 @@ class HomeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final scale = BannerScale.of(context);
     final auth = context.watch<AuthService>();
     final user = auth.currentUser;
     final cart = context.watch<CartService>();
@@ -310,77 +312,31 @@ class HomeBanner extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(scale.bannerPadding),
             child: Stack(
               children: [
-                const Positioned(
-                  left: 24,
-                  top: 58,
-                  child: _LoginBannerContent(),
+                Positioned(
+                  left: scale.loginLeft,
+                  top: scale.loginTop,
+                  child: _LoginBannerContent(scale: scale),
                 ),
                 Align(
                   alignment: Alignment.topRight,
                   child: Padding(
                     padding: EdgeInsets.only(top: topPadding + 1),
-                    child: ShaderGlassContainer(
+                    child: _BannerGlassIconButton(
+                      scale: scale,
+                      icon: CupertinoIcons.text_justify,
                       onPressed: onMenuPressed,
-                      padding: const EdgeInsets.all(8),
-                      borderRadius: 30,
-                      child: const Icon(
-                        CupertinoIcons.text_justify,
-                        color: AppColors.buttonText,
-                        size: AppSizes.buttonSize,
-                      ),
                     ),
                   ),
                 ),
                 Align(
                   alignment: Alignment.bottomRight,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ShaderGlassContainer(
-                        key: cartIconKey,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CheckoutScreens(),
-                            ),
-                          );
-                        },
-                        padding: const EdgeInsets.all(8),
-                        borderRadius: 30,
-                        child: const Icon(
-                          CupertinoIcons.cart,
-                          color: AppColors.buttonText,
-                          size: AppSizes.buttonSize,
-                        ),
-                      ),
-                      if (cart.totalItems > 0)
-                        Positioned(
-                          top: 25,
-                          right: 40,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${cart.totalItems}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: _BannerCartButton(
+                    scale: scale,
+                    cartIconKey: cartIconKey,
+                    totalItems: cart.totalItems,
                   ),
                 ),
               ],
@@ -401,22 +357,17 @@ class HomeBanner extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(scale.bannerPadding),
         child: Stack(
           children: [
             Align(
               alignment: Alignment.topLeft,
               child: Padding(
                 padding: EdgeInsets.only(top: topPadding + 1),
-                child: ShaderGlassContainer(
-                  padding: const EdgeInsets.all(8),
-                  borderRadius: 30,
+                child: _BannerGlassIconButton(
+                  scale: scale,
+                  icon: CupertinoIcons.person,
                   onPressed: onAccountPressed,
-                  child: const Icon(
-                    CupertinoIcons.person,
-                    color: AppColors.buttonText,
-                    size: AppSizes.buttonSize,
-                  ),
                 ),
               ),
             ),
@@ -424,69 +375,26 @@ class HomeBanner extends StatelessWidget {
               alignment: Alignment.topRight,
               child: Padding(
                 padding: EdgeInsets.only(top: topPadding + 1),
-                child: ShaderGlassContainer(
+                child: _BannerGlassIconButton(
+                  scale: scale,
+                  icon: CupertinoIcons.text_justify,
                   onPressed: onMenuPressed,
-                  padding: const EdgeInsets.all(8),
-                  borderRadius: 30,
-                  child: const Icon(
-                    CupertinoIcons.text_justify,
-                    color: AppColors.buttonText,
-                    size: AppSizes.buttonSize,
-                  ),
                 ),
               ),
             ),
             Align(
               alignment: Alignment.bottomLeft,
-              child: _BannerBonusesButton(balance: user.points),
+              child: _BannerBonusesButton(
+                balance: user.points,
+                scale: scale,
+              ),
             ),
             Align(
               alignment: Alignment.bottomRight,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  ShaderGlassContainer(
-                    key: cartIconKey,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CheckoutScreens(),
-                        ),
-                      );
-                    },
-                    padding: const EdgeInsets.all(8),
-                    borderRadius: 30,
-                    child: const Icon(
-                      CupertinoIcons.cart,
-                      color: AppColors.buttonText,
-                      size: AppSizes.buttonSize,
-                    ),
-                  ),
-                  if (cart.totalItems > 0)
-                    Positioned(
-                      top: 25,
-                      right: 40,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '${cart.totalItems}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+              child: _BannerCartButton(
+                scale: scale,
+                cartIconKey: cartIconKey,
+                totalItems: cart.totalItems,
               ),
             ),
           ],
@@ -496,11 +404,101 @@ class HomeBanner extends StatelessWidget {
   }
 }
 
+class _BannerGlassIconButton extends StatelessWidget {
+  const _BannerGlassIconButton({
+    required this.scale,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final BannerScale scale;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderGlassContainer(
+      onPressed: onPressed,
+      padding: EdgeInsets.all(scale.glassPadding),
+      borderRadius: scale.glassRadius,
+      child: Icon(
+        icon,
+        color: AppColors.buttonText,
+        size: scale.iconSize,
+      ),
+    );
+  }
+}
+
+class _BannerCartButton extends StatelessWidget {
+  const _BannerCartButton({
+    required this.scale,
+    required this.cartIconKey,
+    required this.totalItems,
+  });
+
+  final BannerScale scale;
+  final GlobalKey cartIconKey;
+  final int totalItems;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ShaderGlassContainer(
+          key: cartIconKey,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const CheckoutScreens(),
+              ),
+            );
+          },
+          padding: EdgeInsets.all(scale.glassPadding),
+          borderRadius: scale.glassRadius,
+          child: Icon(
+            CupertinoIcons.cart,
+            color: AppColors.buttonText,
+            size: scale.iconSize,
+          ),
+        ),
+        if (totalItems > 0)
+          Positioned(
+            top: scale.badgeTop,
+            right: scale.badgeRight,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.badgePaddingH,
+                vertical: scale.badgePaddingV,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(scale.badgeRadius),
+              ),
+              child: Text(
+                '$totalItems',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: scale.badgeFontSize,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _BannerBonusesButton extends StatelessWidget {
   final int balance;
+  final BannerScale scale;
 
   const _BannerBonusesButton({
     required this.balance,
+    required this.scale,
   });
 
   @override
@@ -514,21 +512,24 @@ class _BannerBonusesButton extends StatelessWidget {
           ),
         );
       },
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      borderRadius: 30,
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.bonusPaddingH,
+        vertical: scale.bonusPaddingV,
+      ),
+      borderRadius: scale.glassRadius,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             CupertinoIcons.tickets,
             color: AppColors.buttonText,
-            size: AppSizes.buttonSize,
+            size: scale.iconSize,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: scale.bonusIconGap),
           Text(
             '$balance',
-            style: const TextStyle(
-              fontSize: 20,
+            style: TextStyle(
+              fontSize: scale.bonusFontSize,
               fontWeight: FontWeight.w700,
               color: AppColors.buttonText,
             ),
@@ -540,7 +541,9 @@ class _BannerBonusesButton extends StatelessWidget {
 }
 
 class _LoginBannerContent extends StatefulWidget {
-  const _LoginBannerContent();
+  const _LoginBannerContent({required this.scale});
+
+  final BannerScale scale;
 
   @override
   State<_LoginBannerContent> createState() => __LoginBannerContentState();
