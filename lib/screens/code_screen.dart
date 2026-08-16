@@ -2,8 +2,8 @@
 
 import 'package:delycafe/screens/pin_setup_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/widgets/auth/pin_code_input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class CodeScreen extends StatefulWidget {
@@ -15,10 +15,8 @@ class CodeScreen extends StatefulWidget {
 }
 
 class _CodeScreenState extends State<CodeScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(4, (_) => TextEditingController());
-
-  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  final GlobalKey<PinCodeInputState> _codeInputKey =
+      GlobalKey<PinCodeInputState>();
 
   Timer? _pollTimer;
   Timer? _retryTimer;
@@ -39,8 +37,6 @@ class _CodeScreenState extends State<CodeScreen> {
       _pollOtpStatus();
     });
   }
-
-  String get _enterCode => _controllers.map((c) => c.text).join();
 
   Future<void> _pollOtpStatus() async {
     if (!mounted || _isVerifying || _isCompleting || _isResending) {
@@ -75,10 +71,6 @@ class _CodeScreenState extends State<CodeScreen> {
           _errorMessage = status.message;
         }
       });
-
-      if (status.showCodeInput && !_focusNodes.first.hasFocus && !_isVerifying) {
-        _focusNodes.first.requestFocus();
-      }
     } catch (error) {
       if (!mounted || _isVerifying || _isCompleting) {
         return;
@@ -156,35 +148,6 @@ class _CodeScreenState extends State<CodeScreen> {
     });
   }
 
-  void _onDigitChanged(int index, String value) {
-    if (_isVerifying || !_showCodeInput) {
-      return;
-    }
-
-    if (value.isNotEmpty) {
-      if (index < 3) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _verifyCode();
-      }
-    } else {
-      if (index > 0) {
-        _focusNodes[index - 1].requestFocus();
-      }
-    }
-  }
-
-  KeyEventResult _onDigitKeyEvent(int index, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey == LogicalKeyboardKey.backspace &&
-        _controllers[index].text.isEmpty &&
-        index > 0) {
-      _focusNodes[index - 1].requestFocus();
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
   Future<void> _goToPinSetup() async {
     await Navigator.pushAndRemoveUntil(
       context,
@@ -216,9 +179,7 @@ class _CodeScreenState extends State<CodeScreen> {
         return;
       }
 
-      for (final controller in _controllers) {
-        controller.clear();
-      }
+      _codeInputKey.currentState?.clear();
 
       setState(() {
         _isResending = false;
@@ -238,8 +199,8 @@ class _CodeScreenState extends State<CodeScreen> {
     }
   }
 
-  Future<void> _verifyCode() async {
-    if (_enterCode.length != 4 || _isVerifying || !_showCodeInput) {
+  Future<void> _verifyCode(String code) async {
+    if (code.length != 4 || _isVerifying || !_showCodeInput) {
       return;
     }
 
@@ -254,7 +215,7 @@ class _CodeScreenState extends State<CodeScreen> {
     try {
       final isValid = await authService.verifyCode(
         widget.phoneNumber,
-        _enterCode,
+        code,
         onProgress: (message) {
           if (!mounted) {
             return;
@@ -292,23 +253,13 @@ class _CodeScreenState extends State<CodeScreen> {
       });
     }
 
-    for (final controller in _controllers) {
-      controller.clear();
-    }
-
-    _focusNodes.first.requestFocus();
+    _codeInputKey.currentState?.clear();
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
     _retryTimer?.cancel();
-    for (var c in _controllers) {
-      c.dispose();
-    }
-    for (var f in _focusNodes) {
-      f.dispose();
-    }
     super.dispose();
   }
 
@@ -317,88 +268,72 @@ class _CodeScreenState extends State<CodeScreen> {
     final isBusy = _isVerifying || _isCompleting || _isResending;
     final canResend = !isBusy && _retryAfter <= 0;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Подтверждение номера')),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (_errorMessage != null) ...[
-                Text(
-                  _errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (isBusy || !_showCodeInput) ...[
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-              ],
-              if (_statusMessage != null) ...[
-                Text(
-                  _statusMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Подтверждение номера')),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_errorMessage != null) ...[
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (isBusy || !_showCodeInput) ...[
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                ],
+                if (_statusMessage != null) ...[
+                  Text(
+                    _statusMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (!_showCodeInput && !isBusy) ...[
+                  Text(
+                    'SIM-PUSH не подставляет код в поля — это проверка у оператора. '
+                    'Если она пройдёт, вход выполнится автоматически.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                if (_showCodeInput && !_isVerifying && !_isCompleting)
+                  PinCodeInput(
+                    key: _codeInputKey,
+                    length: 4,
+                    obscureText: false,
+                    enableSmsAutofill: true,
+                    enabled: !isBusy,
+                    onCompleted: _verifyCode,
+                  ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: canResend ? _resendCode : null,
+                  child: Text(
+                    _retryAfter > 0
+                        ? 'Отправить код повторно ($_retryAfter с)'
+                        : 'Отправить код повторно',
                   ),
                 ),
-                const SizedBox(height: 12),
               ],
-              if (!_showCodeInput && !isBusy) ...[
-                Text(
-                  'SIM-PUSH не подставляет код в поля — это проверка у оператора. '
-                  'Если она пройдёт, вход выполнится автоматически.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-              if (_showCodeInput && !_isVerifying && !_isCompleting)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    return Container(
-                      width: 60,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Focus(
-                        onKeyEvent: (node, event) =>
-                            _onDigitKeyEvent(index, event),
-                        child: TextField(
-                          controller: _controllers[index],
-                          focusNode: _focusNodes[index],
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          maxLength: 1,
-                          decoration: const InputDecoration(
-                            counterText: '',
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(16)),
-                            ),
-                          ),
-                          onChanged: (value) => _onDigitChanged(index, value),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: canResend ? _resendCode : null,
-                child: Text(
-                  _retryAfter > 0
-                      ? 'Отправить код повторно ($_retryAfter с)'
-                      : 'Отправить код повторно',
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -8,12 +8,16 @@ class PinCodeInput extends StatefulWidget {
     required this.onCompleted,
     this.enabled = true,
     this.autofocus = true,
+    this.obscureText = true,
+    this.enableSmsAutofill = false,
   });
 
   final int length;
   final ValueChanged<String> onCompleted;
   final bool enabled;
   final bool autofocus;
+  final bool obscureText;
+  final bool enableSmsAutofill;
 
   @override
   State<PinCodeInput> createState() => PinCodeInputState();
@@ -22,6 +26,7 @@ class PinCodeInput extends StatefulWidget {
 class PinCodeInputState extends State<PinCodeInput> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
+  bool _isDistributing = false;
 
   @override
   void initState() {
@@ -51,18 +56,63 @@ class PinCodeInputState extends State<PinCodeInput> {
 
   String get value => _controllers.map((controller) => controller.text).join();
 
-  void _onDigitChanged(int index, String value) {
-    if (!widget.enabled) {
+  void _distributeDigits(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) {
       return;
     }
 
-    if (value.isNotEmpty) {
+    _isDistributing = true;
+    try {
+      final code = digits.length > widget.length
+          ? digits.substring(0, widget.length)
+          : digits;
+
+      for (var i = 0; i < widget.length; i++) {
+        _controllers[i].text = i < code.length ? code[i] : '';
+      }
+
+      if (code.length >= widget.length) {
+        _focusNodes[widget.length - 1].unfocus();
+        widget.onCompleted(code.substring(0, widget.length));
+      } else {
+        _focusNodes[code.length].requestFocus();
+      }
+    } finally {
+      _isDistributing = false;
+    }
+  }
+
+  void _onDigitChanged(int index, String value) {
+    if (!widget.enabled || _isDistributing) {
+      return;
+    }
+
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length > 1) {
+      _distributeDigits(digits);
+      return;
+    }
+
+    if (digits.length == 1) {
+      if (_controllers[index].text != digits) {
+        _controllers[index].value = TextEditingValue(
+          text: digits,
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+      }
+
       if (index < widget.length - 1) {
         _focusNodes[index + 1].requestFocus();
       } else if (this.value.length == widget.length) {
         widget.onCompleted(this.value);
       }
-    } else if (index > 0) {
+      return;
+    }
+
+    _controllers[index].clear();
+    if (index > 0) {
       _focusNodes[index - 1].requestFocus();
     }
   }
@@ -97,7 +147,7 @@ class PinCodeInputState extends State<PinCodeInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final fields = Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(widget.length, (index) {
         return Container(
@@ -111,10 +161,14 @@ class PinCodeInputState extends State<PinCodeInput> {
               enabled: widget.enabled,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              maxLength: 1,
-              obscureText: true,
+              obscureText: widget.obscureText,
               obscuringCharacter: '•',
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              autofillHints: widget.enableSmsAutofill && index == 0
+                  ? const [AutofillHints.oneTimeCode]
+                  : null,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
               decoration: const InputDecoration(
                 counterText: '',
                 border: OutlineInputBorder(
@@ -127,5 +181,11 @@ class PinCodeInputState extends State<PinCodeInput> {
         );
       }),
     );
+
+    if (!widget.enableSmsAutofill) {
+      return fields;
+    }
+
+    return AutofillGroup(child: fields);
   }
 }

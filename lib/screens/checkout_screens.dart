@@ -86,56 +86,60 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                 ),
               ),
             )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              children: [
-                _CartSummaryCard(cart: cart),
-                const SizedBox(height: 24),
-                GuestCheckoutForm(
-                  cartTotal: cart.totalPrice,
-                  initialName: user?.name,
-                  initialAddress: user?.checkoutAddress,
-                  initialPhone: user?.phone,
-                  savedAddresses: user?.addresses ?? const [],
-                  availableBonuses: user?.bonusBalance ?? 0,
-                  firstOrderDiscountAvailable:
-                      user?.firstOrderDiscountAvailable ?? false,
-                  onSubmit: (data) async {
-                    final cartService = context.read<CartService>();
-                    final legalConsent = context.read<LegalConsentService>();
+          : GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                children: [
+                  _CartSummaryCard(cart: cart),
+                  const SizedBox(height: 24),
+                  GuestCheckoutForm(
+                    cartTotal: cart.totalPrice,
+                    initialName: user?.name,
+                    initialAddress: user?.checkoutAddress,
+                    initialPhone: user?.phone,
+                    savedAddresses: user?.addresses ?? const [],
+                    availableBonuses: user?.bonusBalance ?? 0,
+                    firstOrderDiscountAvailable:
+                        user?.firstOrderDiscountAvailable ?? false,
+                    onSubmit: (data) async {
+                      final cartService = context.read<CartService>();
+                      final legalConsent = context.read<LegalConsentService>();
 
-                    if (cartService.items.isEmpty) {
-                      throw Exception('Корзина пуста');
-                    }
+                      if (cartService.items.isEmpty) {
+                        throw Exception('Корзина пуста');
+                      }
 
-                    final order = await OrderApiService().createOrder(
-                      phone: data.phone,
-                      customerName: data.name,
-                      deliveryType: data.deliveryType.apiValue,
-                      address: data.address,
-                      addressLocality: data.addressLocality,
-                      addressEntrance: data.addressEntrance,
-                      addressFloor: data.addressFloor,
-                      addressApartment: data.addressApartment,
-                      deliveryTimeType: data.urgency.apiValue,
-                      deliveryTime: data.deliveryTime ?? '',
-                      paymentType: data.paymentMethod.apiValue,
-                      comment: data.comment,
-                      items: cartService.toOrderApiItems(),
-                      bonusSpent: data.bonusSpent,
-                      termsAccepted: legalConsent.termsAccepted,
-                      privacyAccepted: legalConsent.privacyAccepted,
-                      pdConsentAccepted: legalConsent.pdConsentAccepted,
-                      marketingConsentAccepted: legalConsent.marketingAccepted,
-                    );
-
-                    if (order.orderAccessToken.isNotEmpty) {
-                      await ApiAuthStorage.instance.saveOrderAccessToken(
-                        order.orderAccessToken,
+                      final order = await OrderApiService().createOrder(
+                        phone: data.phone,
+                        customerName: data.name,
+                        deliveryType: data.deliveryType.apiValue,
+                        address: data.address,
+                        addressLocality: data.addressLocality,
+                        addressEntrance: data.addressEntrance,
+                        addressFloor: data.addressFloor,
+                        addressApartment: data.addressApartment,
+                        deliveryTimeType: data.urgency.apiValue,
+                        deliveryTime: data.deliveryTime ?? '',
+                        paymentType: data.paymentMethod.apiValue,
+                        comment: data.comment,
+                        items: cartService.toOrderApiItems(),
+                        bonusSpent: data.bonusSpent,
+                        termsAccepted: legalConsent.termsAccepted,
+                        privacyAccepted: legalConsent.privacyAccepted,
+                        pdConsentAccepted: legalConsent.pdConsentAccepted,
+                        marketingConsentAccepted:
+                            legalConsent.marketingAccepted,
                       );
-                    }
 
-                    if (!context.mounted) return;
+                      if (order.orderAccessToken.isNotEmpty) {
+                        await ApiAuthStorage.instance.saveOrderAccessToken(
+                          order.orderAccessToken,
+                        );
+                      }
+
+                      if (!context.mounted) return;
 
                     final auth = context.read<AuthService>();
                     try {
@@ -243,6 +247,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                 ),
               ],
             ),
+          ),
     );
   }
 }

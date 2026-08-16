@@ -253,34 +253,50 @@ class _CatalogSectionState extends State<CatalogSection> {
               ),
             )
           else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-              sliver: SliverGrid(
-                key: ValueKey(currentCategory),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = items[index];
+            Builder(
+              builder: (context) {
+                final screenWidth = MediaQuery.sizeOf(context).width;
+                // На узких экранах (iPhone 13 и меньше) карточка выше:
+                // кнопка «В корзину» уходит под цену и не обрезается.
+                final aspectRatio = screenWidth < 400 ? 0.56 : 0.63;
+                final horizontalPad = screenWidth < 400 ? 12.0 : 16.0;
+                final spacing = screenWidth < 400 ? 10.0 : 12.0;
 
-                    return CatalogCard(
-                      key: ValueKey(item.id),
-                      item: item,
-                      onAddToCart: ({origin}) {
-                        _handleAddToCart(
-                          item,
-                          origin: origin,
+                return SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPad,
+                    16,
+                    horizontalPad,
+                    120,
+                  ),
+                  sliver: SliverGrid(
+                    key: ValueKey(currentCategory),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final item = items[index];
+
+                        return CatalogCard(
+                          key: ValueKey(item.id),
+                          item: item,
+                          onAddToCart: ({origin}) {
+                            _handleAddToCart(
+                              item,
+                              origin: origin,
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                  childCount: items.length,
-                ),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.63,
-                ),
-              ),
+                      childCount: items.length,
+                    ),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      childAspectRatio: aspectRatio,
+                    ),
+                  ),
+                );
+              },
             ),
         ],
       ),

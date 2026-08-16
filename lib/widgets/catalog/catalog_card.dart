@@ -129,74 +129,125 @@ class _CatalogCardState extends State<CatalogCard> {
                     ],
                   ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.item.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            widget.item.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.35,
-                              color: Colors.black.withValues(alpha: 0.55),
-                            ),
-                          ),
-                          const Spacer(),
-                          Row(
-                            children: [
-                              Text(
-                                '${widget.item.price} ₽',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.black87,
-                                ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final narrow = constraints.maxWidth < 168;
+                        final titleSize = narrow ? 14.0 : 16.0;
+                        final priceSize = narrow ? 14.0 : 16.0;
+                        final buttonPadH = narrow ? 8.0 : 12.0;
+                        final buttonPadV = narrow ? 7.0 : 8.0;
+                        final buttonFont = narrow ? 11.0 : 12.0;
+
+                        Widget cartButton({required bool expanded}) {
+                          final button = Opacity(
+                            opacity: _hideCartButton ? 0 : 1,
+                            child: Container(
+                              key: _cartButtonKey,
+                              width: expanded ? double.infinity : null,
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: buttonPadH,
+                                vertical: buttonPadV,
                               ),
-                              const Spacer(),
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: _handleAddToCart,
-                                child: Opacity(
-                                  opacity: _hideCartButton ? 0 : 1,
-                                  child: Container(
-                                    key: _cartButtonKey,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.header,
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: const Text(
-                                      'В корзину',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                      ),
-                                    ),
+                              decoration: BoxDecoration(
+                                color: AppColors.header,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'В корзину',
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: buttonFont,
                                   ),
                                 ),
                               ),
+                            ),
+                          );
+
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _handleAddToCart,
+                            child: button,
+                          );
+                        }
+
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            narrow ? 10 : 12,
+                            narrow ? 10 : 12,
+                            narrow ? 10 : 12,
+                            narrow ? 8 : 10,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.item.title,
+                                maxLines: narrow ? 2 : 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: titleSize,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                  height: 1.2,
+                                ),
+                              ),
+                              SizedBox(height: narrow ? 4 : 6),
+                              Text(
+                                widget.item.description,
+                                maxLines: narrow ? 1 : 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: narrow ? 12 : 13,
+                                  height: 1.35,
+                                  color: Colors.black.withValues(alpha: 0.55),
+                                ),
+                              ),
+                              const Spacer(),
+                              if (narrow) ...[
+                                Text(
+                                  '${widget.item.price} ₽',
+                                  style: TextStyle(
+                                    fontSize: priceSize,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                cartButton(expanded: true),
+                              ] else
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${widget.item.price} ₽',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: priceSize,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Align(
+                                        alignment: Alignment.centerRight,
+                                        child: cartButton(expanded: false),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ],
