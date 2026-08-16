@@ -16,6 +16,9 @@ flutter precache --ios
 # Install Flutter dependencies (creates ios/Flutter/Generated.xcconfig).
 flutter pub get
 
+# Prepare iOS plugin registrant for Release (excludes unused/dev plugins).
+flutter build ios --release --no-codesign --config-only
+
 # Install CocoaPods using Homebrew.
 HOMEBREW_NO_AUTO_UPDATE=1
 brew install cocoapods
