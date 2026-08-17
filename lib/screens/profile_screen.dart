@@ -147,14 +147,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
             ),
             const SizedBox(height: 12),
-            const _InfoCard(
-              icon: CupertinoIcons.cart,
-              title: 'История заказов',
-              child: Text(
-                'История заказов скоро появится здесь',
-                style: _subtleStyle,
-              ),
-            ),
             if (user != null) ...[
               const SizedBox(height: 24),
               Center(
