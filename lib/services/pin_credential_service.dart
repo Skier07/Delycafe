@@ -48,18 +48,6 @@ class PinCredentialService {
     return stored == hashPin(phone, pin);
   }
 
-  Future<bool> isBiometricEnabled(String phone) async {
-    final value = await _storage.read(key: _biometricKey(phone));
-    return value == '1';
-  }
-
-  Future<void> setBiometricEnabled(String phone, bool enabled) async {
-    await _storage.write(
-      key: _biometricKey(phone),
-      value: enabled ? '1' : '0',
-    );
-  }
-
   Future<void> clearCredentials(String phone) async {
     await _storage.delete(key: _pinHashKey(phone));
     await _storage.delete(key: _biometricKey(phone));

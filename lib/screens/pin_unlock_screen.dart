@@ -15,7 +15,8 @@ class PinUnlockScreen extends StatefulWidget {
 }
 
 class _PinUnlockScreenState extends State<PinUnlockScreen> {
-  final GlobalKey<PinCodeInputState> _pinInputKey = GlobalKey<PinCodeInputState>();
+  final GlobalKey<PinCodeInputState> _pinInputKey =
+      GlobalKey<PinCodeInputState>();
 
   bool _isSubmittingPin = false;
   bool _isBiometricInProgress = false;
@@ -150,59 +151,74 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     final auth = context.watch<AuthService>();
     final phone = auth.registeredPhone ?? '';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Вход в аккаунт'),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Text(
-                phone,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _biometricEnabled
-                    ? 'Введите PIN или используйте биометрию'
-                    : 'Введите PIN для входа',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              PinCodeInput(
-                key: _pinInputKey,
-                length: PinCredentialService.pinLength,
-                enabled: !_isSubmittingPin,
-                onCompleted: _unlockWithPin,
-              ),
-              if (_isSubmittingPin) ...[
-                const SizedBox(height: 16),
-                const CircularProgressIndicator(),
-              ],
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Вход в аккаунт'),
+        ),
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 48,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        Text(
+                          phone,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _biometricEnabled
+                              ? 'Введите PIN или используйте биометрию'
+                              : 'Введите PIN для входа',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+                        PinCodeInput(
+                          key: _pinInputKey,
+                          length: PinCredentialService.pinLength,
+                          enabled: !_isSubmittingPin,
+                          onCompleted: _unlockWithPin,
+                        ),
+                        if (_isSubmittingPin) ...[
+                          const SizedBox(height: 16),
+                          const CircularProgressIndicator(),
+                        ],
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ],
+                        const Spacer(),
+                        if (_biometricEnabled) ...[
+                          AuthButton(
+                            text: _isBiometricInProgress
+                                ? 'Подтвердите биометрию…'
+                                : 'Войти по биометрии',
+                            onPressed: _isBusy ? null : _unlockWithBiometric,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        AuthButton(
+                          text: 'Забыли PIN? Войти по SMS',
+                          onPressed: _isBusy ? null : _resetWithSms,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-              const Spacer(),
-              if (_biometricEnabled) ...[
-                AuthButton(
-                  text: _isBiometricInProgress
-                      ? 'Подтвердите биометрию…'
-                      : 'Войти по биометрии',
-                  onPressed: _isBusy ? null : _unlockWithBiometric,
-                ),
-                const SizedBox(height: 12),
-              ],
-              AuthButton(
-                text: 'Забыли PIN? Войти по SMS',
-                onPressed: _isBusy ? null : _resetWithSms,
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

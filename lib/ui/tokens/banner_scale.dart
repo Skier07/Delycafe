@@ -1,17 +1,22 @@
 import 'package:delycafe/ui/tokens/app_sizes.dart';
 import 'package:flutter/material.dart';
 
-/// Масштаб элементов баннера от ширины экрана (эталон — iPhone 13/14, 390 pt).
+/// Масштаб элементов баннера от логической ширины экрана.
+///
+/// При ширине iPhone 13 (390 pt) коэффициент около 0.87, поэтому кнопки
+/// остаются удобными для нажатия, но не занимают значительную часть баннера.
 class BannerScale {
   BannerScale._(this._scale);
 
-  static const double _referenceWidth = 390;
+  static const double _referenceWidth = 450;
 
   final double _scale;
 
+  double get factor => _scale;
+
   static BannerScale of(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final scale = (width / _referenceWidth).clamp(0.82, 1.0);
+    final scale = (width / _referenceWidth).clamp(0.85, 1.0);
     return BannerScale._(scale);
   }
 

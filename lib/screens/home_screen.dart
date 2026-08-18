@@ -18,7 +18,6 @@ import 'package:delycafe/ui/components/glass/dark_glass_sheet.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/ui/tokens/app_radius.dart';
-import 'package:delycafe/ui/tokens/app_sizes.dart';
 import 'package:delycafe/ui/tokens/banner_scale.dart';
 import 'package:delycafe/widgets/catalog/catalog_section.dart';
 import 'package:flutter/cupertino.dart';
@@ -565,9 +564,8 @@ class __LoginBannerContentState extends State<_LoginBannerContent> {
       onTapCancel: () => _setPressed(false),
       onTap: () {
         final auth = context.read<AuthService>();
-        final nextScreen = auth.needsPinUnlock
-            ? const PinUnlockScreen()
-            : const AuthScreen();
+        final nextScreen =
+            auth.needsPinUnlock ? const PinUnlockScreen() : const AuthScreen();
 
         Navigator.push(
           context,
@@ -608,27 +606,27 @@ class __LoginBannerContentState extends State<_LoginBannerContent> {
                     child: Text(
                       'ВОЙТИ',
                       style: TextStyle(
-                        fontSize: 50,
+                        fontSize: widget.scale.loginFontSize,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: -1.0,
+                        letterSpacing: widget.scale.loginLetterSpacing,
                         color: Colors.white.withValues(alpha: 0.85),
                         shadows: [
                           Shadow(
-                            blurRadius: 18,
+                            blurRadius: 18 * widget.scale.factor,
                             color: Colors.black.withValues(alpha: 0.45),
-                            offset: const Offset(0, 6),
+                            offset: Offset(0, 6 * widget.scale.factor),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(
+                SizedBox(width: widget.scale.loginChevronGap),
+                Icon(
                   CupertinoIcons.chevron_right_2,
-                  size: 40,
+                  size: widget.scale.loginChevronSize,
                   color: AppColors.buttonText,
-                  shadows: [
+                  shadows: const [
                     Shadow(
                       blurRadius: 14,
                       color: AppColors.bannerOverlay,

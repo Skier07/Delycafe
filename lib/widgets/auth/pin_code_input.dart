@@ -24,168 +24,179 @@ class PinCodeInput extends StatefulWidget {
 }
 
 class PinCodeInputState extends State<PinCodeInput> {
-  late final List<TextEditingController> _controllers;
-  late final List<FocusNode> _focusNodes;
-  bool _isDistributing = false;
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+  String? _lastCompletedValue;
 
   @override
   void initState() {
     super.initState();
 
-    _controllers = List.generate(widget.length, (_) => TextEditingController());
-    _focusNodes = List.generate(widget.length, (_) => FocusNode());
+    _controller = TextEditingController();
+    _focusNode = FocusNode()..addListener(_handleFocusChanged);
 
     if (widget.autofocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && widget.enabled) {
-          _focusNodes.first.requestFocus();
+          _focusNode.requestFocus();
         }
       });
     }
   }
 
   void clear() {
-    for (final controller in _controllers) {
-      controller.clear();
-    }
+    _controller.clear();
+    _lastCompletedValue = null;
+    setState(() {});
 
     if (widget.enabled) {
-      _focusNodes.first.requestFocus();
+      _focusNode.requestFocus();
     }
   }
 
-  String get value => _controllers.map((controller) => controller.text).join();
+  String get value => _controller.text;
 
-  void _distributeDigits(String raw) {
-    final digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) {
-      return;
-    }
-
-    _isDistributing = true;
-    try {
-      final code = digits.length > widget.length
-          ? digits.substring(0, widget.length)
-          : digits;
-
-      for (var i = 0; i < widget.length; i++) {
-        _controllers[i].text = i < code.length ? code[i] : '';
-      }
-
-      if (code.length >= widget.length) {
-        _focusNodes[widget.length - 1].unfocus();
-        widget.onCompleted(code.substring(0, widget.length));
-      } else {
-        _focusNodes[code.length].requestFocus();
-      }
-    } finally {
-      _isDistributing = false;
+  void _handleFocusChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
-  void _onDigitChanged(int index, String value) {
-    if (!widget.enabled || _isDistributing) {
+  void _onChanged(String value) {
+    if (!widget.enabled) {
       return;
     }
 
-    final digits = value.replaceAll(RegExp(r'\D'), '');
+    setState(() {});
 
-    if (digits.length > 1) {
-      _distributeDigits(digits);
-      return;
+    if (value.length < widget.length) {
+      _lastCompletedValue = null;
+    } else if (value.length == widget.length && _lastCompletedValue != value) {
+      _lastCompletedValue = value;
+      widget.onCompleted(value);
     }
-
-    if (digits.length == 1) {
-      if (_controllers[index].text != digits) {
-        _controllers[index].value = TextEditingValue(
-          text: digits,
-          selection: const TextSelection.collapsed(offset: 1),
-        );
-      }
-
-      if (index < widget.length - 1) {
-        _focusNodes[index + 1].requestFocus();
-      } else if (this.value.length == widget.length) {
-        widget.onCompleted(this.value);
-      }
-      return;
-    }
-
-    _controllers[index].clear();
-    if (index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-  }
-
-  KeyEventResult _onDigitKeyEvent(int index, KeyEvent event) {
-    if (event is! KeyDownEvent) {
-      return KeyEventResult.ignored;
-    }
-
-    if (event.logicalKey == LogicalKeyboardKey.backspace &&
-        _controllers[index].text.isEmpty &&
-        index > 0) {
-      _focusNodes[index - 1].requestFocus();
-      return KeyEventResult.handled;
-    }
-
-    return KeyEventResult.ignored;
   }
 
   @override
   void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-
-    for (final focusNode in _focusNodes) {
-      focusNode.dispose();
-    }
-
+    _focusNode.removeListener(_handleFocusChanged);
+    _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final fields = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(widget.length, (index) {
-        return Container(
-          width: 60,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          child: Focus(
-            onKeyEvent: (node, event) => _onDigitKeyEvent(index, event),
-            child: TextField(
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              enabled: widget.enabled,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              obscureText: widget.obscureText,
-              obscuringCharacter: '•',
-              autofillHints: widget.enableSmsAutofill && index == 0
-                  ? const [AutofillHints.oneTimeCode]
-                  : null,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              decoration: const InputDecoration(
-                counterText: '',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
-                ),
+    final input = Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: widget.length * 60 + (widget.length - 1) * 16,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final desiredWidth = widget.length * 60 + (widget.length - 1) * 16;
+            final totalWidth = constraints.maxWidth < desiredWidth
+                ? constraints.maxWidth
+                : desiredWidth.toDouble();
+            final gap = totalWidth < 280 ? 8.0 : 16.0;
+            final boxWidth =
+                (totalWidth - gap * (widget.length - 1)) / widget.length;
+            final currentValue = _controller.text;
+            final activeIndex = currentValue.length >= widget.length
+                ? widget.length - 1
+                : currentValue.length;
+
+            return SizedBox(
+              width: totalWidth,
+              height: 64,
+              child: Stack(
+                children: [
+                  IgnorePointer(
+                    child: Row(
+                      children: List.generate(widget.length, (index) {
+                        final hasValue = index < currentValue.length;
+                        final isActive =
+                            _focusNode.hasFocus && index == activeIndex;
+
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            right: index < widget.length - 1 ? gap : 0,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 120),
+                            width: boxWidth,
+                            height: 64,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: widget.enabled
+                                  ? Colors.transparent
+                                  : Theme.of(context)
+                                      .disabledColor
+                                      .withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isActive
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.outline,
+                                width: isActive ? 2 : 1,
+                              ),
+                            ),
+                            child: Text(
+                              hasValue
+                                  ? (widget.obscureText
+                                      ? '•'
+                                      : currentValue[index])
+                                  : '',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.01,
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        enabled: widget.enabled,
+                        autofocus: false,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        maxLength: widget.length,
+                        showCursor: false,
+                        autofillHints: widget.enableSmsAutofill
+                            ? const [AutofillHints.oneTimeCode]
+                            : null,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(widget.length),
+                        ],
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: _onChanged,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              onChanged: (value) => _onDigitChanged(index, value),
-            ),
-          ),
-        );
-      }),
+            );
+          },
+        ),
+      ),
     );
 
     if (!widget.enableSmsAutofill) {
-      return fields;
+      return input;
     }
 
-    return AutofillGroup(child: fields);
+    return AutofillGroup(child: input);
   }
 }

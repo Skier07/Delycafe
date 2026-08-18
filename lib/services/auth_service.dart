@@ -222,23 +222,16 @@ class AuthService extends ChangeNotifier {
   Future<void> completePinSetup({
     required String phone,
     required String pin,
-    bool enableBiometric = false,
   }) async {
     final normalizedPhone = _normalizePhone(phone);
 
     await _pinCredentialService.savePin(normalizedPhone, pin);
-    await _pinCredentialService.setBiometricEnabled(
-      normalizedPhone,
-      enableBiometric,
-    );
 
     _registeredPhone = normalizedPhone;
     _guestSession = false;
     _isUnlocked = true;
 
-    if (_currentUser == null) {
-      _currentUser = User(phone: normalizedPhone);
-    }
+    _currentUser ??= User(phone: normalizedPhone);
 
     await loadCustomerProfile(normalizedPhone);
   }
@@ -267,10 +260,7 @@ class AuthService extends ChangeNotifier {
       return false;
     }
 
-    final biometricEnabled =
-        await _pinCredentialService.isBiometricEnabled(targetPhone);
-
-    if (!biometricEnabled) {
+    if (!await _pinCredentialService.hasPin(targetPhone)) {
       return false;
     }
 
@@ -284,10 +274,6 @@ class AuthService extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> canSetupBiometricUnlock() async {
-    return _biometricAuthService.isBiometricReady();
-  }
-
   Future<bool> canUseBiometricUnlock({String? phone}) async {
     final targetPhone = phone ?? _registeredPhone;
 
@@ -295,9 +281,7 @@ class AuthService extends ChangeNotifier {
       return false;
     }
 
-    final enabled = await _pinCredentialService.isBiometricEnabled(targetPhone);
-
-    if (!enabled) {
+    if (!await _pinCredentialService.hasPin(targetPhone)) {
       return false;
     }
 
