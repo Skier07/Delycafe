@@ -1,6 +1,7 @@
 import 'package:delycafe/features/auth/auth_form.dart';
 import 'package:delycafe/screens/code_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/utils/user_facing_error.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -46,7 +47,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
 
       setState(() {
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     } finally {
       if (mounted) {

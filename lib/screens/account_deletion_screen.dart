@@ -5,6 +5,7 @@ import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/user_facing_error.dart';
 import 'package:delycafe/widgets/auth/pin_code_input.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -60,7 +61,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
 
       setState(() {
         _isSendingCode = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     }
   }
@@ -148,7 +149,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
 
       setState(() {
         _isDeleting = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
 
       _codeInputKey.currentState?.clear();

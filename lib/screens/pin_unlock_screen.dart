@@ -150,11 +150,13 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final phone = auth.registeredPhone ?? '';
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: const Text('Вход в аккаунт'),
         ),
@@ -162,7 +164,15 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  24,
+                  24,
+                  24 + keyboardInset,
+                ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     minHeight: constraints.maxHeight - 48,

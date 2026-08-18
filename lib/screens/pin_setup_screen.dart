@@ -2,6 +2,7 @@ import 'package:delycafe/screens/home_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/pin_credential_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
+import 'package:delycafe/utils/user_facing_error.dart';
 import 'package:delycafe/widgets/auth/pin_code_input.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -82,7 +83,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
 
       setState(() {
         _isSaving = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
         _firstPin = null;
       });
 

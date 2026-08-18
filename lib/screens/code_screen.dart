@@ -2,6 +2,7 @@
 
 import 'package:delycafe/screens/pin_setup_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/utils/user_facing_error.dart';
 import 'package:delycafe/widgets/auth/pin_code_input.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -77,7 +78,7 @@ class _CodeScreenState extends State<CodeScreen> {
       }
 
       setState(() {
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     }
   }
@@ -123,7 +124,7 @@ class _CodeScreenState extends State<CodeScreen> {
 
       setState(() {
         _isCompleting = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     }
   }
@@ -194,7 +195,7 @@ class _CodeScreenState extends State<CodeScreen> {
 
       setState(() {
         _isResending = false;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     }
   }
@@ -249,7 +250,7 @@ class _CodeScreenState extends State<CodeScreen> {
       setState(() {
         _isVerifying = false;
         _statusMessage = null;
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = userFacingError(error);
       });
     }
 
