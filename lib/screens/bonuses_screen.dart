@@ -42,11 +42,25 @@ class _BonusesScreenState extends State<BonusesScreen> {
     }
 
     try {
-      return await _bonusApiService.fetchBonuses().timeout(
+      final summary = await _bonusApiService.fetchBonuses().timeout(
             const Duration(seconds: 8),
           );
+
+      if (mounted) {
+        try {
+          await context
+              .read<AuthService>()
+              .synchronizeBonusBalance(summary.bonusBalance);
+        } catch (error) {
+          debugPrint('Не удалось сохранить свежий баланс бонусов: $error');
+        }
+      }
+
+      return summary;
     } catch (error) {
-      return BonusSummary.fromUser(user);
+      final currentUser =
+          mounted ? context.read<AuthService>().currentUser : null;
+      return BonusSummary.fromUser(currentUser ?? user);
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/exceptions/auth_required_exception.dart';
 import 'package:delycafe/features/auth/auth_screen.dart';
@@ -12,8 +14,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(context.read<AuthService>().refreshCurrentUser());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

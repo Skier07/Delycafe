@@ -233,8 +233,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   int get _productsAfterDiscount {
-    final after =
-        widget.cartTotal - _firstOrderDiscount - _pickupDiscount;
+    final after = widget.cartTotal - _firstOrderDiscount - _pickupDiscount;
 
     if (after < 0) return 0;
 
@@ -265,8 +264,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   int get _totalWithDelivery {
-    final total =
-        _productsAfterDiscount - _bonusSpent + _deliveryPrice;
+    final total = _productsAfterDiscount - _bonusSpent + _deliveryPrice;
 
     if (total < 0) return 0;
 
@@ -621,9 +619,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       return;
     }
 
-    final slotLabels = slots
-        .map(DeliverySchedule.formatTime)
-        .toList(growable: false);
+    final slotLabels =
+        slots.map(DeliverySchedule.formatTime).toList(growable: false);
 
     var selectedIndex = 0;
     final current = _timeController.text.trim();
@@ -681,7 +678,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                           TextButton(
                             onPressed: () {
                               setState(() {
-                                _timeController.text = slotLabels[selectedIndex];
+                                _timeController.text =
+                                    slotLabels[selectedIndex];
                               });
                               _scheduleDraftSave();
 
@@ -886,26 +884,36 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
           const SizedBox(height: 24),
           const _BlockTitle('Способ получения'),
           const SizedBox(height: 12),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 2.7,
-            children: DeliveryType.values.map((type) {
-              return _ChoiceCard(
-                title: _deliveryTitle(type),
-                selected: _deliveryType == type,
-                onTap: () {
-                  setState(() {
-                    _deliveryType = type;
-                    _syncDeliveryTimeWithSchedule();
-                  });
-                  _scheduleDraftSave();
-                },
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final childAspectRatio = constraints.maxWidth <= 340
+                  ? 2.0
+                  : constraints.maxWidth <= 390
+                      ? 2.25
+                      : 2.7;
+
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: childAspectRatio,
+                children: DeliveryType.values.map((type) {
+                  return _ChoiceCard(
+                    title: _deliveryTitle(type),
+                    selected: _deliveryType == type,
+                    onTap: () {
+                      setState(() {
+                        _deliveryType = type;
+                        _syncDeliveryTimeWithSchedule();
+                      });
+                      _scheduleDraftSave();
+                    },
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
           const SizedBox(height: 12),
           Container(
@@ -1491,9 +1499,7 @@ class _SavedAddressCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
                 color: selected ? AppColors.header : Colors.black45,
                 size: 22,
               ),
@@ -1571,56 +1577,82 @@ class _ChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 12,
-        ),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.header : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected
-                ? AppColors.header
-                : Colors.black.withValues(alpha: 0.08),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth <= 145;
+        final titleFontSize = compact
+            ? 14.0
+            : constraints.maxWidth <= 175
+                ? 15.0
+                : 16.0;
+        final subtitleFontSize = compact ? 11.5 : 13.0;
+        final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
+        final titleText = Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: hasSubtitle ? 2 : 1,
+          softWrap: hasSubtitle,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black87,
+            fontSize: titleFontSize,
+            fontWeight: FontWeight.w700,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: TextStyle(
-                color: selected ? Colors.white : Colors.black87,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+        );
+
+        final content = hasSubtitle
+            ? FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(
+                  width: constraints.maxWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      titleText,
+                      SizedBox(height: compact ? 2 : 4),
+                      Text(
+                        subtitle!,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : Colors.black.withValues(alpha: 0.55),
+                          fontSize: subtitleFontSize,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                child: titleText,
+              );
+
+        return GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            alignment: Alignment.center,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 7 : 10,
+              vertical: compact ? 9 : 12,
+            ),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.header : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected
+                    ? AppColors.header
+                    : Colors.black.withValues(alpha: 0.08),
               ),
             ),
-            if (subtitle != null && subtitle!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle!,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: selected
-                      ? Colors.white.withValues(alpha: 0.9)
-                      : Colors.black.withValues(alpha: 0.55),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+            child: content,
+          ),
+        );
+      },
     );
   }
 }

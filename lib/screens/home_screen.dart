@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/features/auth/auth_screen.dart';
 import 'package:delycafe/screens/pin_unlock_screen.dart';
@@ -37,14 +39,67 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   HomeOverlayType _activeOverlay = HomeOverlayType.none;
   final GlobalKey _cartIconKey = GlobalKey();
+  String? _lastRefreshedPhone;
+  bool _profileRefreshScheduled = false;
+  bool _profileRefreshInProgress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     precacheImage(const AssetImage('assets/images/banner.png'), context);
+
+    final auth = context.watch<AuthService>();
+    final phone = auth.currentUser?.phone;
+
+    if (phone == null) {
+      _lastRefreshedPhone = null;
+    } else if (phone != _lastRefreshedPhone && !_profileRefreshScheduled) {
+      _profileRefreshScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _profileRefreshScheduled = false;
+        unawaited(_refreshProfile());
+      });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshProfile(force: true));
+    }
+  }
+
+  Future<void> _refreshProfile({bool force = false}) async {
+    if (!mounted || _profileRefreshInProgress) return;
+
+    final auth = context.read<AuthService>();
+    final phone = auth.currentUser?.phone;
+
+    if (phone == null || (!force && phone == _lastRefreshedPhone)) return;
+
+    _profileRefreshInProgress = true;
+    _lastRefreshedPhone = phone;
+
+    try {
+      await auth.refreshCurrentUser();
+    } finally {
+      _profileRefreshInProgress = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   void _openOverlay(HomeOverlayType type) {

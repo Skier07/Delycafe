@@ -303,7 +303,11 @@ def _record_bonus_earn(order: Order) -> None:
     """Начисляет бонусы на локальный баланс после успешной оплаты."""
     from customers.models import Customer
 
-    if order.bonus_earned <= 0 or order.customer_id is None:
+    if (
+        order.payment_status != Order.PaymentStatus.PAID
+        or order.bonus_earned <= 0
+        or order.customer_id is None
+    ):
         return
 
     with transaction.atomic():

@@ -437,6 +437,19 @@ class AuthService extends ChangeNotifier {
     await loadCustomerProfile(phone, keepLocked: keepLocked);
   }
 
+  Future<void> synchronizeBonusBalance(int bonusBalance) async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    final normalizedBalance = bonusBalance < 0 ? 0 : bonusBalance;
+    if (user.bonusBalance == normalizedBalance) return;
+
+    final updatedUser = user.copyWith(bonusBalance: normalizedBalance);
+    _currentUser = updatedUser;
+    await _profileCacheService.save(updatedUser);
+    notifyListeners();
+  }
+
   Future<void> beginSmsRecovery() async {
     await ApiAuthStorage.instance.clearAccessToken();
     _currentUser = null;
