@@ -17,6 +17,8 @@ class CustomerPrincipal:
 
     def __init__(self, customer: Customer):
         self.customer = customer
+        self.pk = customer.pk
+        self.id = customer.pk
 
 
 class OrderAccessPrincipal:

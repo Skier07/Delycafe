@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.utils import timezone
 
-from .models import BonusTransaction, Customer
+from .models import BonusTransaction, Customer, CustomerRefreshToken
 
 
 class BonusTransactionInline(admin.TabularInline):
@@ -174,3 +175,45 @@ class BonusTransactionAdmin(admin.ModelAdmin):
     readonly_fields = (
         'created_at',
     )
+
+
+@admin.register(CustomerRefreshToken)
+class CustomerRefreshTokenAdmin(admin.ModelAdmin):
+    list_display = (
+        'customer',
+        'family_id',
+        'created_at',
+        'last_used_at',
+        'expires_at',
+        'revoked_at',
+    )
+    list_filter = (
+        'created_at',
+        'expires_at',
+        'revoked_at',
+    )
+    search_fields = (
+        'customer__phone',
+        'customer__name',
+        'family_id',
+    )
+    readonly_fields = (
+        'customer',
+        'family_id',
+        'token_hash',
+        'created_at',
+        'last_used_at',
+        'expires_at',
+        'revoked_at',
+    )
+    actions = ('revoke_sessions',)
+
+    @admin.action(description='Отозвать выбранные refresh-сессии')
+    def revoke_sessions(self, request, queryset):
+        updated = queryset.filter(revoked_at__isnull=True).update(
+            revoked_at=timezone.now()
+        )
+        self.message_user(request, f'Отозвано refresh-сессий: {updated}.')
+
+    def has_add_permission(self, request):
+        return False

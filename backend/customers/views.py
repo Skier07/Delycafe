@@ -22,7 +22,14 @@ from .services.saby_customer_service import (
 )
 from .services.otp_auth_service import OtpAuthError, OtpAuthService
 from .services.account_deletion_service import delete_customer_account
-from .services.auth_token_service import create_customer_access_token
+from .services.auth_token_service import (
+    RefreshTokenError,
+    create_customer_access_token,
+    create_customer_refresh_token,
+    create_legacy_customer_access_token,
+    revoke_customer_refresh_token,
+    rotate_customer_refresh_token,
+)
 
 try:
     from orders.promotions import APP_FIRST_ORDER_DISCOUNT_ENABLED
@@ -442,7 +449,11 @@ class SetDefaultAddressAPIView(AuthenticatedCustomerAPIView):
         return Response(CustomerAddressSerializer(address_obj).data)
 
 
-def _finalize_verified_otp_session(session) -> Response:
+def _uses_refresh_tokens(request) -> bool:
+    return request.data.get('token_mode') == 'refresh'
+
+
+def _finalize_verified_otp_session(session, *, use_refresh_tokens=False) -> Response:
     customer, error_response = get_or_create_customer_by_phone(session.phone)
 
     if error_response is not None:
@@ -451,16 +462,28 @@ def _finalize_verified_otp_session(session) -> Response:
     verified_session_id = session.id
     session.delete()
 
-    access_token = create_customer_access_token(
-        customer_id=customer.id,
-        phone=customer.phone,
-    )
+    if use_refresh_tokens:
+        access_token = create_customer_access_token(
+            customer_id=customer.id,
+            phone=customer.phone,
+        )
+        refresh_token = create_customer_refresh_token(customer=customer)
+        expires_in = settings.CUSTOMER_ACCESS_TOKEN_MINUTES * 60
+    else:
+        access_token = create_legacy_customer_access_token(
+            customer_id=customer.id,
+            phone=customer.phone,
+        )
+        refresh_token = ''
+        expires_in = settings.CUSTOMER_LEGACY_ACCESS_TOKEN_DAYS * 86400
 
     return Response(
         {
             'verified': True,
             'session_id': verified_session_id,
             'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': expires_in,
             'customer': CustomerAuthAccountSerializer(customer).data,
         },
     )
@@ -558,7 +581,10 @@ class CustomerOtpVerifyAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return _finalize_verified_otp_session(session)
+        return _finalize_verified_otp_session(
+            session,
+            use_refresh_tokens=_uses_refresh_tokens(request),
+        )
 
 
 class CustomerOtpCompleteAPIView(APIView):
@@ -595,7 +621,88 @@ class CustomerOtpCompleteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return _finalize_verified_otp_session(session)
+        return _finalize_verified_otp_session(
+            session,
+            use_refresh_tokens=_uses_refresh_tokens(request),
+        )
+
+
+class CustomerTokenRefreshAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = 'token_refresh'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def post(self, request):
+        refresh_token = str(request.data.get('refresh_token') or '').strip()
+        if not refresh_token:
+            return Response(
+                {'detail': 'Передайте refresh_token.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            access_token, next_refresh_token = rotate_customer_refresh_token(
+                refresh_token
+            )
+        except RefreshTokenError as error:
+            return Response(
+                {'detail': str(error)},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        return Response(
+            {
+                'access_token': access_token,
+                'refresh_token': next_refresh_token,
+                'expires_in': settings.CUSTOMER_ACCESS_TOKEN_MINUTES * 60,
+            }
+        )
+
+
+class CustomerTokenBootstrapAPIView(AuthenticatedCustomerAPIView):
+    """Обменивает старый 180-дневный access token на новую пару токенов."""
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'token_refresh'
+
+    def post(self, request):
+        auth_payload = request.auth if isinstance(request.auth, dict) else {}
+        if auth_payload.get('jti'):
+            return Response(
+                {'detail': 'Для этой сессии bootstrap недоступен.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        customer = get_request_customer(request)
+        access_token = create_customer_access_token(
+            customer_id=customer.id,
+            phone=customer.phone,
+        )
+        refresh_token = create_customer_refresh_token(customer=customer)
+        return Response(
+            {
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'expires_in': settings.CUSTOMER_ACCESS_TOKEN_MINUTES * 60,
+            }
+        )
+
+
+class CustomerTokenRevokeAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = 'token_refresh'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def post(self, request):
+        refresh_token = str(request.data.get('refresh_token') or '').strip()
+        if refresh_token:
+            revoke_customer_refresh_token(refresh_token)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CustomerOtpStatusAPIView(APIView):

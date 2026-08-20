@@ -26,7 +26,7 @@ class OrderService extends ChangeNotifier {
 
       final response = await http.get(
         uri,
-        headers: ApiAuthStorage.instance.headers(),
+        headers: await ApiAuthStorage.instance.authorizedHeaders(),
       );
       final decodedBody = utf8.decode(response.bodyBytes);
 

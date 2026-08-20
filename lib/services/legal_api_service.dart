@@ -104,7 +104,7 @@ class LegalApiService {
     final uri = ApiConfig.uri('/api/legal/consent/status/');
     final response = await http.get(
       uri,
-      headers: ApiAuthStorage.instance.headers(),
+      headers: await ApiAuthStorage.instance.authorizedHeaders(),
     );
 
     if (response.statusCode != 200) {
@@ -131,7 +131,9 @@ class LegalApiService {
     final uri = ApiConfig.uri('/api/legal/consent/');
     final response = await http.post(
       uri,
-      headers: ApiAuthStorage.instance.headers(jsonContentType: true),
+      headers: await ApiAuthStorage.instance.authorizedHeaders(
+        jsonContentType: true,
+      ),
       body: jsonEncode({
         'terms_accepted': termsAccepted,
         'privacy_accepted': privacyAccepted,

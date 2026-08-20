@@ -105,10 +105,7 @@ class AuthService extends ChangeNotifier {
       return false;
     }
 
-    if (result.accessToken.isNotEmpty) {
-      await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
-      _needsAccessTokenRefresh = false;
-    }
+    await _saveAuthSession(result);
 
     await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
     await _clearOtpSession();
@@ -137,10 +134,7 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      if (result.accessToken.isNotEmpty) {
-        await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
-        _needsAccessTokenRefresh = false;
-      }
+      await _saveAuthSession(result);
 
       await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
       await _clearOtpSession();
@@ -185,10 +179,7 @@ class AuthService extends ChangeNotifier {
           code: code,
         );
 
-        if (result.accessToken.isNotEmpty) {
-          await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
-          _needsAccessTokenRefresh = false;
-        }
+        await _saveAuthSession(result);
 
         await signInAfterOtp(
           result.phone.isNotEmpty ? result.phone : phone,
@@ -325,7 +316,7 @@ class AuthService extends ChangeNotifier {
   }) async {
     final normalizedPhone = _normalizePhone(phone);
 
-    if (!ApiAuthStorage.instance.hasAccessToken) {
+    if (!ApiAuthStorage.instance.hasCustomerSession) {
       _needsAccessTokenRefresh = true;
       final cachedUser = _profileCacheService.read(normalizedPhone);
 
@@ -398,7 +389,7 @@ class AuthService extends ChangeNotifier {
       return;
     }
 
-    if (!ApiAuthStorage.instance.hasAccessToken) {
+    if (!ApiAuthStorage.instance.hasCustomerSession) {
       _needsAccessTokenRefresh = true;
       notifyListeners();
       throw const AuthRequiredException(
@@ -451,7 +442,8 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> beginSmsRecovery() async {
-    await ApiAuthStorage.instance.clearAccessToken();
+    await ApiAuthStorage.instance.revokeRefreshToken();
+    await ApiAuthStorage.instance.clearCustomerSession();
     _currentUser = null;
     _isUnlocked = false;
     _guestSession = false;
@@ -516,6 +508,7 @@ class AuthService extends ChangeNotifier {
       await _profileCacheService.clear(phone);
     }
 
+    await ApiAuthStorage.instance.revokeRefreshToken();
     await ApiAuthStorage.instance.clearAll();
 
     notifyListeners();
@@ -580,6 +573,21 @@ class AuthService extends ChangeNotifier {
       _savedPhoneKey,
       _normalizePhone(phone),
     );
+  }
+
+  Future<void> _saveAuthSession(OtpVerifyResult result) async {
+    if (result.accessToken.isEmpty) return;
+
+    if (result.refreshToken.isNotEmpty) {
+      await ApiAuthStorage.instance.saveSession(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+    } else {
+      await ApiAuthStorage.instance.saveAccessToken(result.accessToken);
+    }
+
+    _needsAccessTokenRefresh = false;
   }
 
   Future<int?> _readSavedSessionId() async {

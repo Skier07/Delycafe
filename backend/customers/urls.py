@@ -13,6 +13,9 @@ from .views import (
     CustomerOtpVerifyAPIView,
     CustomerProfileAPIView,
     CustomerSabyLookupAPIView,
+    CustomerTokenBootstrapAPIView,
+    CustomerTokenRefreshAPIView,
+    CustomerTokenRevokeAPIView,
     SetDefaultAddressAPIView,
 )
 
@@ -37,6 +40,21 @@ urlpatterns = [
         'auth/otp/status/',
         CustomerOtpStatusAPIView.as_view(),
         name='customer-otp-status',
+    ),
+    path(
+        'auth/token/refresh/',
+        CustomerTokenRefreshAPIView.as_view(),
+        name='customer-token-refresh',
+    ),
+    path(
+        'auth/token/bootstrap/',
+        CustomerTokenBootstrapAPIView.as_view(),
+        name='customer-token-bootstrap',
+    ),
+    path(
+        'auth/token/revoke/',
+        CustomerTokenRevokeAPIView.as_view(),
+        name='customer-token-revoke',
     ),
     path(
         'auth/mobile-id/webhook/',

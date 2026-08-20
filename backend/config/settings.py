@@ -200,10 +200,22 @@ REST_FRAMEWORK = {
         'otp_send': '15/hour',
         'otp_verify': '60/hour',
         'auth_match': '30/hour',
+        'token_refresh': '120/hour',
     },
 }
 
-CUSTOMER_ACCESS_TOKEN_DAYS = int(os.getenv('CUSTOMER_ACCESS_TOKEN_DAYS', '180'))
+CUSTOMER_ACCESS_TOKEN_MINUTES = int(
+    os.getenv('CUSTOMER_ACCESS_TOKEN_MINUTES', '30')
+)
+CUSTOMER_REFRESH_TOKEN_DAYS = int(
+    os.getenv('CUSTOMER_REFRESH_TOKEN_DAYS', '365')
+)
+CUSTOMER_LEGACY_ACCESS_TOKEN_DAYS = int(
+    os.getenv(
+        'CUSTOMER_LEGACY_ACCESS_TOKEN_DAYS',
+        os.getenv('CUSTOMER_ACCESS_TOKEN_DAYS', '180'),
+    )
+)
 ORDER_ACCESS_TOKEN_HOURS = int(os.getenv('ORDER_ACCESS_TOKEN_HOURS', '24'))
 
 SMSAERO_WEBHOOK_SECRET = os.getenv('SMSAERO_WEBHOOK_SECRET', '')

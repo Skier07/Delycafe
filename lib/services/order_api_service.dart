@@ -93,12 +93,14 @@ class OrderApiService {
 
     var response = await http.post(
       uri,
-      headers: ApiAuthStorage.instance.headers(jsonContentType: true),
+      headers: await ApiAuthStorage.instance.authorizedHeaders(
+        jsonContentType: true,
+      ),
       body: body,
     );
 
     if (response.statusCode == 401 || response.statusCode == 403) {
-      await ApiAuthStorage.instance.clearAccessToken();
+      await ApiAuthStorage.instance.clearCustomerSession();
 
       response = await http.post(
         uri,

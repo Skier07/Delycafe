@@ -42,9 +42,7 @@ class LegalConsentService extends ChangeNotifier {
   }
 
   Future<void> refreshFromServer() async {
-    final token = ApiAuthStorage.instance.accessToken;
-
-    if (token == null || token.isEmpty) {
+    if (!ApiAuthStorage.instance.hasCustomerSession) {
       return;
     }
 
@@ -71,8 +69,7 @@ class LegalConsentService extends ChangeNotifier {
     _pdConsentAccepted = pdConsentAccepted;
     _marketingAccepted = marketingAccepted;
 
-    if (ApiAuthStorage.instance.accessToken?.isNotEmpty == true &&
-        canPlaceOrder) {
+    if (ApiAuthStorage.instance.hasCustomerSession && canPlaceOrder) {
       _isLoading = true;
       notifyListeners();
 

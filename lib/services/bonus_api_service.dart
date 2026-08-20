@@ -11,7 +11,7 @@ class BonusApiService {
 
     final response = await http.get(
       uri,
-      headers: ApiAuthStorage.instance.headers(),
+      headers: await ApiAuthStorage.instance.authorizedHeaders(),
     );
 
     if (response.statusCode != 200) {

@@ -9,7 +9,7 @@ class OrderHistoryApiService {
   Future<List<Order>> fetchOrders() async {
     final response = await http.get(
       ApiConfig.uri('/api/orders/history/'),
-      headers: ApiAuthStorage.instance.headers(),
+      headers: await ApiAuthStorage.instance.authorizedHeaders(),
     );
 
     final decodedBody = utf8.decode(response.bodyBytes);

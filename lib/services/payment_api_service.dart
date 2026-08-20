@@ -56,8 +56,10 @@ class PaymentStatusResult {
 }
 
 class PaymentApiService {
-  Map<String, String> _paymentHeaders({bool jsonContentType = false}) {
-    return ApiAuthStorage.instance.headers(
+  Future<Map<String, String>> _paymentHeaders({
+    bool jsonContentType = false,
+  }) {
+    return ApiAuthStorage.instance.authorizedHeaders(
       includeOrderAccess: true,
       jsonContentType: jsonContentType,
     );
@@ -68,7 +70,7 @@ class PaymentApiService {
 
     final response = await http.post(
       uri,
-      headers: _paymentHeaders(jsonContentType: true),
+      headers: await _paymentHeaders(jsonContentType: true),
       body: jsonEncode({'order_id': orderId}),
     );
 
@@ -98,7 +100,7 @@ class PaymentApiService {
 
     final response = await http.get(
       uri,
-      headers: _paymentHeaders(),
+      headers: await _paymentHeaders(),
     );
 
     if (response.statusCode != 200) {

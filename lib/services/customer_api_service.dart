@@ -39,11 +39,15 @@ class OtpVerifyResult {
     required this.verified,
     required this.phone,
     required this.accessToken,
+    required this.refreshToken,
+    required this.expiresIn,
   });
 
   final bool verified;
   final String phone;
   final String accessToken;
+  final String refreshToken;
+  final int expiresIn;
 
   factory OtpVerifyResult.fromJson(Map<String, dynamic> json) {
     final customer = json['customer'];
@@ -54,6 +58,8 @@ class OtpVerifyResult {
           ? customer['phone']?.toString() ?? ''
           : '',
       accessToken: json['access_token']?.toString() ?? '',
+      refreshToken: json['refresh_token']?.toString() ?? '',
+      expiresIn: json['expires_in'] is int ? json['expires_in'] as int : 0,
     );
   }
 }
@@ -91,7 +97,8 @@ class OtpStatusResult {
       message: json['message']?.toString() ?? '',
       showCodeInput: json['show_code_input'] == true,
       smsFallbackUsed: json['sms_fallback_used'] == true,
-      retryAfter: json['retry_after'] is int ? json['retry_after'] as int : null,
+      retryAfter:
+          json['retry_after'] is int ? json['retry_after'] as int : null,
     );
   }
 }
@@ -135,6 +142,7 @@ class CustomerApiService {
         'session_id': sessionId,
         'phone': phone,
         'code': code,
+        'token_mode': 'refresh',
       }),
     );
 
@@ -182,6 +190,7 @@ class CustomerApiService {
       body: jsonEncode({
         'session_id': sessionId,
         'phone': phone,
+        'token_mode': 'refresh',
       }),
     );
 
@@ -211,7 +220,7 @@ class CustomerApiService {
           if (syncSaby) 'sync_saby': '1',
         },
       ),
-      headers: _authHeaders(),
+      headers: await _authHeaders(),
     );
 
     final data = _decodeResponse(response);
@@ -236,7 +245,7 @@ class CustomerApiService {
 
     final response = await http.patch(
       ApiConfig.uri('/api/customers/profile/'),
-      headers: _authJsonHeaders,
+      headers: await _authJsonHeaders(),
       body: jsonEncode(body),
     );
 
@@ -250,7 +259,7 @@ class CustomerApiService {
   }) async {
     final response = await http.get(
       ApiConfig.uri('/api/customers/addresses/'),
-      headers: _authHeaders(),
+      headers: await _authHeaders(),
     );
 
     final data = _decodeListResponse(response);
@@ -273,7 +282,7 @@ class CustomerApiService {
   }) async {
     final response = await http.post(
       ApiConfig.uri('/api/customers/addresses/'),
-      headers: _authJsonHeaders,
+      headers: await _authJsonHeaders(),
       body: jsonEncode({
         'address': address,
         'entrance': entrance,
@@ -331,7 +340,7 @@ class CustomerApiService {
 
     final response = await http.patch(
       ApiConfig.uri('/api/customers/addresses/$addressId/'),
-      headers: _authJsonHeaders,
+      headers: await _authJsonHeaders(),
       body: jsonEncode(body),
     );
 
@@ -345,7 +354,7 @@ class CustomerApiService {
   }) async {
     final response = await http.post(
       ApiConfig.uri('/api/customers/addresses/$addressId/set-default/'),
-      headers: _authJsonHeaders,
+      headers: await _authJsonHeaders(),
     );
 
     final data = _decodeResponse(response);
@@ -358,7 +367,7 @@ class CustomerApiService {
   }) async {
     final response = await http.delete(
       ApiConfig.uri('/api/customers/addresses/$addressId/'),
-      headers: _authHeaders(),
+      headers: await _authHeaders(),
     );
 
     if (response.statusCode == 204) {
@@ -375,7 +384,7 @@ class CustomerApiService {
   }) async {
     final response = await http.post(
       ApiConfig.uri('/api/customers/account/delete/'),
-      headers: _authJsonHeaders,
+      headers: await _authJsonHeaders(),
       body: jsonEncode({
         'phone': phone,
         'session_id': sessionId,
@@ -390,7 +399,7 @@ class CustomerApiService {
     final decodedBody = utf8.decode(response.bodyBytes);
 
     if (response.statusCode == 401 || response.statusCode == 403) {
-      unawaited(ApiAuthStorage.instance.clearAccessToken());
+      unawaited(ApiAuthStorage.instance.clearCustomerSession());
       throw const AuthRequiredException(
         'Сессия истекла. Войдите по SMS для продолжения.',
       );
@@ -417,7 +426,7 @@ class CustomerApiService {
     final decodedBody = utf8.decode(response.bodyBytes);
 
     if (response.statusCode == 401 || response.statusCode == 403) {
-      unawaited(ApiAuthStorage.instance.clearAccessToken());
+      unawaited(ApiAuthStorage.instance.clearCustomerSession());
       throw const AuthRequiredException(
         'Сессия истекла. Войдите по SMS для продолжения.',
       );
@@ -487,10 +496,11 @@ class CustomerApiService {
     }
   }
 
-  Map<String, String> get _authJsonHeaders =>
-      ApiAuthStorage.instance.headers(jsonContentType: true);
+  Future<Map<String, String>> _authJsonHeaders() =>
+      ApiAuthStorage.instance.authorizedHeaders(jsonContentType: true);
 
-  Map<String, String> _authHeaders() => ApiAuthStorage.instance.headers();
+  Future<Map<String, String>> _authHeaders() =>
+      ApiAuthStorage.instance.authorizedHeaders();
 
   Map<String, String> get _jsonHeaders {
     return {

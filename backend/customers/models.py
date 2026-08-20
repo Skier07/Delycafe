@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -298,3 +300,50 @@ class PhoneAuthSession(models.Model):
     def mark_failed(self) -> None:
         self.status = self.Status.FAILED
         self.save(update_fields=['status', 'updated_at'])
+
+
+class CustomerRefreshToken(models.Model):
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name='refresh_tokens',
+        verbose_name='Клиент',
+    )
+    family_id = models.UUIDField(
+        default=uuid.uuid4,
+        db_index=True,
+        editable=False,
+        verbose_name='Семейство токенов',
+    )
+    token_hash = models.CharField(
+        max_length=64,
+        unique=True,
+        editable=False,
+        verbose_name='Хэш refresh token',
+    )
+    expires_at = models.DateTimeField(
+        db_index=True,
+        verbose_name='Истекает',
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Последнее использование',
+    )
+    revoked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Отозван',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Создан',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Refresh-сессия клиента'
+        verbose_name_plural = 'Refresh-сессии клиентов'
+
+    def __str__(self):
+        return f'{self.customer.phone} — до {self.expires_at:%d.%m.%Y}'
