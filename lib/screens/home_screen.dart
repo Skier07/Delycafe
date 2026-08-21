@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/features/auth/auth_screen.dart';
-import 'package:delycafe/screens/pin_unlock_screen.dart';
 import 'package:delycafe/screens/about_screen.dart';
 import 'package:delycafe/screens/addresses_screen.dart';
 import 'package:delycafe/screens/bonuses_screen.dart';
@@ -618,13 +617,9 @@ class __LoginBannerContentState extends State<_LoginBannerContent> {
       onTapUp: (_) => _setPressed(false),
       onTapCancel: () => _setPressed(false),
       onTap: () {
-        final auth = context.read<AuthService>();
-        final nextScreen =
-            auth.needsPinUnlock ? const PinUnlockScreen() : const AuthScreen();
-
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => nextScreen),
+          MaterialPageRoute(builder: (_) => const AuthScreen()),
         );
       },
       child: AnimatedContainer(

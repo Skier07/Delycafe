@@ -1,7 +1,8 @@
 ﻿import 'dart:async';
 
-import 'package:delycafe/screens/pin_setup_screen.dart';
+import 'package:delycafe/root_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/user_facing_error.dart';
 import 'package:delycafe/widgets/auth/pin_code_input.dart';
 import 'package:flutter/material.dart';
@@ -115,7 +116,7 @@ class _CodeScreenState extends State<CodeScreen> {
       }
 
       if (completed) {
-        await _goToPinSetup();
+        await _goToApp();
       }
     } catch (error) {
       if (!mounted) {
@@ -149,11 +150,11 @@ class _CodeScreenState extends State<CodeScreen> {
     });
   }
 
-  Future<void> _goToPinSetup() async {
+  Future<void> _goToApp() async {
     await Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => PinSetupScreen(phone: widget.phoneNumber),
+        builder: (_) => const RootScreen(),
       ),
       (route) => false,
     );
@@ -233,10 +234,11 @@ class _CodeScreenState extends State<CodeScreen> {
       }
 
       if (isValid) {
-        await _goToPinSetup();
+        await _goToApp();
         return;
       }
 
+      AppHaptics.error();
       setState(() {
         _isVerifying = false;
         _statusMessage = null;
@@ -247,6 +249,7 @@ class _CodeScreenState extends State<CodeScreen> {
         return;
       }
 
+      AppHaptics.error();
       setState(() {
         _isVerifying = false;
         _statusMessage = null;

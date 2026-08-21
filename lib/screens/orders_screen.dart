@@ -11,6 +11,7 @@ import 'package:delycafe/services/order_service.dart';
 import 'package:delycafe/services/repeat_order_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -89,6 +90,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   void _repeatOrder(RepeatOrderResult result) {
+    AppHaptics.addToCart();
     final cart = context.read<CartService>();
 
     for (final match in result.matches) {

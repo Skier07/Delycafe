@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   bool _isLoading = true;
   bool _isCheckingStatus = false;
   bool _paymentCompleted = false;
+  bool _paymentFailedNotified = false;
   bool _awaitingBankReturn = false;
   bool _isClosing = false;
   String? _lastLaunchedExternalUrl;
@@ -98,6 +100,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       } catch (error) {
         if (!mounted) return;
 
+        AppHaptics.error();
         setState(() {
           _errorMessage = error.toString();
           _isLoading = false;
@@ -122,6 +125,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     if (paymentUrl.isEmpty) {
       if (!mounted) return;
 
+      AppHaptics.error();
       setState(() {
         _errorMessage = 'Ссылка на оплату не получена';
         _isLoading = false;
@@ -132,6 +136,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     if (!isAllowedPaymentUrl(paymentUrl)) {
       if (!mounted) return;
 
+      AppHaptics.error();
       setState(() {
         _errorMessage = paymentUrlRejectionHint(paymentUrl);
         _isLoading = false;
@@ -378,6 +383,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       return;
     }
 
+    AppHaptics.error();
     setState(() {
       _errorMessage =
           'Не удалось открыть приложение банка. Установите приложение '
@@ -516,13 +522,16 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
         return;
       }
 
-      if (status.isFailed) {
+      if (status.isFailed && !_paymentFailedNotified) {
+        _paymentFailedNotified = true;
+        AppHaptics.error();
         setState(() {
           _errorMessage = 'Оплата не прошла. Попробуйте ещё раз.';
         });
       }
     } catch (error) {
       if (showErrors && mounted) {
+        AppHaptics.error();
         setState(() {
           _errorMessage = error.toString();
         });

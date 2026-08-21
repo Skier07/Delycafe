@@ -2,6 +2,7 @@ import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _addToCart() {
+    AppHaptics.addToCart();
     context.read<CartService>().addToCart(
           widget.item,
           variant: _selectedVariant,

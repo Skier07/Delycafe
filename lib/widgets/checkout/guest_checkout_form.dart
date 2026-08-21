@@ -10,6 +10,7 @@ import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/legal_consent_prompt.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:delycafe/widgets/checkout/legal_consent_checkout_section.dart';
@@ -1632,7 +1633,10 @@ class _ChoiceCard extends StatelessWidget {
               );
 
         return GestureDetector(
-          onTap: onTap,
+          onTap: () {
+            AppHaptics.selection();
+            onTap();
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             alignment: Alignment.center,

@@ -10,6 +10,7 @@ import 'package:delycafe/services/order_api_service.dart';
 import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:delycafe/widgets/checkout/guest_checkout_form.dart';
 import 'package:flutter/cupertino.dart';
@@ -189,6 +190,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       }
 
                       if (paymentUrl.isEmpty) {
+                        AppHaptics.error();
                         throw Exception(
                           paymentError?.isNotEmpty == true
                               ? paymentError!
@@ -198,6 +200,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       }
 
                       if (!isAllowedPaymentUrl(paymentUrl)) {
+                        AppHaptics.error();
                         throw Exception(paymentUrlRejectionHint(paymentUrl));
                       }
 
@@ -216,6 +219,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       if (!context.mounted) return;
 
                       if (paid != true) {
+                        AppHaptics.error();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(

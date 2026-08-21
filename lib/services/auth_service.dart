@@ -3,34 +3,29 @@ import 'dart:async';
 import 'package:delycafe/exceptions/auth_required_exception.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/api_auth_storage.dart';
-import 'package:delycafe/services/biometric_auth_service.dart';
 import 'package:delycafe/services/customer_api_service.dart';
-import 'package:delycafe/services/pin_credential_service.dart';
 import 'package:delycafe/services/user_profile_cache_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService extends ChangeNotifier {
   AuthService({
     CustomerApiService? customerApiService,
     UserProfileCacheService? profileCacheService,
-    PinCredentialService? pinCredentialService,
-    BiometricAuthService? biometricAuthService,
   })  : _customerApiService = customerApiService ?? CustomerApiService(),
-        _profileCacheService = profileCacheService ?? UserProfileCacheService(),
-        _pinCredentialService = pinCredentialService ?? PinCredentialService(),
-        _biometricAuthService = biometricAuthService ?? BiometricAuthService() {
+        _profileCacheService =
+            profileCacheService ?? UserProfileCacheService() {
     _loadSavedSession();
   }
 
   final CustomerApiService _customerApiService;
   final UserProfileCacheService _profileCacheService;
-  final PinCredentialService _pinCredentialService;
-  final BiometricAuthService _biometricAuthService;
 
   static const String _savedPhoneKey = 'saved_user_phone';
   static const String _otpSessionIdKey = 'otp_session_id';
   static const Duration _profileRequestTimeout = Duration(seconds: 8);
+  static const FlutterSecureStorage _legacyPinStorage = FlutterSecureStorage();
 
   final Completer<void> _sessionReadyCompleter = Completer<void>();
 
@@ -38,27 +33,15 @@ class AuthService extends ChangeNotifier {
   User? _currentUser;
   String? _registeredPhone;
   bool _isLoadingSession = true;
-  bool _isUnlocked = false;
-  bool _guestSession = false;
   bool _needsAccessTokenRefresh = false;
 
-  User? get currentUser => _isUnlocked ? _currentUser : null;
-  bool get isLoggedIn => _currentUser != null && _isUnlocked;
+  User? get currentUser => _currentUser;
+  bool get isLoggedIn => _currentUser != null;
   bool get isLoadingSession => _isLoadingSession;
   bool get needsAccessTokenRefresh =>
       _needsAccessTokenRefresh && _registeredPhone != null;
   int? get otpSessionId => _otpSessionId;
   String? get registeredPhone => _registeredPhone;
-  bool get needsPinUnlock =>
-      !_guestSession &&
-      _registeredPhone != null &&
-      !_isUnlocked &&
-      !_isLoadingSession;
-  bool get needsPinSetup =>
-      _currentUser != null &&
-      !_isUnlocked &&
-      _registeredPhone != null &&
-      !_guestSession;
 
   Future<void> waitForSessionReady() => _sessionReadyCompleter.future;
 
@@ -106,7 +89,6 @@ class AuthService extends ChangeNotifier {
     }
 
     await _saveAuthSession(result);
-
     await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
     await _clearOtpSession();
     return true;
@@ -135,7 +117,6 @@ class AuthService extends ChangeNotifier {
       }
 
       await _saveAuthSession(result);
-
       await signInAfterOtp(result.phone.isNotEmpty ? result.phone : phone);
       await _clearOtpSession();
       return true;
@@ -180,7 +161,6 @@ class AuthService extends ChangeNotifier {
         );
 
         await _saveAuthSession(result);
-
         await signInAfterOtp(
           result.phone.isNotEmpty ? result.phone : phone,
         );
@@ -199,121 +179,27 @@ class AuthService extends ChangeNotifier {
   Future<void> signInAfterOtp(String phone) async {
     final normalizedPhone = _normalizePhone(phone);
 
-    _guestSession = false;
     _registeredPhone = normalizedPhone;
     _currentUser = User(phone: normalizedPhone);
-    _isUnlocked = false;
-
     notifyListeners();
 
+    await _clearLegacyPin(normalizedPhone);
     await _savePhone(normalizedPhone);
-    await loadCustomerProfile(normalizedPhone, keepLocked: true);
-  }
-
-  Future<void> completePinSetup({
-    required String phone,
-    required String pin,
-  }) async {
-    final normalizedPhone = _normalizePhone(phone);
-
-    await _pinCredentialService.savePin(normalizedPhone, pin);
-
-    _registeredPhone = normalizedPhone;
-    _guestSession = false;
-    _isUnlocked = true;
-
-    _currentUser ??= User(phone: normalizedPhone);
-
     await loadCustomerProfile(normalizedPhone);
-  }
-
-  Future<bool> unlockWithPin(String pin) async {
-    final phone = _registeredPhone;
-
-    if (phone == null) {
-      return false;
-    }
-
-    final isValid = await _pinCredentialService.verifyPin(phone, pin);
-
-    if (!isValid) {
-      return false;
-    }
-
-    await _unlockRegisteredAccount(phone);
-    return true;
-  }
-
-  Future<bool> unlockWithBiometric({String? phone}) async {
-    final targetPhone = phone ?? _registeredPhone;
-
-    if (targetPhone == null) {
-      return false;
-    }
-
-    if (!await _pinCredentialService.hasPin(targetPhone)) {
-      return false;
-    }
-
-    final authenticated = await _biometricAuthService.authenticate();
-
-    if (!authenticated) {
-      return false;
-    }
-
-    await _unlockRegisteredAccount(targetPhone);
-    return true;
-  }
-
-  Future<bool> canUseBiometricUnlock({String? phone}) async {
-    final targetPhone = phone ?? _registeredPhone;
-
-    if (targetPhone == null) {
-      return false;
-    }
-
-    if (!await _pinCredentialService.hasPin(targetPhone)) {
-      return false;
-    }
-
-    return _biometricAuthService.isBiometricReady();
-  }
-
-  void skipPinUnlockForSession() {
-    _guestSession = true;
-    _isUnlocked = false;
-    _currentUser = null;
-    notifyListeners();
   }
 
   Future<void> signInWithPhone(String phone) async {
     final normalizedPhone = _normalizePhone(phone);
-    final hasPin = await _pinCredentialService.hasPin(normalizedPhone);
-    final sameAccount = _normalizePhone(
-          _registeredPhone ?? _currentUser?.phone ?? '',
-        ) ==
-        normalizedPhone;
-    final preserveUnlock = _isUnlocked && sameAccount;
 
     _registeredPhone = normalizedPhone;
-    _guestSession = false;
     _currentUser ??= User(phone: normalizedPhone);
-    _isUnlocked = preserveUnlock || !hasPin;
-
     notifyListeners();
 
     await _savePhone(normalizedPhone);
-
-    await loadCustomerProfile(
-      normalizedPhone,
-      keepLocked: hasPin && !preserveUnlock,
-    );
+    await loadCustomerProfile(normalizedPhone);
   }
 
-  Future<void> loadCustomerProfile(
-    String phone, {
-    bool keepLocked = false,
-  }) async {
+  Future<void> loadCustomerProfile(String phone) async {
     final normalizedPhone = _normalizePhone(phone);
 
     if (!ApiAuthStorage.instance.hasCustomerSession) {
@@ -322,11 +208,6 @@ class AuthService extends ChangeNotifier {
 
       if (cachedUser != null) {
         _currentUser = cachedUser;
-
-        if (!keepLocked) {
-          _isUnlocked = true;
-        }
-
         notifyListeners();
       }
 
@@ -345,11 +226,6 @@ class AuthService extends ChangeNotifier {
 
       await _savePhone(user.phone);
       await _profileCacheService.save(user);
-
-      if (!keepLocked) {
-        _isUnlocked = true;
-      }
-
       notifyListeners();
     } on AuthRequiredException {
       _needsAccessTokenRefresh = true;
@@ -358,11 +234,6 @@ class AuthService extends ChangeNotifier {
 
       if (cachedUser != null) {
         _currentUser = cachedUser;
-
-        if (!keepLocked) {
-          _isUnlocked = true;
-        }
-
         notifyListeners();
       }
     } catch (error) {
@@ -372,11 +243,6 @@ class AuthService extends ChangeNotifier {
 
       if (cachedUser != null) {
         _currentUser = cachedUser;
-
-        if (!keepLocked) {
-          _isUnlocked = true;
-        }
-
         notifyListeners();
       }
     }
@@ -423,9 +289,7 @@ class AuthService extends ChangeNotifier {
 
     if (phone == null || phone.trim().isEmpty) return;
 
-    final keepLocked = !_isUnlocked;
-
-    await loadCustomerProfile(phone, keepLocked: keepLocked);
+    await loadCustomerProfile(phone);
   }
 
   Future<void> synchronizeBonusBalance(int bonusBalance) async {
@@ -445,8 +309,6 @@ class AuthService extends ChangeNotifier {
     await ApiAuthStorage.instance.revokeRefreshToken();
     await ApiAuthStorage.instance.clearCustomerSession();
     _currentUser = null;
-    _isUnlocked = false;
-    _guestSession = false;
     _needsAccessTokenRefresh = true;
     notifyListeners();
   }
@@ -455,11 +317,11 @@ class AuthService extends ChangeNotifier {
     final phone = _registeredPhone ?? _currentUser?.phone;
 
     if (phone != null && phone.trim().isNotEmpty) {
-      await _pinCredentialService.clearCredentials(phone);
+      await _clearLegacyPin(phone);
       await _profileCacheService.clear(phone);
     }
 
-    await logout(clearPin: false);
+    await logout();
   }
 
   Future<void> sendAccountDeletionCode(String phone) async {
@@ -482,18 +344,16 @@ class AuthService extends ChangeNotifier {
       code: code,
     );
 
-    await logout(clearPin: true);
+    await logout();
     await _clearOtpSession();
   }
 
-  Future<void> logout({bool clearPin = true}) async {
+  Future<void> logout() async {
     final phone = _registeredPhone ?? _currentUser?.phone;
 
     _currentUser = null;
     _otpSessionId = null;
     _registeredPhone = null;
-    _isUnlocked = false;
-    _guestSession = false;
     _needsAccessTokenRefresh = false;
 
     final prefs = await SharedPreferences.getInstance();
@@ -501,10 +361,7 @@ class AuthService extends ChangeNotifier {
     await prefs.remove(_otpSessionIdKey);
 
     if (phone != null && phone.trim().isNotEmpty) {
-      if (clearPin) {
-        await _pinCredentialService.clearCredentials(phone);
-      }
-
+      await _clearLegacyPin(phone);
       await _profileCacheService.clear(phone);
     }
 
@@ -512,21 +369,6 @@ class AuthService extends ChangeNotifier {
     await ApiAuthStorage.instance.clearAll();
 
     notifyListeners();
-  }
-
-  Future<void> _unlockRegisteredAccount(String phone) async {
-    final normalizedPhone = _normalizePhone(phone);
-    final cachedUser = _profileCacheService.read(normalizedPhone);
-
-    _registeredPhone = normalizedPhone;
-    _guestSession = false;
-    _currentUser = cachedUser ?? User(phone: normalizedPhone);
-    _isUnlocked = true;
-
-    notifyListeners();
-
-    await _savePhone(normalizedPhone);
-    await loadCustomerProfile(normalizedPhone);
   }
 
   Future<void> _loadSavedSession() async {
@@ -539,19 +381,12 @@ class AuthService extends ChangeNotifier {
 
       if (savedPhone != null && savedPhone.trim().isNotEmpty) {
         final normalizedPhone = _normalizePhone(savedPhone);
-        final hasPin = await _pinCredentialService.hasPin(normalizedPhone);
-
         _registeredPhone = normalizedPhone;
+        await _clearLegacyPin(normalizedPhone);
 
-        if (hasPin) {
-          _isUnlocked = false;
-          _currentUser = null;
-        } else {
-          final cachedUser = _profileCacheService.read(normalizedPhone);
-          _currentUser = cachedUser ?? User(phone: normalizedPhone);
-          _isUnlocked = true;
-          await loadCustomerProfile(normalizedPhone);
-        }
+        final cachedUser = _profileCacheService.read(normalizedPhone);
+        _currentUser = cachedUser ?? User(phone: normalizedPhone);
+        await loadCustomerProfile(normalizedPhone);
       }
     } catch (error) {
       debugPrint('Ошибка восстановления сессии: $error');
@@ -588,6 +423,18 @@ class AuthService extends ChangeNotifier {
     }
 
     _needsAccessTokenRefresh = false;
+  }
+
+  Future<void> _clearLegacyPin(String phone) async {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return;
+
+    try {
+      await _legacyPinStorage.delete(key: 'pin_hash_$digits');
+      await _legacyPinStorage.delete(key: 'pin_biometric_$digits');
+    } catch (error) {
+      debugPrint('Не удалось удалить старый PIN: $error');
+    }
   }
 
   Future<int?> _readSavedSessionId() async {

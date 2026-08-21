@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:flutter/material.dart';
 
 class ShaderGlassContainer extends StatefulWidget {
@@ -183,7 +184,10 @@ class _ShaderGlassContainerState extends State<ShaderGlassContainer> {
     return Material(
       color: Colors.transparent,
       child: GestureDetector(
-        onTap: widget.onPressed,
+        onTap: () {
+          AppHaptics.glassButton();
+          widget.onPressed!();
+        },
         onTapDown: (_) => _setPressed(true),
         onTapUp: (_) => _setPressed(false),
         onTapCancel: () => _setPressed(false),

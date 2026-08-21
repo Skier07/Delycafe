@@ -5,6 +5,7 @@ import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/catalog_repository.dart';
 import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/widgets/catalog/catalog_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -215,9 +216,11 @@ class _CatalogSectionState extends State<CatalogSection> {
     final currentCategory = _getCurrentCategory(categories);
     final items = _getFilteredItems(catalog, currentCategory);
 
-    return RefreshIndicator(
-      onRefresh: _refreshFromServer,
-      child: CustomScrollView(
+    return NotificationListener<ScrollNotification>(
+      onNotification: AppHaptics.onScrollStart,
+      child: RefreshIndicator(
+        onRefresh: _refreshFromServer,
+        child: CustomScrollView(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -299,6 +302,7 @@ class _CatalogSectionState extends State<CatalogSection> {
               },
             ),
         ],
+        ),
       ),
     );
   }
@@ -354,6 +358,7 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
                     onTap: () {
+                      AppHaptics.selection();
                       onCategorySelected(category);
                     },
                     child: AnimatedContainer(

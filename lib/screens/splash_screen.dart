@@ -1,5 +1,4 @@
 import 'package:delycafe/root_screen.dart';
-import 'package:delycafe/screens/pin_unlock_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/catalog_repository.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
@@ -72,15 +71,11 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    final nextScreen = auth.needsPinUnlock
-        ? const PinUnlockScreen()
-        : const RootScreen();
-
     await Navigator.pushReplacement(
       context,
       PageRouteBuilder<void>(
         pageBuilder: (context, animation, secondaryAnimation) {
-          return nextScreen;
+          return const RootScreen();
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(

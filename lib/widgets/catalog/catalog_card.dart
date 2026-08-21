@@ -2,6 +2,7 @@ import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/screens/catalog/product_detail_screen.dart';
 import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/material.dart';
 
@@ -28,6 +29,7 @@ class _CatalogCardState extends State<CatalogCard> {
   bool _hideCartButton = false;
 
   void _openProductDetail() {
+    AppHaptics.openProduct();
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -62,6 +64,7 @@ class _CatalogCardState extends State<CatalogCard> {
       );
     }
 
+    AppHaptics.addToCart();
     setState(() => _hideCartButton = true);
     widget.onAddToCart!(origin: origin);
 
