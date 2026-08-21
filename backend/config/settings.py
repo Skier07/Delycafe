@@ -258,12 +258,12 @@ ALFA_API_PASSWORD = os.getenv('ALFA_API_PASSWORD', '')
 
 ALFA_RETURN_URL = os.getenv(
     'ALFA_RETURN_URL',
-    'http://127.0.0.1:8000/api/payments/success/',
+    'https://api.delycafe.ru/api/payments/success/',
 )
 
 ALFA_FAIL_URL = os.getenv(
     'ALFA_FAIL_URL',
-    'http://127.0.0.1:8000/api/payments/fail/',
+    'https://api.delycafe.ru/api/payments/fail/',
 )
 
 ALFA_CALLBACK_URL = os.getenv(
@@ -370,3 +370,30 @@ DEFAULT_FROM_EMAIL = os.getenv(
     'DEFAULT_FROM_EMAIL',
     EMAIL_HOST_USER or ORDER_ADMIN_EMAIL,
 )
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'orders': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'payments': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

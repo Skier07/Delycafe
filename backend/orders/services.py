@@ -40,11 +40,9 @@ def rollback_order(order: Order):
         return
 
     with transaction.atomic():
-        locked_order = (
-            Order.objects.select_for_update()
-            .select_related('customer')
-            .get(pk=order.pk)
-        )
+        # Нельзя select_related('customer'): nullable FK даёт LEFT JOIN,
+        # а PostgreSQL запрещает FOR UPDATE на nullable стороне join.
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
 
         if locked_order.bonus_compensated:
             return
@@ -357,11 +355,7 @@ def apply_partial_order_return(
         raise OrderReturnError('Нужна хотя бы одна позиция возврата')
 
     with transaction.atomic():
-        locked_order = (
-            Order.objects.select_for_update()
-            .select_related('customer')
-            .get(pk=order.pk)
-        )
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
 
         if locked_order.bonus_compensated:
             raise OrderReturnError(
@@ -529,10 +523,8 @@ def settle_order_return(order_return) -> None:
         if not item_rows:
             return
 
-        locked_order = (
-            Order.objects.select_for_update()
-            .select_related('customer')
-            .get(pk=locked_return.order_id)
+        locked_order = Order.objects.select_for_update().get(
+            pk=locked_return.order_id,
         )
 
         if locked_order.bonus_compensated:

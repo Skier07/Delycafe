@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 from django.db import transaction
 from django.db.models import Q
@@ -19,7 +20,12 @@ from .promotions import (
     PICKUP_DISCOUNT_PERCENT,
 )
 from .services import rollback_order
-from payments.services import evaluate_alfa_session_for_reuse
+from payments.services import (
+    evaluate_alfa_session_for_reuse,
+    expire_all_stale_unpaid_orders,
+)
+
+logger = logging.getLogger(__name__)
 
 UNPAID_ORDER_REUSE_HOURS = 24
 
@@ -384,7 +390,13 @@ class OrderCreateSerializer(serializers.Serializer):
         for order in queryset:
             order.status = Order.Status.CANCELED
             order.save(update_fields=['status', 'updated_at'])
-            rollback_order(order)
+            try:
+                rollback_order(order)
+            except Exception:
+                logger.exception(
+                    'rollback_order failed for unpaid order #%s',
+                    order.id,
+                )
 
     def _calculate_order_pricing(
         self,
@@ -504,9 +516,13 @@ class OrderCreateSerializer(serializers.Serializer):
             or pricing['total_price'] != order.payment_amount
         )
 
-    @transaction.atomic
     def create_or_reuse(self, validated_data):
         data = dict(validated_data)
+        expire_all_stale_unpaid_orders()
+        return self._create_or_reuse_atomic(data)
+
+    @transaction.atomic
+    def _create_or_reuse_atomic(self, data):
         items_data = data['items']
         reusable_order = self._find_reusable_unpaid_order(
             data['phone'],

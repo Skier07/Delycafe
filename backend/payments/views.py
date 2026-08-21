@@ -23,6 +23,7 @@ from .callback_handlers import (
 from .services import (
     AlfaPaymentError,
     create_alfa_payment,
+    expire_stale_unpaid_order,
     get_alfa_payment_status,
 )
 
@@ -102,14 +103,18 @@ class AlfaPaymentStatusAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        try:
-            get_alfa_payment_status(order)
-            order.refresh_from_db()
-        except AlfaPaymentError:
-            return Response(
-                {'detail': 'Не удалось проверить оплату. Попробуйте позже.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        expire_stale_unpaid_order(order)
+        order.refresh_from_db()
+
+        if order.payment_status == Order.PaymentStatus.UNPAID:
+            try:
+                get_alfa_payment_status(order)
+                order.refresh_from_db()
+            except AlfaPaymentError:
+                return Response(
+                    {'detail': 'Не удалось проверить оплату. Попробуйте позже.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return Response(
             {

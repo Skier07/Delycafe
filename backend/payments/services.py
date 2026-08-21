@@ -2,11 +2,13 @@ import json
 import logging
 import re
 from decimal import Decimal
+from datetime import timedelta
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 from django.conf import settings
+from django.utils import timezone
 
 from orders.models import Order
 from orders.services import confirm_order_paid, rollback_order
@@ -19,6 +21,7 @@ _ALFA_PAYABLE_ORDER_STATUSES = {'0', '1', '5'}
 _ALFA_PAID_ORDER_STATUS = '2'
 _ALFA_EXPIRED_ORDER_STATUSES = {'3', '4', '6'}
 _ALFA_EXPIRED_ACTION_CODES = {'-2007', '-2014'}
+UNPAID_PAYMENT_TIMEOUT = timedelta(minutes=20)
 
 
 class AlfaPaymentError(Exception):
@@ -241,7 +244,13 @@ def close_unpaid_alfa_order(order):
         update_fields.append('status')
 
     order.save(update_fields=list(set(update_fields)))
-    rollback_order(order)
+    try:
+        rollback_order(order)
+    except Exception:
+        logger.exception(
+            'rollback_order failed while closing unpaid order #%s',
+            order.id,
+        )
 
     logger.info(
         'Closed unpaid Alfa order #%s after expired or rejected payment session',
@@ -249,34 +258,92 @@ def close_unpaid_alfa_order(order):
     )
 
 
+def unpaid_order_is_stale(order, now=None) -> bool:
+    now = now or timezone.now()
+
+    if order.payment_status != Order.PaymentStatus.UNPAID:
+        return False
+
+    if order.status != Order.Status.NEW:
+        return False
+
+    created_at = order.created_at
+    if created_at is None:
+        return False
+
+    return now - created_at >= UNPAID_PAYMENT_TIMEOUT
+
+
+def expire_stale_unpaid_order(order) -> bool:
+    """Закрывает заказ, который ждёт оплату дольше 20 минут."""
+    order.refresh_from_db()
+
+    if not unpaid_order_is_stale(order):
+        return False
+
+    close_unpaid_alfa_order(order)
+    logger.info(
+        'Marked unpaid order #%s as failed after %s',
+        order.id,
+        UNPAID_PAYMENT_TIMEOUT,
+    )
+    return True
+
+
+def expire_all_stale_unpaid_orders() -> int:
+    cutoff = timezone.now() - UNPAID_PAYMENT_TIMEOUT
+    stale_orders = Order.objects.filter(
+        payment_status=Order.PaymentStatus.UNPAID,
+        status=Order.Status.NEW,
+        created_at__lte=cutoff,
+    )
+
+    expired = 0
+    for stale_order in stale_orders:
+        if expire_stale_unpaid_order(stale_order):
+            expired += 1
+
+    return expired
+
+
 def evaluate_alfa_session_for_reuse(order):
     """
     Проверяет, можно ли переиспользовать заказ при оформлении.
     Просроченные в Альфе заказы закрывает в БД.
     """
-    if order.payment_status == Order.PaymentStatus.PAID:
+    try:
+        if expire_stale_unpaid_order(order):
+            return False
+
+        if order.payment_status == Order.PaymentStatus.PAID:
+            return False
+
+        if not getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
+            return True
+
+        if not (order.payment_external_id or '').strip():
+            return True
+
+        response = _fetch_alfa_status_response(order)
+        if response is None:
+            return True
+
+        state = _apply_alfa_status_response(order, response)
+        order.refresh_from_db()
+
+        if state == 'paid':
+            return False
+
+        if state == 'expired':
+            return False
+
+        return state == 'payable'
+    except AlfaPaymentError:
+        logger.exception(
+            'Alfa session check failed for order #%s',
+            order.id,
+        )
         return False
-
-    if not getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
-        return True
-
-    if not (order.payment_external_id or '').strip():
-        return True
-
-    response = _fetch_alfa_status_response(order)
-    if response is None:
-        return True
-
-    state = _apply_alfa_status_response(order, response)
-    order.refresh_from_db()
-
-    if state == 'paid':
-        return False
-
-    if state == 'expired':
-        return False
-
-    return state == 'payable'
 
 
 def _ensure_payable_before_reuse(order):
@@ -500,9 +567,28 @@ def _try_reuse_existing_alfa_session(order, *, amount_value=None):
     return result
 
 
+def _public_alfa_redirect_url(url, fallback):
+    value = (url or '').strip() or fallback
+    lowered = value.lower()
+    if '127.0.0.1' in lowered or 'localhost' in lowered:
+        logger.warning(
+            'Alfa redirect URL is localhost (%s); using %s',
+            value,
+            fallback,
+        )
+        return fallback
+    return value
+
+
 def create_alfa_payment(order, *, force=False):
     if not getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
         raise AlfaPaymentError('Оплата через Альфа-Банк выключена в настройках.')
+
+    if expire_stale_unpaid_order(order):
+        raise AlfaPaymentError(
+            'Срок оплаты истёк. Оформите заказ ещё раз — '
+            'будет создан новый заказ.'
+        )
 
     amount_value = getattr(order, 'payment_amount', None) or getattr(order, 'total_price', 0)
 
@@ -537,8 +623,14 @@ def create_alfa_payment(order, *, force=False):
         'password': password,
         'orderNumber': order_number,
         'amount': amount,
-        'returnUrl': getattr(settings, 'ALFA_RETURN_URL', ''),
-        'failUrl': getattr(settings, 'ALFA_FAIL_URL', ''),
+        'returnUrl': _public_alfa_redirect_url(
+            getattr(settings, 'ALFA_RETURN_URL', ''),
+            'https://api.delycafe.ru/api/payments/success/',
+        ),
+        'failUrl': _public_alfa_redirect_url(
+            getattr(settings, 'ALFA_FAIL_URL', ''),
+            'https://api.delycafe.ru/api/payments/fail/',
+        ),
         'description': f'DelyCafe заказ №{order.id}',
         'pageView': 'MOBILE',
         'allowedPaymentWays': _alfa_allowed_payment_ways(order)[0],

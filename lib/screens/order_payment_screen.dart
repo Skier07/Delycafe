@@ -274,11 +274,21 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       unawaited(_checkPaymentStatusWithRetries());
     }
 
+    if (isCard3dsPaymentUrl(url)) {
+      return NavigationDecision.navigate;
+    }
+
     if (_handleExternalUrl(url, fromNavigationRequest: true)) {
       return NavigationDecision.prevent;
     }
 
     if (!isAllowedPaymentUrl(url) && !_isPaymentReturnUrl(url)) {
+      final uri = Uri.tryParse(normalizePaymentUrl(url));
+      final scheme = uri?.scheme.toLowerCase() ?? '';
+      if ((scheme == 'https' || scheme == 'http') &&
+          !_shouldOpenOutsideWebView(url)) {
+        return NavigationDecision.navigate;
+      }
       return NavigationDecision.prevent;
     }
 
@@ -290,6 +300,10 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     required bool fromNavigationRequest,
   }) {
     if (_isPaymentReturnUrl(url)) {
+      return false;
+    }
+
+    if (isCard3dsPaymentUrl(url)) {
       return false;
     }
 
@@ -524,6 +538,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
       if (status.isFailed && !_paymentFailedNotified) {
         _paymentFailedNotified = true;
+        _pollTimer?.cancel();
         AppHaptics.error();
         setState(() {
           _errorMessage = 'Оплата не прошла. Попробуйте ещё раз.';

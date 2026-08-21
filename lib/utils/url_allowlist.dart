@@ -112,7 +112,54 @@ bool isAllowedPaymentUrl(String url) {
   final lowered = normalized.toLowerCase();
 
   return lowered.contains('alfabank.ru/payment/') ||
-      lowered.contains('rbsuat.com/payment/');
+      lowered.contains('rbsuat.com/payment/') ||
+      isCard3dsPaymentUrl(normalized);
+}
+
+/// ACS / 3-D Secure банка-эмитента. Без этого WebView режет редирект
+/// после «Оплатить», кнопка крутится, деньги не списываются.
+bool isCard3dsPaymentUrl(String url) {
+  final normalized = normalizePaymentUrl(url);
+  final uri = Uri.tryParse(normalized);
+
+  if (uri == null) {
+    return false;
+  }
+
+  if (uri.host.isEmpty) {
+    return false;
+  }
+
+  final host = uri.host.toLowerCase();
+  final path = uri.path.toLowerCase();
+  final haystack = '$host $path';
+
+  const markers = [
+    'acs',
+    '3ds',
+    '3dsecure',
+    '3d-secure',
+    'threedsecure',
+    'miraccept',
+    'mironline',
+    'cardinalcommerce',
+    'arcot',
+    'vbv',
+    'securecode',
+    'authentication',
+    'paysec',
+  ];
+
+  if (markers.any(haystack.contains)) {
+    return true;
+  }
+
+  return host.endsWith('.nspk.ru') ||
+      host == 'nspk.ru' ||
+      host.contains('visa.com') ||
+      host.contains('mastercard.com') ||
+      host.contains('mironline.ru') ||
+      host.contains('mir-plati.ru');
 }
 
 String paymentUrlRejectionHint(String url) {
