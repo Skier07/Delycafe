@@ -347,6 +347,17 @@ SMSAERO_OTP_MESSAGE = os.getenv(
 # Используется только при SMSAERO_ENABLED=false (локальная разработка).
 SMSAERO_DEV_CODE = os.getenv('SMSAERO_DEV_CODE', '1234')
 
+# Демо-вход для App Review: SMS не отправляется, код постоянный.
+# Телефоны через запятую, в любом виде: +79000000000 или 79000000000.
+APP_STORE_REVIEW_PHONES = os.getenv(
+    'APP_STORE_REVIEW_PHONES',
+    '79000000000',
+)
+APP_STORE_REVIEW_CODE = os.getenv('APP_STORE_REVIEW_CODE', '1234')
+APP_STORE_REVIEW_OTP_TTL_SECONDS = int(
+    os.getenv('APP_STORE_REVIEW_OTP_TTL_SECONDS', str(7 * 24 * 60 * 60))
+)
+
 # Уведомления администратору об оплаченных заказах (Mail.ru SMTP).
 ORDER_ADMIN_EMAIL_ENABLED = (
     os.getenv('ORDER_ADMIN_EMAIL_ENABLED', 'True').lower() == 'true'

@@ -36,11 +36,11 @@ class AppHaptics {
 
   /// Открытие карточки товара.
   ///
-  /// iPhone: `selection`. Android: `selectionClick`.
+  /// iPhone: `rigid`. Android: `lightImpact`.
   static void openProduct() {
     _play(
-      ios: apple.HapticsType.selection,
-      android: HapticFeedback.selectionClick,
+      ios: apple.HapticsType.rigid,
+      android: HapticFeedback.lightImpact,
     );
   }
 
@@ -66,7 +66,7 @@ class AppHaptics {
     );
   }
 
-  /// Переключатели («Озёрск / Самовывоз») и листание.
+  /// Переключатели («Озёрск / Самовывоз») и щелчок категории.
   ///
   /// iPhone: `selection`. Android: `selectionClick`.
   static void selection() {
@@ -74,16 +74,6 @@ class AppHaptics {
       ios: apple.HapticsType.selection,
       android: HapticFeedback.selectionClick,
     );
-  }
-
-  /// Один тик при начале жеста прокрутки, без дрожи на каждый пиксель.
-  static bool onScrollStart(ScrollNotification notification) {
-    if (notification is ScrollStartNotification &&
-        notification.dragDetails != null) {
-      selection();
-    }
-
-    return false;
   }
 
   static void _play({
@@ -117,5 +107,55 @@ class AppHaptics {
       // На эмуляторе, в тестах и на устройствах без вибромотора
       // отдачу просто пропускаем.
     }
+  }
+}
+
+/// Щелчки энкодера при горизонтальном скролле категорий меню.
+class CategoryEncoderHaptics {
+  CategoryEncoderHaptics();
+
+  static const double detentPixels = 28;
+  static const Duration minInterval = Duration(milliseconds: 45);
+
+  double _lastTickPixels = 0;
+  DateTime? _lastTickAt;
+  bool _armed = false;
+
+  bool handle(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.horizontal) {
+      return false;
+    }
+
+    if (notification is ScrollStartNotification) {
+      if (notification.dragDetails != null) {
+        _armed = true;
+        _lastTickPixels = notification.metrics.pixels;
+      }
+
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification && _armed) {
+      final pixels = notification.metrics.pixels;
+
+      if ((pixels - _lastTickPixels).abs() >= detentPixels) {
+        final now = DateTime.now();
+
+        if (_lastTickAt == null ||
+            now.difference(_lastTickAt!) >= minInterval) {
+          _lastTickPixels = pixels;
+          _lastTickAt = now;
+          AppHaptics.selection();
+        }
+      }
+
+      return false;
+    }
+
+    if (notification is ScrollEndNotification) {
+      _armed = false;
+    }
+
+    return false;
   }
 }

@@ -275,7 +275,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   String get _deliveryInfo {
     switch (_deliveryType) {
       case DeliveryType.ozersk:
-        return 'Озёрск: от 1700 ₽ бесплатно, от 1000 до 1700 ₽ - 200 ₽, до 1000 ₽ - 250';
+        return 'Озёрск: от 1700 ₽ бесплатно, от 1000 до 1700 ₽ - 200 ₽, до 1000 ₽ - 250 ₽';
 
       case DeliveryType.prom:
         return 'Промплощадка: доставка $_promDeliveryPrice ₽';

@@ -28,6 +28,7 @@ class _CatalogSectionState extends State<CatalogSection> {
   final CatalogRepository _catalogRepository = CatalogRepository();
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoriesScrollController = ScrollController();
+  final CategoryEncoderHaptics _categoryEncoderHaptics = CategoryEncoderHaptics();
 
   List<CatalogItem>? _catalog;
   List<String>? _categories;
@@ -216,11 +217,9 @@ class _CatalogSectionState extends State<CatalogSection> {
     final currentCategory = _getCurrentCategory(categories);
     final items = _getFilteredItems(catalog, currentCategory);
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: AppHaptics.onScrollStart,
-      child: RefreshIndicator(
-        onRefresh: _refreshFromServer,
-        child: CustomScrollView(
+    return RefreshIndicator(
+      onRefresh: _refreshFromServer,
+      child: CustomScrollView(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -240,6 +239,7 @@ class _CatalogSectionState extends State<CatalogSection> {
               selectedCategory: currentCategory,
               onCategorySelected: _selectCategory,
               scrollController: _categoriesScrollController,
+              encoderHaptics: _categoryEncoderHaptics,
             ),
           ),
           if (items.isEmpty)
@@ -302,7 +302,6 @@ class _CatalogSectionState extends State<CatalogSection> {
               },
             ),
         ],
-        ),
       ),
     );
   }
@@ -313,12 +312,14 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String selectedCategory;
   final ValueChanged<String> onCategorySelected;
   final ScrollController scrollController;
+  final CategoryEncoderHaptics encoderHaptics;
 
   _CatalogHeaderDelegate({
     required this.categories,
     required this.selectedCategory,
     required this.onCategorySelected,
     required this.scrollController,
+    required this.encoderHaptics,
   });
 
   @override
@@ -347,11 +348,13 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
             ),
           ),
           const SizedBox(height: 12),
-          SingleChildScrollView(
-            controller: scrollController,
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: categories.map((category) {
+          NotificationListener<ScrollNotification>(
+            onNotification: encoderHaptics.handle,
+            child: SingleChildScrollView(
+              controller: scrollController,
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: categories.map((category) {
                 final selected = category == selectedCategory;
 
                 return Padding(
@@ -389,6 +392,7 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 );
               }).toList(),
+              ),
             ),
           ),
         ],

@@ -47,6 +47,9 @@ class OtpAuthService:
 
         self._ensure_can_send(normalized_phone)
 
+        if self._is_review_phone(normalized_phone):
+            return self._send_review_otp(normalized_phone)
+
         if self.mode == 'mobile_id':
             return self._send_mobile_id(normalized_phone)
 
@@ -383,6 +386,22 @@ class OtpAuthService:
         except PhoneAuthSession.DoesNotExist:
             return
 
+    def _send_review_otp(self, phone: str) -> PhoneAuthSession:
+        code = self._review_code()
+        expires_at = timezone.now() + timedelta(
+            seconds=settings.APP_STORE_REVIEW_OTP_TTL_SECONDS,
+        )
+
+        session = PhoneAuthSession.objects.create(
+            phone=phone,
+            mode=PhoneAuthSession.Mode.SMS,
+            status=PhoneAuthSession.Status.AWAITING_OTP,
+            code_hash=self._hash_code(phone, code),
+            expires_at=expires_at,
+        )
+        logger.info('App Store review OTP issued for %s', phone)
+        return session
+
     def _send_sms_otp(self, phone: str) -> PhoneAuthSession:
         if settings.SMSAERO_ENABLED:
             code = self._generate_code()
@@ -516,6 +535,9 @@ class OtpAuthService:
             session.save(update_fields=['status', 'updated_at'])
 
     def _ensure_can_send(self, phone: str) -> None:
+        if self._is_review_phone(phone):
+            return
+
         now = timezone.now()
         cooldown_from = now - timedelta(seconds=settings.SMSAERO_SEND_COOLDOWN_SECONDS)
         hour_ago = now - timedelta(hours=1)
@@ -590,6 +612,30 @@ class OtpAuthService:
         payload = f'{phone}:{code}'.encode()
         secret = settings.SECRET_KEY.encode()
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    @classmethod
+    def _is_review_phone(cls, phone: str) -> bool:
+        normalized = cls._normalize_phone(phone)
+        if not normalized:
+            return False
+
+        return normalized in cls._review_phones()
+
+    @staticmethod
+    def _review_phones() -> set[str]:
+        raw = getattr(settings, 'APP_STORE_REVIEW_PHONES', '') or ''
+        phones = set()
+
+        for part in raw.replace(';', ',').split(','):
+            digits = OtpAuthService._normalize_phone(part)
+            if digits:
+                phones.add(digits)
+
+        return phones
+
+    @staticmethod
+    def _review_code() -> str:
+        return str(getattr(settings, 'APP_STORE_REVIEW_CODE', '') or '1234').strip()
 
     @staticmethod
     def _normalize_phone(value: str) -> str:
