@@ -189,25 +189,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
             const SizedBox(height: 20),
             SafeArea(
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Готово',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
+              child: AuthButton(
+                text: 'Готово',
+                onPressed: () => Navigator.pop(context),
               ),
             ),
           ],

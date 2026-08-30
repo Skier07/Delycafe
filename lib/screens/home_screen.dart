@@ -333,6 +333,10 @@ class HomeBanner extends StatelessWidget {
     required this.onAccountPressed,
   });
 
+  static const BorderRadius _bannerRadius = BorderRadius.vertical(
+    bottom: Radius.circular(AppRadius.button),
+  );
+
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
@@ -342,74 +346,47 @@ class HomeBanner extends StatelessWidget {
     final cart = context.watch<CartService>();
 
     if (user == null) {
-      return Container(
-        height: screenHeight * 0.25,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          image: const DecorationImage(
-            image: AssetImage('assets/images/banner.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            gradient: LinearGradient(
-              begin: Alignment.bottomLeft,
-              end: Alignment.topRight,
-              colors: [
-                Colors.black.withValues(alpha: 0.35),
-                Colors.transparent,
-              ],
-            ),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(scale.bannerPadding),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: scale.loginLeft,
-                  top: scale.loginTop,
-                  child: _LoginBannerContent(scale: scale),
-                ),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: topPadding + 1),
-                    child: _BannerGlassIconButton(
-                      scale: scale,
-                      icon: CupertinoIcons.text_justify,
-                      onPressed: onMenuPressed,
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: _BannerCartButton(
+      return _BannerChrome(
+        fallbackHeight: screenHeight * 0.25,
+        dimmed: true,
+        overlay: Padding(
+          padding: EdgeInsets.all(scale.bannerPadding),
+          child: Stack(
+            children: [
+              Positioned(
+                left: scale.loginLeft,
+                top: scale.loginTop,
+                child: _LoginBannerContent(scale: scale),
+              ),
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: EdgeInsets.only(top: topPadding + 1),
+                  child: _BannerGlassIconButton(
                     scale: scale,
-                    cartIconKey: cartIconKey,
-                    totalItems: cart.totalItems,
+                    icon: CupertinoIcons.text_justify,
+                    onPressed: onMenuPressed,
                   ),
                 ),
-              ],
-            ),
+              ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: _BannerCartButton(
+                  scale: scale,
+                  cartIconKey: cartIconKey,
+                  totalItems: cart.totalItems,
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return Container(
-      height: screenHeight * 0.25,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.button),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/banner.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Padding(
+    return _BannerChrome(
+      fallbackHeight: screenHeight * 0.25,
+      dimmed: false,
+      overlay: Padding(
         padding: EdgeInsets.all(scale.bannerPadding),
         child: Stack(
           children: [
@@ -453,6 +430,79 @@ class HomeBanner extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BannerChrome extends StatelessWidget {
+  const _BannerChrome({
+    required this.overlay,
+    required this.fallbackHeight,
+    required this.dimmed,
+  });
+
+  final Widget overlay;
+  final double fallbackHeight;
+  final bool dimmed;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height =
+            constraints.maxHeight.isFinite && constraints.maxHeight > 0
+                ? constraints.maxHeight
+                : fallbackHeight;
+
+        // Нижний padding, чтобы мягкая тень баннера не обрезалась sliver'ом.
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: HomeBanner._bannerRadius,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.40),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: SizedBox(
+              height: height,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: HomeBanner._bannerRadius,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    const Image(
+                      image: AssetImage('assets/images/banner.png'),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                    if (dimmed)
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.35),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    overlay,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
