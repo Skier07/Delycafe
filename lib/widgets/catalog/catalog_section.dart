@@ -221,7 +221,9 @@ class _CatalogSectionState extends State<CatalogSection> {
       onRefresh: _refreshFromServer,
       child: CustomScrollView(
         controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: ClampingScrollPhysics(),
+        ),
         slivers: [
           if (widget.banner != null)
             SliverToBoxAdapter(

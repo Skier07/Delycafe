@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .models import Category, Product, ProductVariant
+from .models import Category, Product, ProductInfoNote, ProductSnippet, ProductVariant
 from .serializers import CategorySerializer, ProductSerializer
 
 
@@ -37,7 +37,17 @@ class ProductViewSet(ReadOnlyModelViewSet):
                     'variants',
                     queryset=active_variants,
                     to_attr='active_variants',
-                )
+                ),
+                Prefetch(
+                    'product_snippets',
+                    queryset=ProductSnippet.objects.select_related('snippet'),
+                    to_attr='prefetched_snippets',
+                ),
+                Prefetch(
+                    'info_notes',
+                    queryset=ProductInfoNote.objects.all(),
+                    to_attr='prefetched_notes',
+                ),
             )
             .select_related('category')
         )

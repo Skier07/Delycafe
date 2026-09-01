@@ -19,6 +19,10 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Более частая синхронизация — каждую минуту (если нужна минимальная задержка):
 # * * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_order_statuses --limit=200 >> /var/log/delycafe_saby_sync.log 2>&1
 
+# Только цены из прайса Saby. Не меняет категории, названия и активность.
+# Не используйте sync_saby_products в cron — она переписывает категории.
+0 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_prices >> /var/log/delycafe_saby_prices.log 2>&1
+
 # Повторная отправка в Saby оплаченных заказов без sale_id (реже, раз в 10 минут):
 # */10 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py retry_saby_dispatch --limit=50 >> /var/log/delycafe_saby_retry.log 2>&1
 #

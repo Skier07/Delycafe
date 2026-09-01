@@ -144,17 +144,13 @@ def format_phone_for_saby(phone: str) -> str:
     return str(phone or '').strip()
 
 
-LOCALITY_BY_DELIVERY_TYPE = {
-    Order.DeliveryType.OZERSK: 'Озерск',
-    Order.DeliveryType.PROMPLOSHADKA: 'Промплощадка',
-    Order.DeliveryType.TATYSH: 'Татыш',
-}
+from orders.delivery_pricing import get_default_locality, get_delivery_zone_title
 
 
 def build_saby_comment(order: Order) -> str:
     """Комментарий для операторов Saby Presto (время, тип доставки, клиент)."""
     lines = [
-        f'Доставка: {order.get_delivery_type_display()}',
+        f'Доставка: {get_delivery_zone_title(order.delivery_type)}',
     ]
 
     if (
@@ -1131,7 +1127,7 @@ class SabyOrderService:
 
         locality = (
             order.address_locality
-            or LOCALITY_BY_DELIVERY_TYPE.get(order.delivery_type, '')
+            or get_default_locality(order.delivery_type)
         )
 
         address_json = {

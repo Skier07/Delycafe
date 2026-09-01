@@ -22,7 +22,11 @@ class DeliverySchedule {
 
   static DateTime get now => cafeNow();
 
-  static Duration leadTime(String deliveryTypeApi) {
+  static Duration leadTime(String deliveryTypeApi, {int? leadMinutes}) {
+    if (leadMinutes != null) {
+      return Duration(minutes: leadMinutes);
+    }
+
     if (deliveryTypeApi == 'tatysh') {
       return const Duration(hours: 2);
     }
@@ -40,12 +44,20 @@ class DeliverySchedule {
   }
 
   /// Есть ли сегодня слот доставки с учётом lead time.
-  static bool isOrderingOpen(DateTime now, String deliveryTypeApi) {
+  static bool isOrderingOpen(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
     if (!isAcceptingOrders(now)) {
       return false;
     }
 
-    return _canDeliverToday(now, deliveryTypeApi);
+    return _canDeliverToday(
+      now,
+      deliveryTypeApi,
+      leadMinutes: leadMinutes,
+    );
   }
 
   /// До 10:00 или с 20:30 (вс–чт) / 21:30 (пт–сб) — кухня закрыта.
@@ -61,8 +73,16 @@ class DeliverySchedule {
     return now.isBefore(_closingTimeOnDate(now));
   }
 
-  static bool _canDeliverToday(DateTime now, String deliveryTypeApi) {
-    final minDelivery = minDeliveryTime(now, deliveryTypeApi);
+  static bool _canDeliverToday(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
+    final minDelivery = minDeliveryTime(
+      now,
+      deliveryTypeApi,
+      leadMinutes: leadMinutes,
+    );
     final maxDelivery = maxDeliveryTime(now);
 
     return !minDelivery.isAfter(maxDelivery);
@@ -82,9 +102,15 @@ class DeliverySchedule {
     return _openOnDate(nextDay);
   }
 
-  static DateTime minDeliveryTime(DateTime now, String deliveryTypeApi) {
+  static DateTime minDeliveryTime(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
     final todayOpen = _openOnDate(now);
-    final earliest = now.add(leadTime(deliveryTypeApi));
+    final earliest = now.add(
+      leadTime(deliveryTypeApi, leadMinutes: leadMinutes),
+    );
 
     if (earliest.isBefore(todayOpen)) {
       return todayOpen;
@@ -97,13 +123,21 @@ class DeliverySchedule {
     return _closingTimeOnDate(now);
   }
 
-  static List<DateTime> availableSlots(DateTime now, String deliveryTypeApi) {
+  static List<DateTime> availableSlots(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
     if (!isAcceptingOrders(now)) {
       return const [];
     }
 
     final minSlot = _roundUpToInterval(
-      minDeliveryTime(now, deliveryTypeApi),
+      minDeliveryTime(
+        now,
+        deliveryTypeApi,
+        leadMinutes: leadMinutes,
+      ),
       slotIntervalMinutes,
     );
     final maxSlot = maxDeliveryTime(now);
@@ -159,16 +193,27 @@ class DeliverySchedule {
 
   static DateTime firstSlotAfterOpen(
     DateTime openAt,
-    String deliveryTypeApi,
-  ) {
-    final earliest = openAt.add(leadTime(deliveryTypeApi));
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
+    final earliest = openAt.add(
+      leadTime(deliveryTypeApi, leadMinutes: leadMinutes),
+    );
 
     return _roundUpToInterval(earliest, slotIntervalMinutes);
   }
 
-  static DateTime displayAsapSlot(DateTime now, String deliveryTypeApi) {
+  static DateTime displayAsapSlot(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
     if (isAcceptingOrders(now)) {
-      final earliest = minDeliveryTime(now, deliveryTypeApi);
+      final earliest = minDeliveryTime(
+        now,
+        deliveryTypeApi,
+        leadMinutes: leadMinutes,
+      );
       final latest = maxDeliveryTime(now);
       final target = earliest.isAfter(latest) ? latest : earliest;
 
@@ -181,11 +226,20 @@ class DeliverySchedule {
     return firstSlotAfterOpen(
       nextOrderingOpensAt(now),
       deliveryTypeApi,
+      leadMinutes: leadMinutes,
     );
   }
 
-  static String asapChoiceLabel(DateTime now, String deliveryTypeApi) {
-    final slot = displayAsapSlot(now, deliveryTypeApi);
+  static String asapChoiceLabel(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
+    final slot = displayAsapSlot(
+      now,
+      deliveryTypeApi,
+      leadMinutes: leadMinutes,
+    );
     final time = formatTime(slot);
 
     if (isAcceptingOrders(now)) {
@@ -195,8 +249,18 @@ class DeliverySchedule {
     return 'завтра к $time';
   }
 
-  static String previewTimeLabel(DateTime now, String deliveryTypeApi) {
-    return formatTime(displayAsapSlot(now, deliveryTypeApi));
+  static String previewTimeLabel(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
+    return formatTime(
+      displayAsapSlot(
+        now,
+        deliveryTypeApi,
+        leadMinutes: leadMinutes,
+      ),
+    );
   }
 
   static bool isClosedUntilTomorrow(DateTime now) {
@@ -211,8 +275,16 @@ class DeliverySchedule {
     return 'Кухня закрыта';
   }
 
-  static String asapEstimateMessage(DateTime now, String deliveryTypeApi) {
-    return 'Ориентировочно ${asapChoiceLabel(now, deliveryTypeApi)}';
+  static String asapEstimateMessage(
+    DateTime now,
+    String deliveryTypeApi, {
+    int? leadMinutes,
+  }) {
+    return 'Ориентировочно ${asapChoiceLabel(
+      now,
+      deliveryTypeApi,
+      leadMinutes: leadMinutes,
+    )}';
   }
 
   static int _lastSlotHour(int weekday) {

@@ -3,15 +3,20 @@ import 'dart:async';
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/customer_address.dart';
+import 'package:delycafe/models/delivery_config.dart';
+import 'package:delycafe/services/delivery_config_service.dart';
 import 'package:delycafe/services/auth_service.dart';
+import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/checkout_draft_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
+import 'package:delycafe/utils/delivery_pricing.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/legal_consent_prompt.dart';
+import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:delycafe/widgets/checkout/legal_consent_checkout_section.dart';
 import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
@@ -19,13 +24,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
-enum DeliveryType {
-  ozersk,
-  prom,
-  tatysh,
-  pickup,
-}
 
 enum DeliveryUrgency {
   asap,
@@ -35,34 +33,6 @@ enum DeliveryUrgency {
 enum PaymentMethod {
   card,
   sbp,
-}
-
-extension DeliveryTypeApiValue on DeliveryType {
-  String get apiValue {
-    switch (this) {
-      case DeliveryType.ozersk:
-        return 'ozersk';
-      case DeliveryType.prom:
-        return 'promploshadka';
-      case DeliveryType.tatysh:
-        return 'tatysh';
-      case DeliveryType.pickup:
-        return 'pickup';
-    }
-  }
-
-  String get defaultLocality {
-    switch (this) {
-      case DeliveryType.ozersk:
-        return 'Озерск';
-      case DeliveryType.prom:
-        return 'Промплощадка';
-      case DeliveryType.tatysh:
-        return 'Татыш';
-      case DeliveryType.pickup:
-        return '';
-    }
-  }
 }
 
 extension DeliveryUrgencyApiValue on DeliveryUrgency {
@@ -90,7 +60,7 @@ extension PaymentMethodApiValue on PaymentMethod {
 class GuestCheckoutData {
   final String name;
   final String phone;
-  final DeliveryType deliveryType;
+  final String deliveryTypeCode;
   final int deliveryPrice;
   final String address;
   final String addressLocality;
@@ -106,7 +76,7 @@ class GuestCheckoutData {
   const GuestCheckoutData({
     required this.name,
     required this.phone,
-    required this.deliveryType,
+    required this.deliveryTypeCode,
     required this.deliveryPrice,
     required this.address,
     required this.addressLocality,
@@ -159,7 +129,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   final _commentController = TextEditingController();
   final _timeController = TextEditingController();
 
-  DeliveryType _deliveryType = DeliveryType.ozersk;
+  List<DeliveryZoneConfig> _zones = DeliveryConfig.fallback().zones;
+  String _selectedZoneCode = 'ozersk';
   DeliveryUrgency _urgency = DeliveryUrgency.asap;
   PaymentMethod _paymentMethod = PaymentMethod.card;
 
@@ -173,8 +144,19 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   Timer? _scheduleTimer;
   Timer? _draftSaveTimer;
 
-  static const int _promDeliveryPrice = 350;
-  static const int _tatyshDeliveryPrice = 450;
+  DeliveryZoneConfig? get _selectedZone {
+    for (final zone in _zones) {
+      if (zone.code == _selectedZoneCode) {
+        return zone;
+      }
+    }
+
+    return _zones.isNotEmpty ? _zones.first : null;
+  }
+
+  int get _scheduleLeadMinutes => _selectedZone?.leadMinutes ?? 90;
+
+  bool get _needsAddress => _selectedZone?.requiresAddress ?? true;
 
   bool get _isPhoneComplete {
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
@@ -185,40 +167,29 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   bool get _isAcceptingOrders => DeliverySchedule.isAcceptingOrders(_now);
 
+  String? get _preorderBlockMessage {
+    final cart = context.read<CartService>();
+    return cartPreorderBlockMessage(cart.items);
+  }
+
   bool get _canSubmit {
     final legalConsent = context.read<LegalConsentService>();
 
     return _isPhoneComplete &&
         !_isSubmitting &&
         _isAcceptingOrders &&
-        legalConsent.canPlaceOrder;
-  }
-
-  bool get _needsAddress {
-    return _deliveryType != DeliveryType.pickup;
-  }
-
-  bool get _hasAutomaticFirstOrderDiscount {
-    return AppFeatures.firstOrderDiscountEnabled &&
-        widget.firstOrderDiscountAvailable;
+        legalConsent.canPlaceOrder &&
+        _preorderBlockMessage == null;
   }
 
   int get _deliveryPrice {
-    switch (_deliveryType) {
-      case DeliveryType.ozersk:
-        if (widget.cartTotal >= 1700) return 0;
-        if (widget.cartTotal >= 1000) return 200;
-        return 250;
+    final zone = _selectedZone;
 
-      case DeliveryType.prom:
-        return _promDeliveryPrice;
-
-      case DeliveryType.tatysh:
-        return _tatyshDeliveryPrice;
-
-      case DeliveryType.pickup:
-        return 0;
+    if (zone == null) {
+      return 0;
     }
+
+    return calculateDeliveryPrice(zone, widget.cartTotal);
   }
 
   int get _firstOrderDiscount {
@@ -227,8 +198,13 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     return widget.cartTotal * BonusRules.firstOrderDiscountPercent ~/ 100;
   }
 
+  bool get _hasAutomaticFirstOrderDiscount {
+    return AppFeatures.firstOrderDiscountEnabled &&
+        widget.firstOrderDiscountAvailable;
+  }
+
   int get _pickupDiscount {
-    if (_deliveryType != DeliveryType.pickup) return 0;
+    if (_selectedZoneCode != 'pickup') return 0;
 
     return widget.cartTotal * BonusRules.pickupDiscountPercent ~/ 100;
   }
@@ -273,19 +249,13 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   }
 
   String get _deliveryInfo {
-    switch (_deliveryType) {
-      case DeliveryType.ozersk:
-        return 'Озёрск: от 1700 ₽ бесплатно, от 1000 до 1700 ₽ - 200 ₽, до 1000 ₽ - 250 ₽';
+    final description = _selectedZone?.checkoutDescription.trim() ?? '';
 
-      case DeliveryType.prom:
-        return 'Промплощадка: доставка $_promDeliveryPrice ₽';
-
-      case DeliveryType.tatysh:
-        return 'Татыш: доставка $_tatyshDeliveryPrice ₽, минимальное время - около 2 часов';
-
-      case DeliveryType.pickup:
-        return 'Самовывоз: скидка ${BonusRules.pickupDiscountPercent}% на сумму заказа';
+    if (description.isNotEmpty) {
+      return description;
     }
+
+    return _selectedZone?.title ?? '';
   }
 
   @override
@@ -324,6 +294,23 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     });
 
     unawaited(_restoreDraft());
+    unawaited(_loadDeliveryConfig());
+  }
+
+  Future<void> _loadDeliveryConfig() async {
+    final config = await DeliveryConfigService.instance.fetch();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _zones = config.zones;
+
+      if (!_zones.any((zone) => zone.code == _selectedZoneCode)) {
+        _selectedZoneCode = _zones.first.code;
+      }
+    });
   }
 
   Future<void> _restoreDraft() async {
@@ -375,7 +362,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       _timeController.text = draft.deliveryTime.trim();
     }
 
-    _deliveryType = _deliveryTypeFromApi(draft.deliveryType);
+    _selectedZoneCode = _deliveryCodeFromApi(draft.deliveryType);
     _urgency = _urgencyFromApi(draft.urgency);
     _paymentMethod = _paymentMethodFromApi(draft.paymentMethod);
     _useManualAddress = draft.useManualAddress;
@@ -385,18 +372,12 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     }
   }
 
-  DeliveryType _deliveryTypeFromApi(String value) {
-    switch (value) {
-      case 'promploshadka':
-        return DeliveryType.prom;
-      case 'tatysh':
-        return DeliveryType.tatysh;
-      case 'pickup':
-        return DeliveryType.pickup;
-      case 'ozersk':
-      default:
-        return DeliveryType.ozersk;
+  String _deliveryCodeFromApi(String value) {
+    if (_zones.any((zone) => zone.code == value)) {
+      return value;
     }
+
+    return _zones.first.code;
   }
 
   DeliveryUrgency _urgencyFromApi(String value) {
@@ -445,7 +426,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       apartment: _apartmentController.text.trim(),
       comment: _commentController.text.trim(),
       deliveryTime: _timeController.text.trim(),
-      deliveryType: _deliveryType.apiValue,
+      deliveryType: _selectedZoneCode,
       urgency: _urgency.apiValue,
       paymentMethod: _paymentMethod.apiValue,
       useManualAddress: _useManualAddress,
@@ -474,7 +455,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   void _syncDeliveryTimeWithSchedule() {
     final previewTime = DeliverySchedule.previewTimeLabel(
       _now,
-      _deliveryType.apiValue,
+      _selectedZoneCode,
+      leadMinutes: _scheduleLeadMinutes,
     );
 
     if (!_isAcceptingOrders) {
@@ -489,7 +471,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
     final slots = DeliverySchedule.availableSlots(
       _now,
-      _deliveryType.apiValue,
+      _selectedZoneCode,
+      leadMinutes: _scheduleLeadMinutes,
     );
 
     if (slots.isEmpty) {
@@ -577,19 +560,6 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     super.dispose();
   }
 
-  String _deliveryTitle(DeliveryType type) {
-    switch (type) {
-      case DeliveryType.ozersk:
-        return 'Озёрск';
-      case DeliveryType.prom:
-        return 'Промплощадка';
-      case DeliveryType.tatysh:
-        return 'Татыш';
-      case DeliveryType.pickup:
-        return 'Самовывоз';
-    }
-  }
-
   String _paymentTitle(PaymentMethod method) {
     switch (method) {
       case PaymentMethod.card:
@@ -602,7 +572,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   Future<void> _pickTime() async {
     final slots = DeliverySchedule.availableSlots(
       _now,
-      _deliveryType.apiValue,
+      _selectedZoneCode,
+      leadMinutes: _scheduleLeadMinutes,
     );
 
     if (slots.isEmpty) {
@@ -747,6 +718,15 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       return;
     }
 
+    final preorderBlock = _preorderBlockMessage;
+
+    if (preorderBlock != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(preorderBlock)),
+      );
+      return;
+    }
+
     final legalConsent = context.read<LegalConsentService>();
 
     if (!legalConsent.canPlaceOrder) {
@@ -785,10 +765,11 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     final data = GuestCheckoutData(
       name: _nameController.text.trim(),
       phone: fullPhone,
-      deliveryType: _deliveryType,
+      deliveryTypeCode: _selectedZoneCode,
       deliveryPrice: _deliveryPrice,
       address: _needsAddress ? _addressController.text.trim() : 'Самовывоз',
-      addressLocality: _needsAddress ? _deliveryType.defaultLocality : '',
+      addressLocality:
+          _needsAddress ? (_selectedZone?.defaultLocality ?? '') : '',
       addressEntrance: _needsAddress ? _entranceController.text.trim() : '',
       addressFloor: _needsAddress ? _floorController.text.trim() : '',
       addressApartment: _needsAddress ? _apartmentController.text.trim() : '',
@@ -835,6 +816,29 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
         children: [
           if (!_isAcceptingOrders) ...[
             OrderingClosedBanner(now: _now),
+            const SizedBox(height: 20),
+          ],
+          if (_preorderBlockMessage != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFD32F2F).withValues(alpha: 0.35),
+                ),
+              ),
+              child: Text(
+                _preorderBlockMessage!,
+                style: const TextStyle(
+                  color: Color(0xFFD32F2F),
+                  fontSize: 14,
+                  height: 1.4,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
           ],
           const _BlockTitle('Контактные данные'),
@@ -900,13 +904,13 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 childAspectRatio: childAspectRatio,
-                children: DeliveryType.values.map((type) {
+                children: _zones.map((zone) {
                   return _ChoiceCard(
-                    title: _deliveryTitle(type),
-                    selected: _deliveryType == type,
+                    title: zone.title,
+                    selected: _selectedZoneCode == zone.code,
                     onTap: () {
                       setState(() {
-                        _deliveryType = type;
+                        _selectedZoneCode = zone.code;
                         _syncDeliveryTimeWithSchedule();
                       });
                       _scheduleDraftSave();
@@ -1042,7 +1046,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   title: 'Как можно скорее',
                   subtitle: DeliverySchedule.asapChoiceLabel(
                     _now,
-                    _deliveryType.apiValue,
+                    _selectedZoneCode,
+                    leadMinutes: _scheduleLeadMinutes,
                   ),
                   selected: _urgency == DeliveryUrgency.asap,
                   onTap: () {
@@ -1064,7 +1069,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                           : 'выберите')
                       : DeliverySchedule.previewTimeLabel(
                           _now,
-                          _deliveryType.apiValue,
+                          _selectedZoneCode,
+                          leadMinutes: _scheduleLeadMinutes,
                         ),
                   selected: _urgency == DeliveryUrgency.byTime,
                   onTap: () {
@@ -1083,7 +1089,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
             Text(
               DeliverySchedule.asapEstimateMessage(
                 _now,
-                _deliveryType.apiValue,
+                _selectedZoneCode,
+                leadMinutes: _scheduleLeadMinutes,
               ),
               style: TextStyle(
                 fontSize: 14,
@@ -1114,7 +1121,8 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                 if (_urgency == DeliveryUrgency.byTime) {
                   final slots = DeliverySchedule.availableSlots(
                     _now,
-                    _deliveryType.apiValue,
+                    _selectedZoneCode,
+                    leadMinutes: _scheduleLeadMinutes,
                   ).map(DeliverySchedule.formatTime);
 
                   if (!slots.contains(value?.trim())) {
@@ -1261,16 +1269,24 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                   ? 'Оформляем...'
                   : !_isAcceptingOrders
                       ? DeliverySchedule.closedSubmitButtonLabel(_now)
-                      : !legalConsent.canPlaceOrder
-                          ? 'Примите условия'
-                          : 'Оформить заказ',
+                      : _preorderBlockMessage != null
+                          ? 'Уберите недоступные позиции'
+                          : !legalConsent.canPlaceOrder
+                              ? 'Примите условия'
+                              : 'Оформить заказ',
               onPressed: _isSubmitting || !_isAcceptingOrders
                   ? null
-                  : !legalConsent.canPlaceOrder
-                      ? () => showLegalConsentRequiredDialog(context)
-                      : _canSubmit
-                          ? _submit
-                          : null,
+                  : _preorderBlockMessage != null
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(_preorderBlockMessage!)),
+                          );
+                        }
+                      : !legalConsent.canPlaceOrder
+                          ? () => showLegalConsentRequiredDialog(context)
+                          : _canSubmit
+                              ? _submit
+                              : null,
             ),
           ),
         ],

@@ -3,7 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 from orders.services import OrderReturnError, rollback_order, settle_order_return
 
-from .models import Order, OrderItem, OrderReturn, OrderReturnItem
+from .models import Order, OrderItem, OrderReturn, OrderReturnItem, DeliveryZone, DeliveryInfoSection, DeliveryPriceTier
 
 
 class OrderItemInline(admin.TabularInline):
@@ -480,4 +480,105 @@ class OrderItemAdmin(admin.ModelAdmin):
 
     list_select_related = (
         'order',
+    )
+
+
+class DeliveryPriceTierInline(admin.TabularInline):
+    model = DeliveryPriceTier
+    extra = 1
+    ordering = ('sort_order', 'min_cart_total')
+    fields = (
+        'min_cart_total',
+        'price',
+        'sort_order',
+    )
+
+
+@admin.register(DeliveryZone)
+class DeliveryZoneAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'code',
+        'pricing_mode',
+        'fixed_price',
+        'requires_address',
+        'is_active',
+        'sort_order',
+    )
+    list_editable = (
+        'is_active',
+        'sort_order',
+    )
+    list_filter = (
+        'is_active',
+        'pricing_mode',
+        'requires_address',
+    )
+    search_fields = (
+        'title',
+        'code',
+    )
+    ordering = (
+        'sort_order',
+        'id',
+    )
+    inlines = [DeliveryPriceTierInline]
+    fieldsets = (
+        (
+            'Основные',
+            {
+                'fields': (
+                    'title',
+                    'code',
+                    'is_active',
+                    'sort_order',
+                ),
+            },
+        ),
+        (
+            'Тариф',
+            {
+                'fields': (
+                    'pricing_mode',
+                    'fixed_price',
+                ),
+            },
+        ),
+        (
+            'Оформление заказа',
+            {
+                'fields': (
+                    'requires_address',
+                    'default_locality',
+                    'lead_minutes',
+                    'checkout_description',
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(DeliveryInfoSection)
+class DeliveryInfoSectionAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'section_type',
+        'is_active',
+        'sort_order',
+    )
+    list_editable = (
+        'is_active',
+        'sort_order',
+    )
+    list_filter = (
+        'section_type',
+        'is_active',
+    )
+    search_fields = (
+        'title',
+        'content',
+    )
+    ordering = (
+        'sort_order',
+        'id',
     )

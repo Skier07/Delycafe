@@ -3,6 +3,7 @@ import 'package:delycafe/screens/catalog/product_detail_screen.dart';
 import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
+import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/material.dart';
 
@@ -45,6 +46,21 @@ class _CatalogCardState extends State<CatalogCard> {
 
   void _handleAddToCart() {
     if (widget.onAddToCart == null) {
+      return;
+    }
+
+    if (!catalogItemCanOrderNow(widget.item)) {
+      final reason = catalogItemCannotOrderReason(widget.item).trim();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            reason.isNotEmpty
+                ? reason
+                : 'Сейчас этот товар недоступен для заказа.',
+          ),
+        ),
+      );
       return;
     }
 
@@ -141,6 +157,8 @@ class _CatalogCardState extends State<CatalogCard> {
                         final buttonPadV = narrow ? 7.0 : 8.0;
                         final buttonFont = narrow ? 11.0 : 12.0;
 
+                        final canOrderNow = catalogItemCanOrderNow(widget.item);
+
                         Widget cartButton({required bool expanded}) {
                           final button = Opacity(
                             opacity: _hideCartButton ? 0 : 1,
@@ -153,13 +171,17 @@ class _CatalogCardState extends State<CatalogCard> {
                                 vertical: buttonPadV,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.header,
+                                color: canOrderNow
+                                    ? AppColors.header
+                                    : Colors.grey.shade400,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
-                                  'В корзину',
+                                  canOrderNow
+                                      ? 'В корзину'
+                                      : 'Недоступно',
                                   maxLines: 1,
                                   softWrap: false,
                                   style: TextStyle(

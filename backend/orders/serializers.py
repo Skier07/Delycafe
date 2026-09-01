@@ -9,7 +9,16 @@ from rest_framework import serializers
 from customers.models import BonusTransaction, Customer
 from legal.services import LegalConsentError, ensure_customer_can_place_order, save_customer_consents
 from legal.services import customer_has_required_consents
-from .catalog_pricing import apply_validated_item_prices
+from catalog.preorder import cannot_order_message, product_can_order_now
+
+from .catalog_pricing import apply_validated_item_prices, resolve_catalog_product
+from .delivery_pricing import (
+    calculate_delivery_price,
+    delivery_requires_address,
+    delivery_zone_exists,
+    get_default_locality,
+    is_pickup_delivery,
+)
 from .delivery_schedule import validate_order_delivery_window
 from .models import Order, OrderItem
 from .promotions import (
@@ -28,28 +37,6 @@ from payments.services import (
 logger = logging.getLogger(__name__)
 
 UNPAID_ORDER_REUSE_HOURS = 24
-
-
-def calculate_delivery_price(delivery_type, products_total):
-    if delivery_type == Order.DeliveryType.OZERSK:
-        if products_total >= 1700:
-            return 0
-
-        if products_total >= 1000:
-            return 200
-
-        return 250
-
-    if delivery_type == Order.DeliveryType.PROMPLOSHADKA:
-        return 350
-
-    if delivery_type == Order.DeliveryType.TATYSH:
-        return 450
-
-    if delivery_type == Order.DeliveryType.PICKUP:
-        return 0
-
-    return 0
 
 
 def normalize_phone(phone):
@@ -122,9 +109,17 @@ class OrderCreateSerializer(serializers.Serializer):
         allow_blank=True,
     )
 
-    delivery_type = serializers.ChoiceField(
-        choices=Order.DeliveryType.choices,
-    )
+    delivery_type = serializers.CharField(max_length=50)
+
+    def validate_delivery_type(self, value):
+        code = str(value or '').strip()
+
+        if not delivery_zone_exists(code):
+            raise serializers.ValidationError(
+                'Выбранный способ получения недоступен.'
+            )
+
+        return code
 
     address = serializers.CharField(
         required=False,
@@ -224,7 +219,7 @@ class OrderCreateSerializer(serializers.Serializer):
         delivery_type = attrs.get('delivery_type')
         address = (attrs.get('address') or '').strip()
 
-        if delivery_type != Order.DeliveryType.PICKUP and not address:
+        if delivery_requires_address(delivery_type) and not address:
             raise serializers.ValidationError(
                 'Для доставки нужно указать адрес.'
             )
@@ -259,6 +254,26 @@ class OrderCreateSerializer(serializers.Serializer):
                     'items': (
                         'У каждой позиции нужен saby_id для отправки в Presto: '
                         + ', '.join(missing_saby)
+                    ),
+                }
+            )
+
+        closed_products = []
+
+        for item in items:
+            product = resolve_catalog_product(item)
+
+            if product is not None and not product_can_order_now(product):
+                closed_products.append(product)
+
+        if closed_products:
+            reason = cannot_order_message(closed_products[0].category)
+            titles = ', '.join(product.title for product in closed_products)
+            raise serializers.ValidationError(
+                {
+                    'items': (
+                        f'Сейчас нельзя заказать: {titles}'
+                        + (f'. {reason}' if reason else '')
                     ),
                 }
             )
@@ -422,7 +437,7 @@ class OrderCreateSerializer(serializers.Serializer):
         first_order_discount_applied = False
 
         # Скидка первого заказа отключена. Постоянная скидка — только самовывоз.
-        if delivery_type == Order.DeliveryType.PICKUP:
+        if is_pickup_delivery(delivery_type):
             discount_amount = (
                 products_total * PICKUP_DISCOUNT_PERCENT // 100
             )
@@ -480,7 +495,7 @@ class OrderCreateSerializer(serializers.Serializer):
             customer_update_fields.append('name')
 
         if (
-            delivery_type != Order.DeliveryType.PICKUP
+            delivery_requires_address(delivery_type)
             and order_address
             and customer.default_address != order_address
         ):
@@ -561,13 +576,9 @@ class OrderCreateSerializer(serializers.Serializer):
         order_address = (data.get('address') or '').strip()
         delivery_type = data.get('delivery_type')
 
-        if delivery_type != Order.DeliveryType.PICKUP:
+        if delivery_requires_address(delivery_type):
             if not data.get('address_locality'):
-                from orders.services import LOCALITY_BY_DELIVERY_TYPE
-
-                data['address_locality'] = (
-                    LOCALITY_BY_DELIVERY_TYPE.get(delivery_type, '')
-                )
+                data['address_locality'] = get_default_locality(delivery_type)
 
         customer = order.customer
         if customer is None:
@@ -576,7 +587,7 @@ class OrderCreateSerializer(serializers.Serializer):
                 defaults={
                     'name': customer_name,
                     'default_address': order_address
-                    if delivery_type != Order.DeliveryType.PICKUP
+                    if delivery_requires_address(delivery_type)
                     else '',
                     'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
                     'first_order_discount_used': False,
@@ -641,12 +652,10 @@ class OrderCreateSerializer(serializers.Serializer):
         order_address = (validated_data.get('address') or '').strip()
         delivery_type = validated_data.get('delivery_type')
 
-        if delivery_type != Order.DeliveryType.PICKUP:
+        if delivery_requires_address(delivery_type):
             if not validated_data.get('address_locality'):
-                from orders.services import LOCALITY_BY_DELIVERY_TYPE
-
-                validated_data['address_locality'] = (
-                    LOCALITY_BY_DELIVERY_TYPE.get(delivery_type, '')
+                validated_data['address_locality'] = get_default_locality(
+                    delivery_type,
                 )
 
         customer, created = Customer.objects.get_or_create(
@@ -654,7 +663,7 @@ class OrderCreateSerializer(serializers.Serializer):
             defaults={
                 'name': customer_name,
                 'default_address': order_address
-                if delivery_type != Order.DeliveryType.PICKUP
+                if delivery_requires_address(delivery_type)
                 else '',
                 'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
                 'first_order_discount_used': False,

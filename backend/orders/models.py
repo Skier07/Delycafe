@@ -53,8 +53,7 @@ class Order(models.Model):
     )
 
     delivery_type = models.CharField(
-        max_length=30,
-        choices=DeliveryType.choices,
+        max_length=50,
         default=DeliveryType.OZERSK,
         verbose_name='Тип доставки',
     )
@@ -386,3 +385,127 @@ class OrderReturnItem(models.Model):
 
     def __str__(self):
         return f'{self.product_title} × {self.quantity}'
+
+
+class DeliveryZone(models.Model):
+    class PricingMode(models.TextChoices):
+        TIERED = 'tiered', 'По сумме заказа'
+        FIXED = 'fixed', 'Фиксированная'
+        FREE = 'free', 'Бесплатно'
+
+    code = models.SlugField(
+        max_length=50,
+        unique=True,
+        verbose_name='Код (для API)',
+    )
+    title = models.CharField(
+        max_length=120,
+        verbose_name='Название',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активна',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок',
+    )
+    pricing_mode = models.CharField(
+        max_length=20,
+        choices=PricingMode.choices,
+        default=PricingMode.FIXED,
+        verbose_name='Тип тарифа',
+    )
+    fixed_price = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Фиксированная цена',
+    )
+    requires_address = models.BooleanField(
+        default=True,
+        verbose_name='Нужен адрес',
+    )
+    default_locality = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name='Населённый пункт по умолчанию',
+    )
+    lead_minutes = models.PositiveIntegerField(
+        default=90,
+        verbose_name='Мин. время до доставки (мин)',
+    )
+    checkout_description = models.TextField(
+        blank=True,
+        verbose_name='Описание в оформлении заказа',
+    )
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Зона доставки'
+        verbose_name_plural = 'Зоны доставки'
+
+    def __str__(self):
+        return self.title
+
+
+class DeliveryPriceTier(models.Model):
+    zone = models.ForeignKey(
+        DeliveryZone,
+        on_delete=models.CASCADE,
+        related_name='price_tiers',
+        verbose_name='Зона',
+    )
+    min_cart_total = models.PositiveIntegerField(
+        verbose_name='Сумма заказа от (₽)',
+    )
+    price = models.PositiveIntegerField(
+        verbose_name='Цена доставки (₽)',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок',
+    )
+
+    class Meta:
+        ordering = ['sort_order', 'min_cart_total']
+        verbose_name = 'Тариф доставки'
+        verbose_name_plural = 'Тарифы доставки'
+
+    def __str__(self):
+        return f'{self.zone.title}: от {self.min_cart_total} ₽ — {self.price} ₽'
+
+
+class DeliveryInfoSection(models.Model):
+    class SectionType(models.TextChoices):
+        INFO = 'info', 'Информация'
+        WARNING = 'warning', 'Важно'
+
+    title = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name='Заголовок',
+    )
+    content = models.TextField(
+        verbose_name='Текст',
+    )
+    section_type = models.CharField(
+        max_length=20,
+        choices=SectionType.choices,
+        default=SectionType.INFO,
+        verbose_name='Тип',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активна',
+    )
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Блок «Доставка и оплата»'
+        verbose_name_plural = 'Блоки «Доставка и оплата»'
+
+    def __str__(self):
+        return self.title or f'Блок #{self.id}'

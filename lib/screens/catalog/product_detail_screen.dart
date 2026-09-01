@@ -3,6 +3,8 @@ import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
+import 'package:delycafe/utils/preorder_availability.dart';
+import 'package:delycafe/utils/product_info_sections.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +67,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _addToCart() {
+    if (!catalogItemCanOrderNow(widget.item)) {
+      _showCannotOrderMessage();
+      return;
+    }
+
     AppHaptics.addToCart();
     context.read<CartService>().addToCart(
           widget.item,
@@ -81,9 +88,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  void _showCannotOrderMessage() {
+    final reason = catalogItemCannotOrderReason(widget.item).trim();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          reason.isNotEmpty
+              ? reason
+              : 'Сейчас этот товар недоступен для заказа.',
+        ),
+      ),
+    );
+  }
+
+  List<ProductInfoSection> _infoSections(CatalogItem item) {
+    final blocks = item.infoBlocks;
+
+    if (blocks != null && blocks.isNotEmpty) {
+      return groupProductInfoBlocks(blocks);
+    }
+
+    return legacyProductInfoSections(item);
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+    final canOrderNow = catalogItemCanOrderNow(item);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -147,6 +179,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                         ],
                       ),
+                      if (!canOrderNow) ...[
+                        const SizedBox(height: 14),
+                        Text(
+                          catalogItemCannotOrderReason(item).isNotEmpty
+                              ? catalogItemCannotOrderReason(item)
+                              : 'Сейчас этот товар недоступен для заказа.',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.45,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFD32F2F),
+                          ),
+                        ),
+                      ],
                       if (item.variants.isNotEmpty) ...[
                         const SizedBox(height: 18),
                         _InfoBlock(
@@ -280,33 +326,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _InfoBlock(
-                        title: 'Почему стоит попробовать',
-                        child: Text(
-                          _buildExtendedDescription(item),
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.65,
-                            color: Colors.black.withValues(alpha: 0.78),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const _InfoBlock(
-                        title: 'Что важно знать',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _BuildText(
-                              text:
-                                  'Состав и внешний вид могут немного отличаться в зависимости от партии ингредиентов.',
-                            ),
-                            SizedBox(height: 8),
-                            _BuildText(
-                              text: 'Блюдо готовится после оформления заказа.',
-                            ),
-                          ],
-                        ),
+                      ...buildProductInfoSectionWidgets(
+                        _infoSections(item),
+                        lineBuilder: (text, {bool warning = false}) {
+                          if (warning) {
+                            return Text(
+                              text,
+                              style: const TextStyle(
+                                fontSize: 14.5,
+                                height: 1.55,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFD32F2F),
+                              ),
+                            );
+                          }
+
+                          return _BuildText(text: text);
+                        },
                       ),
                     ],
                   ),
@@ -372,16 +408,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     width: 170,
                     height: double.infinity,
                     child: GestureDetector(
-                      onTap: _addToCart,
+                      onTap: canOrderNow ? _addToCart : _showCannotOrderMessage,
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.header,
+                          color: canOrderNow
+                              ? AppColors.header
+                              : Colors.grey.shade400,
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: const Text(
-                          'В корзину',
-                          style: TextStyle(
+                        child: Text(
+                          canOrderNow ? 'В корзину' : 'Недоступно',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
@@ -397,37 +435,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       ),
     );
-  }
-
-  String _buildExtendedDescription(CatalogItem item) {
-    switch (item.category) {
-      case 'Пицца':
-        return 'Отличный вариант для тех, кто любит насыщенный вкус, тянущийся сыр и сытную подачу. Подходит как для одного плотного приёма пищи, так и для компании.';
-      case 'Шаурма':
-        return 'Сытный вариант для быстрого перекуса. Хорошо подойдёт, когда хочется горячее блюдо без долгого ожидания.';
-      case 'Бургеры':
-        return 'Хороший выбор для любителей сочной начинки, мягкой булочки и насыщенного вкуса.';
-      case 'Фастфуд':
-        return 'Удобная позиция к основному заказу или как самостоятельный перекус. Особенно хорошо подходит для компании.';
-      case 'Картошечка в фольге':
-        return 'Сытная горячая позиция, которую можно взять отдельно или дополнить начинкой по вкусу.';
-      case 'Соусы':
-        return 'Подходит как дополнение к картошке, шаурме, бургерам, закускам и другим позициям меню.';
-      case 'Напитки':
-        return 'Хорошо дополняет заказ и помогает сбалансировать вкус основных блюд.';
-      case 'Десерты':
-        return 'Подходит в конце заказа, если хочется добавить что-то сладкое и завершить приём пищи.';
-      case 'Паста':
-        return 'Горячее и сытное блюдо с насыщенным вкусом. Подходит как самостоятельная позиция.';
-      case 'Пироги':
-        return 'Сытная выпечка для одного или нескольких человек. Хороший вариант к обеду или ужину.';
-      case 'Салаты':
-        return 'Лёгкое дополнение к основному блюду или самостоятельная позиция для тех, кто хочет что-то свежее.';
-      case 'Супы':
-        return 'Горячее первое блюдо, которое хорошо подходит для полноценного обеда.';
-      default:
-        return 'Вкусная позиция из меню, которую можно добавить к основному заказу или взять как самостоятельный вариант.';
-    }
   }
 }
 

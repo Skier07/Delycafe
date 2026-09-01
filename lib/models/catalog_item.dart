@@ -1,3 +1,37 @@
+class ProductInfoBlock {
+  final String section;
+  final String title;
+  final String text;
+  final String style;
+
+  const ProductInfoBlock({
+    required this.section,
+    required this.title,
+    required this.text,
+    this.style = 'normal',
+  });
+
+  bool get isWarning => style == 'warning';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'section': section,
+      'title': title,
+      'text': text,
+      'style': style,
+    };
+  }
+
+  factory ProductInfoBlock.fromJson(Map<String, dynamic> json) {
+    return ProductInfoBlock(
+      section: json['section']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      text: json['text']?.toString() ?? '',
+      style: json['style']?.toString() ?? 'normal',
+    );
+  }
+}
+
 class ProductVariant {
   final String id;
   final int? sabyId;
@@ -40,6 +74,9 @@ class CatalogItem {
   final String title;
   final String category;
   final int categorySortOrder;
+  final bool categoryPreorderCutoffEnabled;
+  final int categoryPreorderLeadDays;
+  final String categoryPreorderCutoffTime;
   final int price;
   final String image;
   final String description;
@@ -53,6 +90,9 @@ class CatalogItem {
   final String? weight;
   final String? composition;
   final List<ProductVariant> variants;
+  final List<ProductInfoBlock>? infoBlocks;
+  final bool canOrder;
+  final String cannotOrderReason;
 
   const CatalogItem({
     required this.id,
@@ -60,6 +100,9 @@ class CatalogItem {
     required this.title,
     required this.category,
     this.categorySortOrder = 500,
+    this.categoryPreorderCutoffEnabled = false,
+    this.categoryPreorderLeadDays = 0,
+    this.categoryPreorderCutoffTime = '',
     required this.price,
     required this.image,
     required this.description,
@@ -73,6 +116,9 @@ class CatalogItem {
     this.weight,
     this.composition,
     this.variants = const [],
+    this.infoBlocks,
+    this.canOrder = true,
+    this.cannotOrderReason = '',
   });
 
   Map<String, dynamic> toJson() {
@@ -82,6 +128,9 @@ class CatalogItem {
       'title': title,
       'category': category,
       'category_sort_order': categorySortOrder,
+      'category_preorder_cutoff_enabled': categoryPreorderCutoffEnabled,
+      'category_preorder_lead_days': categoryPreorderLeadDays,
+      'category_preorder_cutoff_time': categoryPreorderCutoffTime,
       'price': price,
       'image': image,
       'description': description,
@@ -95,6 +144,10 @@ class CatalogItem {
       'weight': weight,
       'composition': composition,
       'variants': variants.map((variant) => variant.toJson()).toList(),
+      if (infoBlocks != null)
+        'info_blocks': infoBlocks!.map((block) => block.toJson()).toList(),
+      'can_order': canOrder,
+      'cannot_order_reason': cannotOrderReason,
     };
   }
 
@@ -112,6 +165,23 @@ class CatalogItem {
             .toList()
         : <ProductVariant>[];
 
+    List<ProductInfoBlock>? infoBlocks;
+
+    if (json.containsKey('info_blocks')) {
+      final rawBlocks = json['info_blocks'];
+      infoBlocks = rawBlocks is List
+          ? rawBlocks
+              .whereType<Map>()
+              .map(
+                (blockJson) => ProductInfoBlock.fromJson(
+                  Map<String, dynamic>.from(blockJson),
+                ),
+              )
+              .where((block) => block.text.trim().isNotEmpty)
+              .toList()
+          : <ProductInfoBlock>[];
+    }
+
     return CatalogItem(
       id: json['id']?.toString() ?? '',
       sabyId: _toNullableInt(json['saby_id']),
@@ -121,6 +191,11 @@ class CatalogItem {
         json['category_sort_order'],
         defaultValue: 500,
       ),
+      categoryPreorderCutoffEnabled:
+          json['category_preorder_cutoff_enabled'] == true,
+      categoryPreorderLeadDays: _toInt(json['category_preorder_lead_days']),
+      categoryPreorderCutoffTime:
+          json['category_preorder_cutoff_time']?.toString() ?? '',
       price: _toInt(json['price']),
       image: json['image']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
@@ -134,6 +209,9 @@ class CatalogItem {
       weight: json['weight']?.toString(),
       composition: json['composition']?.toString(),
       variants: variants,
+      infoBlocks: infoBlocks,
+      canOrder: json['can_order'] != false,
+      cannotOrderReason: json['cannot_order_reason']?.toString() ?? '',
     );
   }
 }

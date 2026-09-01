@@ -23,10 +23,12 @@ class OrderHistorySerializer(serializers.ModelSerializer):
         source='get_status_display',
         read_only=True,
     )
-    delivery_type_label = serializers.CharField(
-        source='get_delivery_type_display',
-        read_only=True,
-    )
+    delivery_type_label = serializers.SerializerMethodField()
+
+    def get_delivery_type_label(self, order):
+        from orders.delivery_pricing import get_delivery_zone_title
+
+        return get_delivery_zone_title(order.delivery_type)
     payment_type_label = serializers.CharField(
         source='get_payment_type_display',
         read_only=True,

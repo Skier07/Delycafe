@@ -115,7 +115,7 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       final order = await OrderApiService().createOrder(
                         phone: data.phone,
                         customerName: data.name,
-                        deliveryType: data.deliveryType.apiValue,
+                        deliveryType: data.deliveryTypeCode,
                         address: data.address,
                         addressLocality: data.addressLocality,
                         addressEntrance: data.addressEntrance,

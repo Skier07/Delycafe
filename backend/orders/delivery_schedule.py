@@ -2,22 +2,18 @@ from datetime import date, datetime, time, timedelta
 
 from django.utils import timezone
 
+from orders.delivery_pricing import lead_minutes_for_delivery
 from orders.models import Order
 
 OPEN_TIME = time(10, 0)
 # Вс–чт: приём заказов до 20:30, пт–сб: до 21:30.
 SLOT_SUNDAY_THROUGH_THURSDAY = time(20, 30)
 SLOT_FRIDAY_SATURDAY = time(21, 30)
-LEAD_DEFAULT = timedelta(hours=1, minutes=30)
-LEAD_TATYSH = timedelta(hours=2)
 SLOT_INTERVAL = timedelta(minutes=5)
 
 
 def lead_for_delivery_type(delivery_type: str) -> timedelta:
-    if delivery_type == Order.DeliveryType.TATYSH:
-        return LEAD_TATYSH
-
-    return LEAD_DEFAULT
+    return timedelta(minutes=lead_minutes_for_delivery(delivery_type))
 
 
 def last_slot_for_date(day: date) -> time:

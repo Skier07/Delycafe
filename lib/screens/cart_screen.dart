@@ -7,6 +7,7 @@ import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:delycafe/utils/legal_consent_prompt.dart';
+import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -43,11 +44,17 @@ class _CartScreenState extends State<CartScreen> {
 
   bool get _isAcceptingOrders => DeliverySchedule.isAcceptingOrders(_now);
 
+  String? _preorderBlockMessage(CartService cart) {
+    return cartPreorderBlockMessage(cart.items);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
     final legalConsent = context.watch<LegalConsentService>();
-    final canCheckout = _isAcceptingOrders && legalConsent.canPlaceOrder;
+    final preorderBlock = _preorderBlockMessage(cart);
+    final canCheckout =
+        _isAcceptingOrders && legalConsent.canPlaceOrder && preorderBlock == null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
@@ -90,6 +97,31 @@ class _CartScreenState extends State<CartScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: OrderingClosedBanner(now: _now),
+                  ),
+                ],
+                if (preorderBlock != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFD32F2F).withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Text(
+                        preorderBlock,
+                        style: const TextStyle(
+                          color: Color(0xFFD32F2F),
+                          fontSize: 14,
+                          height: 1.4,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
                 Expanded(
@@ -293,13 +325,22 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                     );
                                   }
-                                : _isAcceptingOrders
+                                : preorderBlock != null
                                     ? () {
-                                        unawaited(
-                                          showLegalConsentRequiredDialog(context),
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(content: Text(preorderBlock)),
                                         );
                                       }
-                                    : null,
+                                    : _isAcceptingOrders
+                                        ? () {
+                                            unawaited(
+                                              showLegalConsentRequiredDialog(
+                                                context,
+                                              ),
+                                            );
+                                          }
+                                        : null,
                             child: Container(
                               alignment: Alignment.center,
                               padding:
@@ -313,10 +354,12 @@ class _CartScreenState extends State<CartScreen> {
                               child: Text(
                                 canCheckout
                                     ? 'Оформить'
-                                    : _isAcceptingOrders
-                                        ? 'Примите условия'
-                                        : DeliverySchedule
-                                            .closedSubmitButtonLabel(_now),
+                                    : preorderBlock != null
+                                        ? 'Уберите недоступные'
+                                        : _isAcceptingOrders
+                                            ? 'Примите условия'
+                                            : DeliverySchedule
+                                                .closedSubmitButtonLabel(_now),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,

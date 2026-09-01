@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
+from orders.delivery_pricing import get_delivery_zone_title
 from orders.models import Order
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ def _should_send_admin_email(order: Order) -> bool:
 
 
 def _format_delivery_line(order: Order) -> str:
-    delivery = order.get_delivery_type_display()
+    delivery = get_delivery_zone_title(order.delivery_type)
 
     if order.delivery_type == Order.DeliveryType.PICKUP:
         return f'{delivery}'
@@ -121,7 +122,7 @@ def build_admin_order_email(order: Order) -> tuple[str, str]:
 
     subject = (
         f'Заказ №{order.id} — {amount} ₽, '
-        f'{order.get_delivery_type_display()}'
+        f'{get_delivery_zone_title(order.delivery_type)}'
     )
 
     body_lines = [

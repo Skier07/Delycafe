@@ -1,14 +1,89 @@
+import 'dart:async';
+
+import 'package:delycafe/models/delivery_config.dart';
+import 'package:delycafe/services/delivery_config_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class DeliveryScreen extends StatelessWidget {
+class DeliveryScreen extends StatefulWidget {
   const DeliveryScreen({super.key});
 
   @override
+  State<DeliveryScreen> createState() => _DeliveryScreenState();
+}
+
+class _DeliveryScreenState extends State<DeliveryScreen> {
+  DeliveryConfig? _config;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadConfig());
+  }
+
+  Future<void> _loadConfig() async {
+    final config = await DeliveryConfigService.instance.fetch();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _config = config;
+    });
+  }
+
+  String _minLeadTimeLabel(DeliveryConfig config) {
+    final minutes = config.zones
+        .where((zone) => zone.requiresAddress)
+        .map((zone) => zone.leadMinutes)
+        .fold<int?>(null, (current, value) {
+      if (current == null || value < current) {
+        return value;
+      }
+
+      return current;
+    });
+
+    if (minutes == null) {
+      return '1,5 часа';
+    }
+
+    if (minutes % 60 == 0) {
+      final hours = minutes ~/ 60;
+      return '$hours ${_hoursLabel(hours)}';
+    }
+
+    if (minutes > 60) {
+      final hours = minutes ~/ 60;
+      final rest = minutes % 60;
+
+      return '$hours ${_hoursLabel(hours)} $rest мин';
+    }
+
+    return '$minutes мин';
+  }
+
+  String _hoursLabel(int hours) {
+    if (hours == 1) {
+      return 'час';
+    }
+
+    if (hours >= 2 && hours <= 4) {
+      return 'часа';
+    }
+
+    return 'часов';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final config = _config ?? DeliveryConfig.fallback();
+    final sections = config.infoSections;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
       appBar: AppBar(
@@ -43,45 +118,56 @@ class DeliveryScreen extends StatelessWidget {
             title: 'Время работы',
             content: 'Приём заказов в приложении: с 10:00.\n'
                 'Закрытие приёма: ${DeliverySchedule.acceptanceHoursShort}.\n\n'
-                'Минимальное время доставки: 1,5 часа (в Татыш — 2 часа).',
+                'Минимальное время доставки: ${_minLeadTimeLabel(config)}.',
           ),
           const SizedBox(height: 16),
-          const _SectionCard(
-            title: 'Доставка и оплата',
-            content: 'Оплата возможна через Мир, Visa, Mastercard и СБП.\n\n'
-                'Все платежи защищены SSL.\n'
-                'Данные карты не сохраняются.',
-          ),
-          const SizedBox(height: 16),
-          const _SectionCard(
-            title: 'Заказ по телефону',
-            content: '+7 (900) 022-30-22\n\n'
-                'При заказе от 3000₽ — предоплата.\n'
-                'Можно оплатить в кафе.',
-          ),
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Доставка по Озёрску',
-            content: 'от 1700₽ — бесплатно\n'
-                'от 1000 до 1700₽ — доставка 200₽\n'
-                '< 1000₽ — доставка 250₽\n\n'
-                '${DeliverySchedule.acceptanceHoursLong}',
-          ),
-          const SizedBox(height: 16),
-          _SectionCard(
-            title: 'Доставка в Татыш',
-            content: 'Стоимость: 450₽\n'
-                'Минимум: 2 часа\n'
-                '${DeliverySchedule.acceptanceHoursLong}',
-          ),
-          const SizedBox(height: 16),
-          const _WarningCard(
-            text: 'Если нет лифта — подъём до 5 этажа бесплатный.\n'
-                'Далее — 50₽/этаж.',
-          ),
+          if (sections.isEmpty)
+            ..._fallbackSections(config)
+          else
+            ...sections.map((section) {
+              if (section.isWarning) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _WarningCard(text: section.content),
+                );
+              }
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _SectionCard(
+                  title: section.title,
+                  content: section.content,
+                ),
+              );
+            }),
         ],
       ),
     );
+  }
+
+  List<Widget> _fallbackSections(DeliveryConfig config) {
+    return [
+      const _SectionCard(
+        title: 'Доставка и оплата',
+        content: 'Оплата возможна через Мир, Visa, Mastercard и СБП.\n\n'
+            'Все платежи защищены SSL.\n'
+            'Данные карты не сохраняются.',
+      ),
+      const SizedBox(height: 16),
+      ...config.zones.where((zone) => zone.requiresAddress).map((zone) {
+        final content = zone.checkoutDescription.trim().isNotEmpty
+            ? zone.checkoutDescription
+            : zone.title;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _SectionCard(
+            title: 'Доставка: ${zone.title}',
+            content: '$content\n\n${DeliverySchedule.acceptanceHoursLong}',
+          ),
+        );
+      }),
+    ];
   }
 }
 
@@ -112,14 +198,16 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          if (title.trim().isNotEmpty) ...[
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
+          ],
           Text(
             content,
             style: const TextStyle(

@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
 
-    'catalog',
+    'catalog.apps.CatalogConfig',
     'orders',
     'customers',
     'legal',

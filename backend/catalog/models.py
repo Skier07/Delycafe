@@ -21,6 +21,26 @@ class Category(models.Model):
         verbose_name='Показывать в приложении',
     )
 
+    preorder_lead_days = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Заказывать минимум за (суток)',
+        help_text='0 — без ограничения. 1 — заказ минимум на завтра.',
+    )
+    preorder_cutoff_enabled = models.BooleanField(
+        default=False,
+        verbose_name='Ограничение по времени заказа',
+        help_text=(
+            'Если включено и указано время «Принимать заказы до», '
+            'после этого времени (по Уралу) товары категории нельзя заказать.'
+        ),
+    )
+    preorder_cutoff_time = models.TimeField(
+        blank=True,
+        null=True,
+        verbose_name='Принимать заказы до',
+        help_text='После этого времени сегодня товары категории нельзя заказать. Например 17:00 для пирогов.',
+    )
+
     class Meta:
         ordering = ['sort_order', 'title']
         verbose_name = 'Категория'
@@ -147,3 +167,117 @@ class ProductVariant(models.Model):
 
     def __str__(self):
         return f'{self.product.title} — {self.title}'
+
+
+class InfoSection(models.TextChoices):
+    WHY_TRY = 'why_try', 'Почему стоит попробовать'
+    IMPORTANT = 'important', 'Что важно знать'
+
+
+class InfoStyle(models.TextChoices):
+    NORMAL = 'normal', 'Обычный'
+    WARNING = 'warning', 'Предупреждение'
+
+
+class CatalogSnippet(models.Model):
+    name = models.CharField(
+        max_length=120,
+        verbose_name='Название в админке',
+    )
+    section = models.CharField(
+        max_length=20,
+        choices=InfoSection.choices,
+        default=InfoSection.IMPORTANT,
+        verbose_name='Блок в карточке',
+    )
+    text = models.TextField(verbose_name='Текст')
+    style = models.CharField(
+        max_length=20,
+        choices=InfoStyle.choices,
+        default=InfoStyle.NORMAL,
+        verbose_name='Оформление',
+    )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name='Подключать ко всем новым товарам',
+    )
+    default_for_category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        related_name='default_snippets',
+        blank=True,
+        null=True,
+        verbose_name='Подключать к новым товарам категории',
+    )
+    sort_order = models.PositiveIntegerField(default=100)
+
+    class Meta:
+        ordering = ['section', 'sort_order', 'id']
+        verbose_name = 'Текстовый блок'
+        verbose_name_plural = 'Текстовые блоки'
+
+    def __str__(self):
+        return self.name
+
+
+class ProductSnippet(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='product_snippets',
+    )
+    snippet = models.ForeignKey(
+        CatalogSnippet,
+        on_delete=models.CASCADE,
+        related_name='product_links',
+    )
+    is_enabled = models.BooleanField(
+        default=True,
+        verbose_name='Показывать',
+    )
+    override_text = models.TextField(
+        blank=True,
+        verbose_name='Свой текст для этого товара',
+        help_text='Пусто — берётся общий текст блока.',
+    )
+
+    class Meta:
+        unique_together = ('product', 'snippet')
+        verbose_name = 'Блок товара'
+        verbose_name_plural = 'Блоки товара'
+
+    def __str__(self):
+        return f'{self.product} — {self.snippet}'
+
+    def resolved_text(self):
+        return (self.override_text or self.snippet.text).strip()
+
+
+class ProductInfoNote(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='info_notes',
+    )
+    section = models.CharField(
+        max_length=20,
+        choices=InfoSection.choices,
+        default=InfoSection.IMPORTANT,
+        verbose_name='Блок в карточке',
+    )
+    text = models.TextField(verbose_name='Текст')
+    style = models.CharField(
+        max_length=20,
+        choices=InfoStyle.choices,
+        default=InfoStyle.WARNING,
+        verbose_name='Оформление',
+    )
+    sort_order = models.PositiveIntegerField(default=500)
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Свой текст товара'
+        verbose_name_plural = 'Свои тексты товара'
+
+    def __str__(self):
+        return f'{self.product} — {self.get_section_display()}'

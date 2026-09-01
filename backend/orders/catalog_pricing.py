@@ -40,6 +40,50 @@ def _extract_saby_id(item_data: dict) -> int | None:
     return None
 
 
+def resolve_catalog_product(item_data: dict) -> Product | None:
+    saby_id = _extract_saby_id(item_data)
+
+    if saby_id:
+        variant = (
+            ProductVariant.objects.filter(
+                saby_id=saby_id,
+                is_active=True,
+                product__is_active=True,
+            )
+            .select_related('product', 'product__category')
+            .first()
+        )
+
+        if variant is not None:
+            return variant.product
+
+        product = (
+            Product.objects.filter(
+                saby_id=saby_id,
+                is_active=True,
+            )
+            .select_related('category')
+            .first()
+        )
+
+        if product is not None:
+            return product
+
+    product_pk = _extract_product_pk(str(item_data.get('product_api_id') or ''))
+
+    if product_pk is not None:
+        return (
+            Product.objects.filter(
+                pk=product_pk,
+                is_active=True,
+            )
+            .select_related('category')
+            .first()
+        )
+
+    return None
+
+
 def resolve_catalog_unit_price(item_data: dict) -> int:
     saby_id = _extract_saby_id(item_data)
 
