@@ -7,7 +7,7 @@ from django.utils import timezone
 from catalog.models import (
     CatalogSnippet,
     Category,
-    InfoSection,
+    InfoSectionDefinition,
     InfoStyle,
     Product,
     ProductInfoNote,
@@ -19,6 +19,9 @@ from catalog.snippets import attach_default_snippets, resolve_info_blocks
 
 class InfoBlocksTests(TestCase):
     def setUp(self):
+        self.why_try = InfoSectionDefinition.objects.get(code='why_try')
+        self.important = InfoSectionDefinition.objects.get(code='important')
+
         self.category = Category.objects.create(
             title='Бургеры',
             slug='burgers',
@@ -26,8 +29,16 @@ class InfoBlocksTests(TestCase):
         )
         self.snippet = CatalogSnippet.objects.create(
             name='Почему стоит: Бургеры',
-            section=InfoSection.WHY_TRY,
-            text='Общий текст про булочку.',
+            info_section=self.why_try,
+            content={
+                'lines': [
+                    {
+                        'text': 'Общий текст про булочку.',
+                        'marker': 'bullet',
+                        'font_size': 'normal',
+                    },
+                ],
+            },
             is_default=True,
             sort_order=10,
         )
@@ -42,13 +53,24 @@ class InfoBlocksTests(TestCase):
         links = ProductSnippet.objects.filter(product=self.product)
         self.assertTrue(links.filter(snippet=self.snippet, is_enabled=True).exists())
 
-    def test_override_text_replaces_snippet(self):
+    def test_override_content_replaces_snippet(self):
         link = ProductSnippet.objects.get(product=self.product, snippet=self.snippet)
-        link.override_text = 'Только для этого бургера.'
-        link.save(update_fields=['override_text'])
+        link.override_content = {
+            'lines': [
+                {
+                    'text': 'Только для этого бургера.',
+                    'marker': 'dash',
+                    'font_size': 'large',
+                    'bold': True,
+                },
+            ],
+        }
+        link.save(update_fields=['override_content'])
 
         blocks = resolve_info_blocks(self.product)
         self.assertEqual(blocks[0]['text'], 'Только для этого бургера.')
+        self.assertEqual(blocks[0]['lines'][0]['marker'], 'dash')
+        self.assertTrue(blocks[0]['lines'][0]['bold'])
 
     def test_disabled_snippet_hidden(self):
         ProductSnippet.objects.filter(product=self.product).update(is_enabled=False)
@@ -57,8 +79,15 @@ class InfoBlocksTests(TestCase):
     def test_custom_warning_note(self):
         ProductInfoNote.objects.create(
             product=self.product,
-            section=InfoSection.IMPORTANT,
-            text='Внимание! Только до 17:00.',
+            info_section=self.important,
+            content={
+                'lines': [
+                    {
+                        'text': 'Внимание! Только до 17:00.',
+                        'marker': 'number',
+                    },
+                ],
+            },
             style=InfoStyle.WARNING,
             sort_order=5,
         )
@@ -66,6 +95,29 @@ class InfoBlocksTests(TestCase):
         blocks = resolve_info_blocks(self.product)
         warning = [block for block in blocks if block['style'] == 'warning']
         self.assertEqual(warning[0]['text'], 'Внимание! Только до 17:00.')
+        self.assertEqual(warning[0]['lines'][0]['number'], 1)
+
+    def test_custom_section_title_from_definition(self):
+        custom = InfoSectionDefinition.objects.create(
+            code='chef_tip',
+            title='Совет шефа',
+            sort_order=5,
+        )
+        CatalogSnippet.objects.create(
+            name='Совет шефа общий',
+            info_section=custom,
+            content={
+                'lines': [
+                    {'text': 'Подавайте с соусом.', 'marker': 'bullet'},
+                ],
+            },
+            is_default=True,
+        )
+        attach_default_snippets(self.product)
+
+        blocks = resolve_info_blocks(self.product)
+        chef_blocks = [block for block in blocks if block['section'] == 'chef_tip']
+        self.assertEqual(chef_blocks[0]['title'], 'Совет шефа')
 
 
 class PreorderCutoffTests(TestCase):

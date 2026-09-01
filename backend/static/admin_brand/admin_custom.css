@@ -440,6 +440,28 @@ select:focus,
   color: #0c204d !important;
 }
 
+/* Формы редактирования — на всю ширину окна */
+.change-form #content-main {
+  max-width: none;
+  width: 100%;
+}
+
+.change-form .aligned .vLargeTextField,
+.change-form .aligned textarea,
+.change-form .aligned input[type="text"],
+.change-form .aligned input[type="number"],
+.change-form .aligned select {
+  max-width: none;
+}
+
+.change-form .aligned .form-row > div {
+  max-width: none;
+}
+
+.change-form .flex-container {
+  max-width: none;
+}
+
 /* ==========================================================
    Buttons
    ========================================================== */

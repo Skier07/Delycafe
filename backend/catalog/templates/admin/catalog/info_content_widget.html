@@ -1,0 +1,19 @@
+<div class="info-content-editor" data-editor-root>
+  <input
+    type="hidden"
+    name="{{ widget.name }}"
+    {% if widget.attrs.id %}id="{{ widget.attrs.id }}"{% endif %}
+    value="{{ widget.value }}"
+    class="info-content-hidden-input"
+  >
+  <div class="info-content-toolbar-help">
+  Форматирование строки: размер, начертание и маркер (точка, тире, номер).
+  </div>
+  <div class="info-content-lines"></div>
+  <button type="button" class="info-content-add-line">+ Добавить строку</button>
+  <noscript>
+    <p style="color:#b42318;margin-top:8px;">
+      Для редактора нужен JavaScript. Включите JS или обновите страницу после деплоя статики.
+    </p>
+  </noscript>
+</div>

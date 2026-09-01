@@ -1,4 +1,5 @@
 import 'package:delycafe/models/catalog_item.dart';
+import 'package:delycafe/models/product_info_block.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -103,13 +104,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   List<ProductInfoSection> _infoSections(CatalogItem item) {
-    final blocks = item.infoBlocks;
-
-    if (blocks != null && blocks.isNotEmpty) {
-      return groupProductInfoBlocks(blocks);
-    }
-
-    return legacyProductInfoSections(item);
+    return groupProductInfoBlocks(item.infoBlocks ?? []);
   }
 
   @override
@@ -328,10 +323,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 14),
                       ...buildProductInfoSectionWidgets(
                         _infoSections(item),
-                        lineBuilder: (text, {bool warning = false}) {
+                        lineBuilder: (line, {bool warning = false}) {
                           if (warning) {
                             return Text(
-                              text,
+                              line.text,
                               style: const TextStyle(
                                 fontSize: 14.5,
                                 height: 1.55,
@@ -341,7 +336,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             );
                           }
 
-                          return _BuildText(text: text);
+                          return _InfoLineWidget(line: line);
                         },
                       ),
                     ],
@@ -438,7 +433,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 }
 
-class _ProductHero extends StatelessWidget {
+class _ProductHero extends StatefulWidget {
   final CatalogItem item;
 
   const _ProductHero({
@@ -446,19 +441,61 @@ class _ProductHero extends StatelessWidget {
   });
 
   @override
+  State<_ProductHero> createState() => _ProductHeroState();
+}
+
+class _ProductHeroState extends State<_ProductHero> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final images = widget.item.galleryImages;
+    final item = widget.item;
+
     return SizedBox(
       height: 320,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          ProductImage(
-            image: item.image,
-            width: double.infinity,
-            height: 320,
-            fit: BoxFit.cover,
-          ),
+          if (images.length <= 1)
+            ProductImage(
+              image: images.isNotEmpty ? images.first : item.image,
+              width: double.infinity,
+              height: 320,
+              fit: BoxFit.cover,
+            )
+          else
+            PageView.builder(
+              controller: _pageController,
+              itemCount: images.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                return ProductImage(
+                  image: images[index],
+                  width: double.infinity,
+                  height: 320,
+                  fit: BoxFit.cover,
+                );
+              },
+            ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -471,6 +508,54 @@ class _ProductHero extends StatelessWidget {
               ),
             ),
           ),
+          if (images.length > 1)
+            Positioned(
+              top: 14,
+              right: 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_currentPage + 1}/${images.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          if (images.length > 1)
+            Positioned(
+              bottom: 52,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(images.length, (index) {
+                  final selected = index == _currentPage;
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: selected ? 18 : 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  );
+                }),
+              ),
+            ),
           Positioned(
             left: 16,
             right: 16,
@@ -610,38 +695,90 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-class _BuildText extends StatelessWidget {
-  final String text;
+class _InfoLineWidget extends StatelessWidget {
+  final ProductInfoLine line;
 
-  const _BuildText({
-    required this.text,
+  const _InfoLineWidget({
+    required this.line,
   });
+
+  double get _fontSize {
+    switch (line.fontSize) {
+      case 'small':
+        return 13;
+      case 'large':
+        return 16.5;
+      case 'normal':
+      default:
+        return 14.5;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 7),
-          child: Icon(
-            Icons.circle,
-            size: 6,
-            color: AppColors.header,
+        if (line.marker != 'none') ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 7),
+            child: _MarkerWidget(line: line),
           ),
-        ),
-        const SizedBox(width: 10),
+          const SizedBox(width: 10),
+        ],
         Expanded(
           child: Text(
-            text,
+            line.text,
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: _fontSize,
               height: 1.55,
+              fontWeight: line.bold ? FontWeight.w700 : FontWeight.w400,
+              fontStyle: line.italic ? FontStyle.italic : FontStyle.normal,
+              decoration: line.underline ? TextDecoration.underline : null,
               color: Colors.black.withValues(alpha: 0.78),
             ),
           ),
         ),
       ],
     );
+  }
+}
+
+class _MarkerWidget extends StatelessWidget {
+  final ProductInfoLine line;
+
+  const _MarkerWidget({
+    required this.line,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (line.marker) {
+      case 'dash':
+        return Text(
+          '—',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.header,
+          ),
+        );
+      case 'number':
+        return Text(
+          '${line.number > 0 ? line.number : 1}.',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.header,
+          ),
+        );
+      case 'bullet':
+      default:
+        return const Icon(
+          Icons.circle,
+          size: 6,
+          color: AppColors.header,
+        );
+    }
   }
 }

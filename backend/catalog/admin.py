@@ -1,15 +1,64 @@
-from django.contrib import admin
+import json
 
+from django import forms
+from django.contrib import admin
+from django.db import models as django_models
+from django.utils.html import format_html, format_html_join
+
+from .gallery import append_gallery_images
 from .models import (
     CatalogSnippet,
     Category,
+    InfoSectionDefinition,
     NewSabyProduct,
     Product,
+    ProductGalleryImage,
     ProductInfoNote,
     ProductSnippet,
     ProductVariant,
 )
+from .widgets import InfoContentField, MultipleFileField, MultipleFileInput
 from .snippets import attach_default_snippets
+
+
+class ProductGalleryImageInline(admin.TabularInline):
+    model = ProductGalleryImage
+    extra = 0
+    add_link_text = 'Добавить ещё одно фото товара'
+    fields = (
+        'preview',
+        'image',
+        'sort_order',
+    )
+    readonly_fields = ('preview',)
+    ordering = ('sort_order', 'id')
+
+    @admin.display(description='Превью')
+    def preview(self, gallery_image):
+        if not gallery_image.image:
+            return '—'
+
+        return format_html(
+            '<img src="{}" alt="" class="product-gallery-inline-thumb" />',
+            gallery_image.image.url,
+        )
+
+
+class ProductAdminForm(forms.ModelForm):
+    extra_gallery_images = MultipleFileField(
+        required=False,
+        label='Загрузить несколько фото',
+        widget=MultipleFileInput(
+            attrs={
+                'accept': 'image/*',
+            },
+        ),
+        help_text='Выберите одно или несколько файлов. Они добавятся в галерею после сохранения.',
+    )
+
+    class Meta:
+        model = Product
+        fields = '__all__'
 
 
 class ProductVariantInline(admin.TabularInline):
@@ -26,26 +75,32 @@ class ProductVariantInline(admin.TabularInline):
     )
 
 
-class ProductSnippetInline(admin.TabularInline):
+class ProductSnippetInline(admin.StackedInline):
     model = ProductSnippet
     extra = 0
     autocomplete_fields = ('snippet',)
     fields = (
         'snippet',
         'is_enabled',
-        'override_text',
+        'override_content',
     )
+    formfield_overrides = {
+        django_models.JSONField: {'form_class': InfoContentField},
+    }
 
 
-class ProductInfoNoteInline(admin.TabularInline):
+class ProductInfoNoteInline(admin.StackedInline):
     model = ProductInfoNote
     extra = 0
     fields = (
-        'section',
-        'text',
+        'info_section',
+        'content',
         'style',
         'sort_order',
     )
+    formfield_overrides = {
+        django_models.JSONField: {'form_class': InfoContentField},
+    }
 
 
 @admin.register(Category)
@@ -137,15 +192,54 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 class ProductAdminBase(admin.ModelAdmin):
+    form = ProductAdminForm
     inlines = [
+        ProductGalleryImageInline,
         ProductVariantInline,
         ProductSnippetInline,
         ProductInfoNoteInline,
     ]
 
+    class Media:
+        css = {
+            'all': (
+                'catalog/admin/product_gallery_admin.css',
+                'catalog/admin/info_content_editor.css',
+            ),
+        }
+        js = ('catalog/admin/info_content_editor.js',)
+
     actions = (
         'attach_standard_snippets',
     )
+
+    def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
+        inline_admin_formsets = super().get_inline_formsets(
+            request,
+            formsets,
+            inline_instances,
+            obj,
+        )
+
+        for inline_formset in inline_admin_formsets:
+            custom_add_text = getattr(inline_formset.opts, 'add_link_text', None)
+
+            if not custom_add_text:
+                continue
+
+            original_inline_formset_data = inline_formset.inline_formset_data
+
+            def patched_inline_formset_data(
+                original=original_inline_formset_data,
+                add_text=custom_add_text,
+            ):
+                payload = json.loads(original())
+                payload['options']['addText'] = add_text
+                return json.dumps(payload)
+
+            inline_formset.inline_formset_data = patched_inline_formset_data
+
+        return inline_admin_formsets
 
     @admin.action(description='Подключить стандартные текстовые блоки')
     def attach_standard_snippets(self, request, queryset):
@@ -162,12 +256,42 @@ class ProductAdminBase(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
 
+        uploaded_files = request.FILES.getlist('extra_gallery_images')
+        created = append_gallery_images(obj, uploaded_files)
+
+        if created:
+            self.message_user(
+                request,
+                f'Добавлено фотографий: {created}',
+            )
+
         if not change:
             attach_default_snippets(obj)
+
+    @admin.display(description='Текущие фото')
+    def gallery_preview(self, product):
+        if not product.pk:
+            return 'Сохраните товар, затем добавьте фото.'
+
+        gallery_images = product.gallery_images.all()
+
+        if not gallery_images:
+            return 'Фотографии ещё не добавлены.'
+
+        return format_html_join(
+            '',
+            '<img src="{}" alt="" class="product-gallery-preview-thumb" />',
+            (
+                (gallery_image.image.url,)
+                for gallery_image in gallery_images
+                if gallery_image.image
+            ),
+        )
 
 
 @admin.register(Product)
 class ProductAdmin(ProductAdminBase):
+    readonly_fields = ('gallery_preview', 'image')
     list_display = (
         'title',
         'category',
@@ -214,6 +338,21 @@ class ProductAdmin(ProductAdminBase):
 
     fieldsets = (
         (
+            'Фотографии',
+            {
+                'fields': (
+                    'gallery_preview',
+                    'extra_gallery_images',
+                    'image',
+                ),
+                'description': (
+                    'Первое фото в списке ниже — обложка в каталоге. '
+                    'Можно загрузить несколько файлов одним выбором '
+                    'или добавить по одному в таблице «Фото товара».'
+                ),
+            },
+        ),
+        (
             'Основное',
             {
                 'fields': (
@@ -221,7 +360,6 @@ class ProductAdmin(ProductAdminBase):
                     'manual_category',
                     'title',
                     'description',
-                    'image',
                 ),
             },
         ),
@@ -289,11 +427,13 @@ class NewSabyProductAdmin(ProductAdminBase):
     )
 
     fields = (
+        'gallery_preview',
+        'extra_gallery_images',
+        'image',
         'category',
         'manual_category',
         'title',
         'description',
-        'image',
         'saby_id',
         'saby_name',
         'source',
@@ -308,9 +448,13 @@ class NewSabyProductAdmin(ProductAdminBase):
     )
 
     readonly_fields = (
+        'gallery_preview',
+        'image',
         'saby_id',
         'saby_name',
         'source',
+        'created_at',
+        'updated_at',
     )
 
     actions = (
@@ -371,11 +515,39 @@ class NewSabyProductAdmin(ProductAdminBase):
         super().save_model(request, obj, form, change)
 
 
+@admin.register(InfoSectionDefinition)
+class InfoSectionDefinitionAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'code',
+        'sort_order',
+        'is_active',
+    )
+    list_editable = (
+        'sort_order',
+        'is_active',
+    )
+    search_fields = (
+        'title',
+        'code',
+    )
+    ordering = (
+        'sort_order',
+        'id',
+    )
+
+
 @admin.register(CatalogSnippet)
 class CatalogSnippetAdmin(admin.ModelAdmin):
+    class Media:
+        css = {
+            'all': ('catalog/admin/info_content_editor.css',),
+        }
+        js = ('catalog/admin/info_content_editor.js',)
+
     list_display = (
         'name',
-        'section',
+        'info_section',
         'style',
         'is_default',
         'default_for_category',
@@ -386,7 +558,7 @@ class CatalogSnippetAdmin(admin.ModelAdmin):
         'sort_order',
     )
     list_filter = (
-        'section',
+        'info_section',
         'style',
         'is_default',
         'default_for_category',
@@ -396,6 +568,49 @@ class CatalogSnippetAdmin(admin.ModelAdmin):
         'text',
     )
     autocomplete_fields = ('default_for_category',)
+    formfield_overrides = {
+        django_models.JSONField: {'form_class': InfoContentField},
+    }
+    fieldsets = (
+        (
+            'Основные',
+            {
+                'fields': (
+                    'name',
+                    'info_section',
+                    'style',
+                    'sort_order',
+                ),
+            },
+        ),
+        (
+            'Текст для приложения',
+            {
+                'fields': (
+                    'content',
+                ),
+            },
+        ),
+        (
+            'Автоподключение',
+            {
+                'fields': (
+                    'is_default',
+                    'default_for_category',
+                ),
+            },
+        ),
+        (
+            'Служебное',
+            {
+                'fields': (
+                    'text',
+                ),
+                'classes': ('collapse',),
+            },
+        ),
+    )
+    readonly_fields = ('text',)
     actions = (
         'attach_to_all_products',
         'disable_on_all_products',

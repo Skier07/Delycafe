@@ -1,0 +1,140 @@
+.info-content-editor {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.info-content-toolbar-help {
+  margin-bottom: 12px;
+  color: #5f6368;
+  font-size: 13px;
+}
+
+.info-content-lines {
+  width: 100%;
+}
+
+.info-content-line {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #e3e6eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.info-content-line textarea {
+  display: block;
+  width: 100%;
+  max-width: none;
+  min-height: 88px;
+  resize: vertical;
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.info-content-line-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.info-content-line-controls select {
+  min-width: 132px;
+  padding: 6px 8px;
+}
+
+.info-content-line-controls button {
+  padding: 6px 10px;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.info-content-line-controls button.is-active {
+  background: #417690;
+  color: #fff;
+  border-color: #417690;
+}
+
+.info-content-line-controls .info-content-remove-line {
+  color: #b42318;
+  border-color: #f2c7c3;
+}
+
+.info-content-add-line {
+  margin-top: 6px;
+  padding: 8px 14px;
+  border: 1px solid #417690;
+  border-radius: 6px;
+  background: #417690;
+  color: #fff;
+  cursor: pointer;
+}
+
+.info-content-add-line:hover {
+  background: #356076;
+}
+
+/* Растянуть редактор на всю ширину формы Django admin */
+.change-form .form-row.field-content .flex-container,
+.change-form .form-row.field-override_content .flex-container,
+.inline-group .form-row .flex-container .info-content-editor,
+.change-form .aligned .form-row.field-content > div,
+.change-form .aligned .form-row.field-override_content > div {
+  width: 100%;
+  max-width: none;
+  flex: 1 1 100%;
+}
+
+.change-form .form-row.field-content .info-content-editor,
+.change-form .form-row.field-override_content .info-content-editor,
+.inline-group .info-content-editor {
+  width: 100%;
+  max-width: none;
+}
+
+.change-form .aligned .form-row.field-content,
+.change-form .aligned .form-row.field-override_content {
+  display: block;
+}
+
+.change-form .aligned .form-row.field-content label,
+.change-form .aligned .form-row.field-override_content label {
+  display: block;
+  float: none;
+  width: auto;
+  margin-bottom: 8px;
+}
+
+.change-form .aligned .form-row.field-content .flex-container,
+.change-form .aligned .form-row.field-override_content .flex-container {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Stacked inline: блоки товара / свои тексты */
+.inline-group .stacked .form-row .field-content .info-content-editor,
+.inline-group .stacked .form-row .field-override_content .info-content-editor {
+  width: 100%;
+}
+
+.inline-group .stacked .form-row .field-content textarea,
+.inline-group .stacked .form-row .field-override_content textarea {
+  width: 100% !important;
+  max-width: none !important;
+}

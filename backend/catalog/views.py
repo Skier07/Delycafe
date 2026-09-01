@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .models import Category, Product, ProductInfoNote, ProductSnippet, ProductVariant
+from .models import Category, Product, ProductGalleryImage, ProductInfoNote, ProductSnippet, ProductVariant
 from .serializers import CategorySerializer, ProductSerializer
 
 
@@ -25,6 +25,10 @@ class ProductViewSet(ReadOnlyModelViewSet):
             'sort_order',
             'title',
         )
+        gallery_images = ProductGalleryImage.objects.order_by(
+            'sort_order',
+            'id',
+        )
 
         return (
             Product.objects.filter(
@@ -39,13 +43,23 @@ class ProductViewSet(ReadOnlyModelViewSet):
                     to_attr='active_variants',
                 ),
                 Prefetch(
+                    'gallery_images',
+                    queryset=gallery_images,
+                    to_attr='prefetched_gallery_images',
+                ),
+                Prefetch(
                     'product_snippets',
-                    queryset=ProductSnippet.objects.select_related('snippet'),
+                    queryset=ProductSnippet.objects.select_related(
+                        'snippet',
+                        'snippet__info_section',
+                    ),
                     to_attr='prefetched_snippets',
                 ),
                 Prefetch(
                     'info_notes',
-                    queryset=ProductInfoNote.objects.all(),
+                    queryset=ProductInfoNote.objects.select_related(
+                        'info_section',
+                    ),
                     to_attr='prefetched_notes',
                 ),
             )

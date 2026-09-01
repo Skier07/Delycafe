@@ -1,36 +1,4 @@
-class ProductInfoBlock {
-  final String section;
-  final String title;
-  final String text;
-  final String style;
-
-  const ProductInfoBlock({
-    required this.section,
-    required this.title,
-    required this.text,
-    this.style = 'normal',
-  });
-
-  bool get isWarning => style == 'warning';
-
-  Map<String, dynamic> toJson() {
-    return {
-      'section': section,
-      'title': title,
-      'text': text,
-      'style': style,
-    };
-  }
-
-  factory ProductInfoBlock.fromJson(Map<String, dynamic> json) {
-    return ProductInfoBlock(
-      section: json['section']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      text: json['text']?.toString() ?? '',
-      style: json['style']?.toString() ?? 'normal',
-    );
-  }
-}
+import 'package:delycafe/models/product_info_block.dart';
 
 class ProductVariant {
   final String id;
@@ -79,6 +47,7 @@ class CatalogItem {
   final String categoryPreorderCutoffTime;
   final int price;
   final String image;
+  final List<String> images;
   final String description;
   final String? shortDescription;
   final bool isHit;
@@ -105,6 +74,7 @@ class CatalogItem {
     this.categoryPreorderCutoffTime = '',
     required this.price,
     required this.image,
+    this.images = const [],
     required this.description,
     this.shortDescription,
     this.isHit = false,
@@ -121,6 +91,18 @@ class CatalogItem {
     this.cannotOrderReason = '',
   });
 
+  List<String> get galleryImages {
+    if (images.isNotEmpty) {
+      return images;
+    }
+
+    if (image.trim().isNotEmpty) {
+      return [image];
+    }
+
+    return const [];
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -133,6 +115,7 @@ class CatalogItem {
       'category_preorder_cutoff_time': categoryPreorderCutoffTime,
       'price': price,
       'image': image,
+      'images': images,
       'description': description,
       'short_description': shortDescription,
       'is_hit': isHit,
@@ -177,10 +160,18 @@ class CatalogItem {
                   Map<String, dynamic>.from(blockJson),
                 ),
               )
-              .where((block) => block.text.trim().isNotEmpty)
+              .where((block) => block.resolvedLines().isNotEmpty)
               .toList()
           : <ProductInfoBlock>[];
     }
+
+    final imagesJson = json['images'];
+    final images = imagesJson is List
+        ? imagesJson
+            .map((value) => value?.toString() ?? '')
+            .where((value) => value.trim().isNotEmpty)
+            .toList(growable: false)
+        : const <String>[];
 
     return CatalogItem(
       id: json['id']?.toString() ?? '',
@@ -198,6 +189,7 @@ class CatalogItem {
           json['category_preorder_cutoff_time']?.toString() ?? '',
       price: _toInt(json['price']),
       image: json['image']?.toString() ?? '',
+      images: images,
       description: json['description']?.toString() ?? '',
       shortDescription: json['short_description']?.toString(),
       isHit: json['is_hit'] == true,

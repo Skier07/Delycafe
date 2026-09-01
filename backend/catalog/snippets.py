@@ -1,7 +1,9 @@
-from catalog.models import CatalogSnippet, InfoSection, Product, ProductInfoNote, ProductSnippet
+from catalog.info_content import content_to_plain_text, resolved_lines
+from catalog.models import CatalogSnippet, Product, ProductInfoNote, ProductSnippet
 
 
-SECTION_TITLES = dict(InfoSection.choices)
+def _section_payload(info_section) -> tuple[str, str]:
+    return info_section.code, info_section.title
 
 
 def attach_default_snippets(product: Product) -> int:
@@ -32,61 +34,115 @@ def attach_default_snippets(product: Product) -> int:
     return created
 
 
+def _lines_payload(lines: list[dict]) -> list[dict]:
+    numbered = 0
+
+    payload = []
+
+    for line in lines:
+        marker = line.get('marker', 'bullet')
+
+        if marker == 'number':
+            numbered += 1
+            number = numbered
+        else:
+            number = 0
+
+        payload.append(
+            {
+                'text': line.get('text', ''),
+                'marker': marker,
+                'font_size': line.get('font_size', 'normal'),
+                'bold': bool(line.get('bold')),
+                'italic': bool(line.get('italic')),
+                'underline': bool(line.get('underline')),
+                'number': number,
+            }
+        )
+
+    return payload
+
+
 def resolve_info_blocks(product: Product) -> list[dict]:
     blocks: list[dict] = []
 
     snippet_links = getattr(product, 'prefetched_snippets', None)
 
     if snippet_links is None:
-        snippet_links = product.product_snippets.select_related('snippet').all()
+        snippet_links = product.product_snippets.select_related(
+            'snippet',
+            'snippet__info_section',
+        ).all()
 
     for link in snippet_links:
         if not link.is_enabled:
             continue
 
-        text = link.resolved_text()
+        info_section = link.snippet.info_section
 
-        if not text:
+        if not info_section.is_active:
             continue
+
+        lines = link.resolved_lines()
+
+        if not lines:
+            continue
+
+        section_code, section_title = _section_payload(info_section)
+        formatted_lines = _lines_payload(lines)
 
         blocks.append(
             {
-                'section': link.snippet.section,
-                'title': link.snippet.get_section_display(),
-                'text': text,
+                'section': section_code,
+                'title': section_title,
+                'text': content_to_plain_text({'lines': lines}),
                 'style': link.snippet.style,
+                'lines': formatted_lines,
                 'sort_order': link.snippet.sort_order,
+                'section_sort_order': info_section.sort_order,
             }
         )
 
     notes = getattr(product, 'prefetched_notes', None)
 
     if notes is None:
-        notes = product.info_notes.all()
+        notes = product.info_notes.select_related('info_section').all()
 
     for note in notes:
-        text = (note.text or '').strip()
+        lines = resolved_lines(note.content, note.text)
 
-        if not text:
+        if not lines:
             continue
+
+        info_section = note.info_section
+
+        if not info_section.is_active:
+            continue
+
+        section_code, section_title = _section_payload(info_section)
+        formatted_lines = _lines_payload(lines)
 
         blocks.append(
             {
-                'section': note.section,
-                'title': note.get_section_display(),
-                'text': text,
+                'section': section_code,
+                'title': section_title,
+                'text': content_to_plain_text({'lines': lines}),
                 'style': note.style,
+                'lines': formatted_lines,
                 'sort_order': note.sort_order,
+                'section_sort_order': info_section.sort_order,
             }
         )
 
-    section_rank = {
-        InfoSection.WHY_TRY: 0,
-        InfoSection.IMPORTANT: 1,
-    }
-    blocks.sort(key=lambda item: (section_rank.get(item['section'], 9), item['sort_order']))
+    blocks.sort(
+        key=lambda item: (
+            item.get('section_sort_order', 999),
+            item['sort_order'],
+        ),
+    )
 
     for item in blocks:
         item.pop('sort_order', None)
+        item.pop('section_sort_order', None)
 
     return blocks

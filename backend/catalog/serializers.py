@@ -1,12 +1,22 @@
 from rest_framework import serializers
 
-from .models import Category, Product, ProductVariant
+from .models import Category, Product, ProductGalleryImage, ProductVariant
 from .preorder import (
     cannot_order_message,
     format_cutoff_time,
     product_can_order_now,
 )
 from .snippets import resolve_info_blocks
+
+
+def build_absolute_media_url(request, file_field):
+    if not file_field:
+        return ''
+
+    if request is None:
+        return file_field.url
+
+    return request.build_absolute_uri(file_field.url)
 
 
 class ProductVariantSerializer(serializers.ModelSerializer):
@@ -38,6 +48,7 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     category_preorder_cutoff_time = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
     variants = serializers.SerializerMethodField()
     info_blocks = serializers.SerializerMethodField()
     can_order = serializers.SerializerMethodField()
@@ -56,6 +67,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'category_preorder_cutoff_time',
             'description',
             'image',
+            'images',
             'price',
             'weight',
             'is_new',
@@ -71,16 +83,40 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_category_preorder_cutoff_time(self, product):
         return format_cutoff_time(product.category.preorder_cutoff_time)
 
-    def get_image(self, product):
-        if not product.image:
-            return ''
+    def _gallery_image_urls(self, product):
+        gallery_images = getattr(product, 'prefetched_gallery_images', None)
+
+        if gallery_images is None:
+            gallery_images = product.gallery_images.all()
 
         request = self.context.get('request')
 
-        if request is None:
-            return product.image.url
+        return [
+            build_absolute_media_url(request, gallery_image.image)
+            for gallery_image in gallery_images
+            if gallery_image.image
+        ]
 
-        return request.build_absolute_uri(product.image.url)
+    def get_image(self, product):
+        urls = self._gallery_image_urls(product)
+
+        if urls:
+            return urls[0]
+
+        return build_absolute_media_url(self.context.get('request'), product.image)
+
+    def get_images(self, product):
+        urls = self._gallery_image_urls(product)
+
+        if urls:
+            return urls
+
+        cover = build_absolute_media_url(self.context.get('request'), product.image)
+
+        if cover:
+            return [cover]
+
+        return []
 
     def get_variants(self, product):
         active_variants = getattr(product, 'active_variants', None)

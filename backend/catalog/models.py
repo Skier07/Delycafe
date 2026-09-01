@@ -127,6 +127,31 @@ class Product(models.Model):
         return self.title
 
 
+class ProductGalleryImage(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='gallery_images',
+        verbose_name='Товар',
+    )
+    image = models.ImageField(
+        upload_to='products/gallery/',
+        verbose_name='Фото',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=500,
+        verbose_name='Порядок',
+    )
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Фото товара'
+        verbose_name_plural = 'Фото товара'
+
+    def __str__(self):
+        return f'Фото #{self.id} — {self.product.title}'
+
+
 class NewSabyProduct(Product):
     class Meta:
         proxy = True
@@ -174,6 +199,34 @@ class InfoSection(models.TextChoices):
     IMPORTANT = 'important', 'Что важно знать'
 
 
+class InfoSectionDefinition(models.Model):
+    code = models.SlugField(
+        max_length=50,
+        unique=True,
+        verbose_name='Код (для API)',
+    )
+    title = models.CharField(
+        max_length=120,
+        verbose_name='Заголовок в приложении',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активен',
+    )
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Тип блока информации'
+        verbose_name_plural = 'Типы блоков информации'
+
+    def __str__(self):
+        return self.title
+
+
 class InfoStyle(models.TextChoices):
     NORMAL = 'normal', 'Обычный'
     WARNING = 'warning', 'Предупреждение'
@@ -184,13 +237,22 @@ class CatalogSnippet(models.Model):
         max_length=120,
         verbose_name='Название в админке',
     )
-    section = models.CharField(
-        max_length=20,
-        choices=InfoSection.choices,
-        default=InfoSection.IMPORTANT,
+    info_section = models.ForeignKey(
+        InfoSectionDefinition,
+        on_delete=models.PROTECT,
+        related_name='snippets',
         verbose_name='Блок в карточке',
     )
-    text = models.TextField(verbose_name='Текст')
+    content = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Содержимое',
+    )
+    text = models.TextField(
+        verbose_name='Текст (поиск)',
+        help_text='Заполняется автоматически из редактора.',
+        blank=True,
+    )
     style = models.CharField(
         max_length=20,
         choices=InfoStyle.choices,
@@ -212,12 +274,18 @@ class CatalogSnippet(models.Model):
     sort_order = models.PositiveIntegerField(default=100)
 
     class Meta:
-        ordering = ['section', 'sort_order', 'id']
+        ordering = ['info_section__sort_order', 'sort_order', 'id']
         verbose_name = 'Текстовый блок'
         verbose_name_plural = 'Текстовые блоки'
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        from catalog.info_content import content_to_plain_text
+
+        self.text = content_to_plain_text(self.content)
+        super().save(*args, **kwargs)
 
 
 class ProductSnippet(models.Model):
@@ -237,8 +305,13 @@ class ProductSnippet(models.Model):
     )
     override_text = models.TextField(
         blank=True,
+        verbose_name='Свой текст (устар.)',
+        help_text='Используйте редактор ниже. Это поле только для совместимости.',
+    )
+    override_content = models.JSONField(
+        default=dict,
+        blank=True,
         verbose_name='Свой текст для этого товара',
-        help_text='Пусто — берётся общий текст блока.',
     )
 
     class Meta:
@@ -250,7 +323,30 @@ class ProductSnippet(models.Model):
         return f'{self.product} — {self.snippet}'
 
     def resolved_text(self):
-        return (self.override_text or self.snippet.text).strip()
+        from catalog.info_content import content_to_plain_text, resolved_lines
+
+        override_lines = resolved_lines(
+            self.override_content,
+            self.override_text,
+        )
+
+        if override_lines:
+            return content_to_plain_text({'lines': override_lines})
+
+        return content_to_plain_text(self.snippet.content, self.snippet.text)
+
+    def resolved_lines(self):
+        from catalog.info_content import resolved_lines
+
+        override_lines = resolved_lines(
+            self.override_content,
+            self.override_text,
+        )
+
+        if override_lines:
+            return override_lines
+
+        return resolved_lines(self.snippet.content, self.snippet.text)
 
 
 class ProductInfoNote(models.Model):
@@ -259,13 +355,22 @@ class ProductInfoNote(models.Model):
         on_delete=models.CASCADE,
         related_name='info_notes',
     )
-    section = models.CharField(
-        max_length=20,
-        choices=InfoSection.choices,
-        default=InfoSection.IMPORTANT,
+    info_section = models.ForeignKey(
+        InfoSectionDefinition,
+        on_delete=models.PROTECT,
+        related_name='product_notes',
         verbose_name='Блок в карточке',
     )
-    text = models.TextField(verbose_name='Текст')
+    content = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Содержимое',
+    )
+    text = models.TextField(
+        verbose_name='Текст (поиск)',
+        help_text='Заполняется автоматически из редактора.',
+        blank=True,
+    )
     style = models.CharField(
         max_length=20,
         choices=InfoStyle.choices,
@@ -280,4 +385,10 @@ class ProductInfoNote(models.Model):
         verbose_name_plural = 'Свои тексты товара'
 
     def __str__(self):
-        return f'{self.product} — {self.get_section_display()}'
+        return f'{self.product} — {self.info_section.title}'
+
+    def save(self, *args, **kwargs):
+        from catalog.info_content import content_to_plain_text
+
+        self.text = content_to_plain_text(self.content)
+        super().save(*args, **kwargs)
