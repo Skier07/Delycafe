@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:delycafe/background/workmanager_callback.dart';
 import 'package:flutter/foundation.dart';
 import 'package:workmanager/workmanager.dart';
@@ -5,8 +7,12 @@ import 'package:workmanager/workmanager.dart';
 bool _registrationComplete = false;
 bool _registrationInProgress = false;
 
-/// Регистрация фоновой синхронизации после старта UI (безопасно для iOS BGTask).
+/// Регистрация фоновой синхронизации каталога (Android). На iOS BGTask вызывает краш.
 Future<void> registerCatalogBackgroundSyncWhenReady() async {
+  if (Platform.isIOS) {
+    return;
+  }
+
   if (_registrationComplete || _registrationInProgress) {
     return;
   }
@@ -14,7 +20,6 @@ Future<void> registerCatalogBackgroundSyncWhenReady() async {
   _registrationInProgress = true;
 
   try {
-    // Не трогаем BGTaskScheduler в том же окне, что нативный launch.
     await Future<void>.delayed(const Duration(seconds: 3));
 
     await Workmanager().initialize(callbackDispatcher);
