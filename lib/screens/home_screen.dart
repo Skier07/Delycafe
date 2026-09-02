@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:delycafe/background/catalog_background_registration.dart';
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/features/auth/auth_screen.dart';
 import 'package:delycafe/screens/about_screen.dart';
@@ -58,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       CatalogSyncService.instance.onAppForeground();
       unawaited(_initializeLegalConsent());
       unawaited(_checkForStoreUpdate());
+      unawaited(registerCatalogBackgroundSyncWhenReady());
     });
   }
 

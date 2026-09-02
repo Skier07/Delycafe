@@ -41,6 +41,8 @@ void main() {
 
     expect(find.byType(RootScreen), findsOneWidget);
 
+    await tester.pump(const Duration(seconds: 3));
+
     await tester.pumpWidget(const SizedBox.shrink());
     CatalogSyncService.instance.onAppBackground();
   });
