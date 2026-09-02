@@ -2,7 +2,6 @@ import 'package:delycafe/data/hive/hive_boxes.dart';
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/models/category.dart';
 import 'package:hive/hive.dart';
-
 class CatalogSnapshot {
   final List<CatalogItem> products;
   final List<Category> categories;
@@ -45,9 +44,13 @@ class CatalogCacheService {
       final raw = _box.get(key);
       if (raw == null) continue;
 
-      products.add(
-        CatalogItem.fromJson(Map<String, dynamic>.from(raw)),
-      );
+      try {
+        products.add(
+          CatalogItem.fromJson(Map<String, dynamic>.from(raw)),
+        );
+      } catch (_) {
+        // Пропускаем повреждённую записись, не блокируем весь каталог.
+      }
     }
 
     if (products.isEmpty) {

@@ -103,9 +103,10 @@ class ProductInfoBlock {
       style: json['style']?.toString() ?? 'normal',
       lines: rawLines is List
           ? rawLines
+              .whereType<Map>()
               .map(
                 (line) => ProductInfoLine.fromJson(
-                  line as Map<String, dynamic>,
+                  Map<String, dynamic>.from(line),
                 ),
               )
               .toList(growable: false)

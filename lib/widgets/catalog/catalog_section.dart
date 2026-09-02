@@ -52,17 +52,21 @@ class _CatalogSectionState extends State<CatalogSection> {
   }
 
   Future<void> _loadCatalog() async {
-    final cached = _catalogRepository.readCached();
+    try {
+      final cached = _catalogRepository.readCached();
 
-    if (cached != null) {
-      setState(() {
-        _catalog = cached.products;
-        _categories = cached.categoryTitles;
-        _isLoading = false;
-        _loadError = null;
-      });
-      unawaited(_silentRefreshFromServer());
-      return;
+      if (cached != null) {
+        setState(() {
+          _catalog = cached.products;
+          _categories = cached.categoryTitles;
+          _isLoading = false;
+          _loadError = null;
+        });
+        unawaited(_silentRefreshFromServer());
+        return;
+      }
+    } catch (error) {
+      debugPrint('Ошибка чтения кэша каталога: $error');
     }
 
     setState(() {
@@ -98,7 +102,14 @@ class _CatalogSectionState extends State<CatalogSection> {
 
       final snapshot = _catalogRepository.readCached();
 
-      if (!mounted || snapshot == null) return;
+      if (!mounted) return;
+
+      if (snapshot == null) {
+        _setLoadFailureIfNeeded(
+          'Не удалось загрузить каталог. Проверьте подключение и попробуйте снова.',
+        );
+        return;
+      }
 
       setState(() {
         _catalog = snapshot.products;
@@ -109,13 +120,19 @@ class _CatalogSectionState extends State<CatalogSection> {
     } catch (error) {
       if (!mounted) return;
 
-      if (_catalog == null) {
-        setState(() {
-          _loadError = error.toString();
-          _isLoading = false;
-        });
-      }
+      _setLoadFailureIfNeeded(error.toString());
     }
+  }
+
+  void _setLoadFailureIfNeeded(String message) {
+    if (_catalog != null) {
+      return;
+    }
+
+    setState(() {
+      _loadError = message;
+      _isLoading = false;
+    });
   }
 
   String _getCurrentCategory(List<String> categories) {
