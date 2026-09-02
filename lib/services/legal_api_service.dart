@@ -72,9 +72,11 @@ class LegalConsentStatus {
 }
 
 class LegalApiService {
+  static const Duration _requestTimeout = Duration(seconds: 8);
+
   Future<List<LegalDocumentInfo>> fetchDocuments() async {
     final uri = ApiConfig.uri('/api/legal/documents/');
-    final response = await http.get(uri);
+    final response = await http.get(uri).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -102,10 +104,12 @@ class LegalApiService {
 
   Future<LegalConsentStatus> fetchConsentStatus() async {
     final uri = ApiConfig.uri('/api/legal/consent/status/');
-    final response = await http.get(
-      uri,
-      headers: await ApiAuthStorage.instance.authorizedHeaders(),
-    );
+    final response = await http
+        .get(
+          uri,
+          headers: await ApiAuthStorage.instance.authorizedHeaders(),
+        )
+        .timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -129,18 +133,20 @@ class LegalApiService {
     bool marketingConsentAccepted = false,
   }) async {
     final uri = ApiConfig.uri('/api/legal/consent/');
-    final response = await http.post(
-      uri,
-      headers: await ApiAuthStorage.instance.authorizedHeaders(
-        jsonContentType: true,
-      ),
-      body: jsonEncode({
-        'terms_accepted': termsAccepted,
-        'privacy_accepted': privacyAccepted,
-        'pd_consent_accepted': pdConsentAccepted,
-        'marketing_consent_accepted': marketingConsentAccepted,
-      }),
-    );
+    final response = await http
+        .post(
+          uri,
+          headers: await ApiAuthStorage.instance.authorizedHeaders(
+            jsonContentType: true,
+          ),
+          body: jsonEncode({
+            'terms_accepted': termsAccepted,
+            'privacy_accepted': privacyAccepted,
+            'pd_consent_accepted': pdConsentAccepted,
+            'marketing_consent_accepted': marketingConsentAccepted,
+          }),
+        )
+        .timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final body = utf8.decode(response.bodyBytes);

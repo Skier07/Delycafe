@@ -6,10 +6,12 @@ import 'package:delycafe/models/category.dart';
 import 'package:http/http.dart' as http;
 
 class CatalogApiService {
+  static const Duration _requestTimeout = Duration(seconds: 15);
+
   Future<List<CatalogItem>> fetchProducts() async {
     final uri = ApiConfig.uri('/api/catalog/products/');
 
-    final response = await http.get(uri);
+    final response = await http.get(uri).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -31,7 +33,7 @@ class CatalogApiService {
   Future<List<Category>> fetchCategories() async {
     final uri = ApiConfig.uri('/api/catalog/categories/');
 
-    final response = await http.get(uri);
+    final response = await http.get(uri).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(

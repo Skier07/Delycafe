@@ -1,7 +1,5 @@
 import 'package:delycafe/root_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
-import 'package:delycafe/services/catalog_repository.dart';
-import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,11 +14,13 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   static const Duration _minimumSplashDuration = Duration(milliseconds: 1500);
-  static const Duration _catalogRefreshTimeout = Duration(seconds: 8);
+  static const Duration _sessionReadyTimeout = Duration(seconds: 10);
+  static const Duration _totalSplashTimeout = Duration(seconds: 12);
 
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
   late final Animation<double> _fadeAnimation;
+  bool _navigated = false;
 
   @override
   void initState() {
@@ -57,19 +57,29 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _startSplash() async {
+    try {
+      await _runStartupTasks().timeout(_totalSplashTimeout);
+    } catch (_) {
+      // Не блокируем вход: открываем главную даже при медленной сети.
+    }
+
+    await _navigateToRoot();
+  }
+
+  Future<void> _runStartupTasks() async {
     final auth = context.read<AuthService>();
-    final legalConsent = context.read<LegalConsentService>();
 
     await Future.wait([
       _controller.forward(),
       Future.delayed(_minimumSplashDuration),
-      auth.waitForSessionReady(),
-      _warmCatalogCache(),
+      auth.waitForSessionReady().timeout(_sessionReadyTimeout),
     ]);
+  }
 
-    await legalConsent.initialize(phone: auth.registeredPhone);
+  Future<void> _navigateToRoot() async {
+    if (!mounted || _navigated) return;
 
-    if (!mounted) return;
+    _navigated = true;
 
     await Navigator.pushReplacement(
       context,
@@ -86,17 +96,6 @@ class _SplashScreenState extends State<SplashScreen>
         transitionDuration: const Duration(milliseconds: 350),
       ),
     );
-  }
-
-  Future<void> _warmCatalogCache() async {
-    final repository = CatalogRepository();
-    repository.readCached();
-
-    try {
-      await repository.fetchFromApiAndCache().timeout(_catalogRefreshTimeout);
-    } catch (_) {
-      // Оффлайн или медленная сеть: остаёмся на кэше каталога.
-    }
   }
 
   @override

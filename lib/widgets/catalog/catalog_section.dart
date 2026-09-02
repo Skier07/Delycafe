@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/catalog_repository.dart';
+import 'package:delycafe/services/catalog_sync_service.dart';
 import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
@@ -60,7 +61,7 @@ class _CatalogSectionState extends State<CatalogSection> {
         _isLoading = false;
         _loadError = null;
       });
-      unawaited(_refreshFromServer());
+      unawaited(_silentRefreshFromServer());
       return;
     }
 
@@ -72,11 +73,32 @@ class _CatalogSectionState extends State<CatalogSection> {
     await _refreshFromServer();
   }
 
+  Future<void> _silentRefreshFromServer() async {
+    try {
+      await CatalogSyncService.instance.refresh();
+
+      final snapshot = _catalogRepository.readCached();
+
+      if (!mounted || snapshot == null) return;
+
+      setState(() {
+        _catalog = snapshot.products;
+        _categories = snapshot.categoryTitles;
+        _isLoading = false;
+        _loadError = null;
+      });
+    } catch (_) {
+      // Оставляем уже показанный кэш.
+    }
+  }
+
   Future<void> _refreshFromServer() async {
     try {
-      final snapshot = await _catalogRepository.fetchFromApiAndCache();
+      await CatalogSyncService.instance.refresh(force: true);
 
-      if (!mounted) return;
+      final snapshot = _catalogRepository.readCached();
+
+      if (!mounted || snapshot == null) return;
 
       setState(() {
         _catalog = snapshot.products;

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:delycafe/background/catalog_background_registration.dart';
 import 'package:delycafe/data/hive/hive_init.dart';
 import 'package:delycafe/screens/splash_screen.dart';
 import 'package:delycafe/services/address_service.dart';
@@ -19,6 +22,8 @@ void main() async {
 
   await initHive();
   await ApiAuthStorage.instance.load();
+
+  unawaited(registerCatalogBackgroundSync());
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

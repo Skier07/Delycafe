@@ -7,6 +7,8 @@ class LegalConsentService extends ChangeNotifier {
   LegalConsentService({LegalApiService? apiService})
       : _apiService = apiService ?? LegalApiService();
 
+  static const Duration _serverRefreshTimeout = Duration(seconds: 8);
+
   static const String _localVersionKey = 'legal_docs_version';
   static const String _termsKey = 'legal_terms_accepted';
   static const String _privacyKey = 'legal_privacy_accepted';
@@ -35,7 +37,11 @@ class LegalConsentService extends ChangeNotifier {
     await _loadLocal();
 
     if (phone != null && phone.trim().isNotEmpty) {
-      await refreshFromServer();
+      try {
+        await refreshFromServer().timeout(_serverRefreshTimeout);
+      } catch (_) {
+        // Локальные согласия остаются доступными офлайн.
+      }
     }
 
     notifyListeners();
@@ -47,7 +53,9 @@ class LegalConsentService extends ChangeNotifier {
     }
 
     try {
-      final status = await _apiService.fetchConsentStatus();
+      final status = await _apiService
+          .fetchConsentStatus()
+          .timeout(_serverRefreshTimeout);
       _applyStatus(status);
       await _saveLocal();
     } catch (_) {

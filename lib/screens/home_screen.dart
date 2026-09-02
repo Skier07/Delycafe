@@ -12,9 +12,13 @@ import 'package:delycafe/screens/legal_policy_screen.dart';
 import 'package:delycafe/screens/news_promos/news_and_promo_screen.dart';
 import 'package:delycafe/screens/orders_screen.dart';
 import 'package:delycafe/screens/profile_screen.dart';
+import 'package:delycafe/services/app_update_service.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/cart_service.dart';
+import 'package:delycafe/services/catalog_sync_service.dart';
 import 'package:delycafe/services/jivo_service.dart';
+import 'package:delycafe/services/legal_consent_service.dart';
+import 'package:delycafe/widgets/app_update_dialog.dart';
 import 'package:delycafe/ui/components/glass/dark_glass_sheet.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
@@ -49,6 +53,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CatalogSyncService.instance.onAppForeground();
+      unawaited(_initializeLegalConsent());
+      unawaited(_checkForStoreUpdate());
+    });
+  }
+
+  Future<void> _initializeLegalConsent() async {
+    if (!mounted) return;
+
+    final auth = context.read<AuthService>();
+    final legalConsent = context.read<LegalConsentService>();
+
+    try {
+      await legalConsent.initialize(phone: auth.registeredPhone);
+    } catch (_) {
+      // Согласия подтянутся позже или останутся локальные.
+    }
   }
 
   @override
@@ -73,8 +96,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      CatalogSyncService.instance.onAppForeground();
       unawaited(_refreshProfile(force: true));
+      unawaited(_checkForStoreUpdate());
+      return;
     }
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      CatalogSyncService.instance.onAppBackground();
+    }
+  }
+
+  Future<void> _checkForStoreUpdate() async {
+    if (!mounted) return;
+
+    final updateInfo = await AppUpdateService.instance.checkForUpdate();
+
+    if (!mounted || updateInfo == null) return;
+
+    await showAppUpdateDialog(context, updateInfo);
   }
 
   Future<void> _refreshProfile({bool force = false}) async {
