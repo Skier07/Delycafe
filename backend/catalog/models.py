@@ -349,6 +349,140 @@ class ProductSnippet(models.Model):
         return resolved_lines(self.snippet.content, self.snippet.text)
 
 
+class ContentPost(models.Model):
+    class PostType(models.TextChoices):
+        NEWS = 'news', 'Новость'
+        PROMO = 'promo', 'Акция'
+
+    post_type = models.CharField(
+        max_length=20,
+        choices=PostType.choices,
+        verbose_name='Тип',
+    )
+    title = models.CharField(
+        max_length=200,
+        verbose_name='Заголовок',
+    )
+    cover_image = models.ImageField(
+        upload_to='content/covers/',
+        blank=True,
+        null=True,
+        verbose_name='Обложка',
+    )
+    body = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Текст и оформление',
+        help_text=(
+            'Плейсхолдеры процентов: {{earn_percent}}, '
+            '{{max_spend_percent}}, {{pickup_discount_percent}} — '
+            'подставятся из настроек промо автоматически.'
+        ),
+    )
+    plain_text = models.TextField(
+        blank=True,
+        verbose_name='Текст (поиск)',
+    )
+    is_published = models.BooleanField(
+        default=True,
+        verbose_name='Опубликовано',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=500,
+        verbose_name='Порядок',
+    )
+    published_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Дата публикации',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', '-published_at', '-id']
+        verbose_name = 'Новость / акция'
+        verbose_name_plural = 'Новости и акции'
+
+    def __str__(self):
+        return f'[{self.get_post_type_display()}] {self.title}'
+
+    def save(self, *args, **kwargs):
+        from catalog.page_content import content_to_plain_text
+
+        self.plain_text = content_to_plain_text(self.body)
+        super().save(*args, **kwargs)
+
+
+class ContentPostImage(models.Model):
+    post = models.ForeignKey(
+        ContentPost,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Материал',
+    )
+    image = models.ImageField(
+        upload_to='content/images/',
+        verbose_name='Картинка',
+    )
+    sort_order = models.PositiveIntegerField(
+        default=500,
+        verbose_name='Порядок',
+    )
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Картинка материала'
+        verbose_name_plural = 'Картинки материала'
+
+    def __str__(self):
+        return f'{self.post_id} — {self.image.name}'
+
+
+class AppPageContent(models.Model):
+    class PageKey(models.TextChoices):
+        BONUS_RULES = 'bonus_rules', 'Как работают бонусы'
+
+    key = models.CharField(
+        max_length=60,
+        unique=True,
+        choices=PageKey.choices,
+        verbose_name='Страница',
+    )
+    title = models.CharField(
+        max_length=200,
+        default='Как работают бонусы',
+        verbose_name='Заголовок',
+    )
+    body = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Текст и оформление',
+        help_text=(
+            'Используйте {{earn_percent}}, {{max_spend_percent}}, '
+            '{{pickup_discount_percent}} — проценты подставятся из API промо.'
+        ),
+    )
+    plain_text = models.TextField(
+        blank=True,
+        verbose_name='Текст (поиск)',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Текст страницы приложения'
+        verbose_name_plural = 'Тексты страниц приложения'
+
+    def __str__(self):
+        return self.get_key_display()
+
+    def save(self, *args, **kwargs):
+        from catalog.page_content import content_to_plain_text
+
+        self.plain_text = content_to_plain_text(self.body)
+        super().save(*args, **kwargs)
+
+
 class ProductInfoNote(models.Model):
     product = models.ForeignKey(
         Product,

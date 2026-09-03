@@ -17,6 +17,7 @@ from .delivery_pricing import (
     delivery_requires_address,
     delivery_zone_exists,
     get_default_locality,
+    get_delivery_zone_title,
     is_pickup_delivery,
 )
 from .delivery_schedule import validate_order_delivery_window
@@ -649,14 +650,24 @@ class OrderCreateSerializer(serializers.Serializer):
 
         phone = validated_data['phone']
         customer_name = validated_data.get('customer_name', '').strip()
-        order_address = (validated_data.get('address') or '').strip()
         delivery_type = validated_data.get('delivery_type')
 
-        if delivery_requires_address(delivery_type):
-            if not validated_data.get('address_locality'):
-                validated_data['address_locality'] = get_default_locality(
-                    delivery_type,
-                )
+        if not validated_data.get('address_locality'):
+            default_locality = get_default_locality(delivery_type)
+            if default_locality:
+                validated_data['address_locality'] = default_locality
+
+        if (
+            not delivery_requires_address(delivery_type)
+            and not (validated_data.get('address') or '').strip()
+        ):
+            validated_data['address'] = (
+                validated_data.get('address_locality')
+                or get_delivery_zone_title(delivery_type)
+                or 'Без адреса'
+            )
+
+        order_address = (validated_data.get('address') or '').strip()
 
         customer, created = Customer.objects.get_or_create(
             phone=phone,

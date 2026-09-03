@@ -2,6 +2,12 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from orders.promotions import (
+    BONUS_EARN_PERCENT,
+    MAX_BONUS_SPEND_PERCENT,
+    PICKUP_DISCOUNT_PERCENT,
+)
+
 from .delivery_serializers import (
     DeliveryInfoSectionSerializer,
     DeliveryZoneSerializer,
@@ -30,5 +36,10 @@ class DeliveryConfigAPIView(APIView):
                     sections,
                     many=True,
                 ).data,
+                'promotions': {
+                    'earn_percent': BONUS_EARN_PERCENT,
+                    'max_spend_percent': MAX_BONUS_SPEND_PERCENT,
+                    'pickup_discount_percent': PICKUP_DISCOUNT_PERCENT,
+                },
             }
         )

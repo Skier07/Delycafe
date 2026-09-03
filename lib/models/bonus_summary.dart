@@ -7,6 +7,7 @@ class BonusSummary {
   final int bonusBalance;
   final int earnPercent;
   final int maxSpendPercent;
+  final int pickupDiscountPercent;
   final bool firstOrderDiscountAvailable;
   final bool firstOrderDiscountUsed;
   final List<BonusTransactionItem> transactions;
@@ -17,6 +18,7 @@ class BonusSummary {
     required this.bonusBalance,
     required this.earnPercent,
     required this.maxSpendPercent,
+    required this.pickupDiscountPercent,
     required this.firstOrderDiscountAvailable,
     required this.firstOrderDiscountUsed,
     required this.transactions,
@@ -26,6 +28,7 @@ class BonusSummary {
     final transactionsJson = json['transactions'];
     final earnPercent = _toInt(json['earn_percent']);
     final maxSpendPercent = _toInt(json['max_spend_percent']);
+    final pickupDiscountPercent = _toInt(json['pickup_discount_percent']);
 
     return BonusSummary(
       customerId: _toInt(json['customer_id']),
@@ -34,6 +37,9 @@ class BonusSummary {
       earnPercent: earnPercent > 0 ? earnPercent : BonusRules.earnPercent,
       maxSpendPercent:
           maxSpendPercent > 0 ? maxSpendPercent : BonusRules.maxSpendPercent,
+      pickupDiscountPercent: pickupDiscountPercent > 0
+          ? pickupDiscountPercent
+          : BonusRules.pickupDiscountPercent,
       firstOrderDiscountAvailable:
           json['first_order_discount_available'] == true,
       firstOrderDiscountUsed: json['first_order_discount_used'] == true,
@@ -53,6 +59,7 @@ class BonusSummary {
       bonusBalance: user.bonusBalance,
       earnPercent: BonusRules.earnPercent,
       maxSpendPercent: BonusRules.maxSpendPercent,
+      pickupDiscountPercent: BonusRules.pickupDiscountPercent,
       firstOrderDiscountAvailable: user.firstOrderDiscountAvailable,
       firstOrderDiscountUsed: user.firstOrderDiscountUsed,
       transactions: const [],

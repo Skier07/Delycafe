@@ -4,6 +4,7 @@ import 'package:delycafe/services/payment_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
+import 'package:delycafe/utils/payment_deeplink.dart';
 import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -47,24 +48,6 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   DateTime? _lastLaunchedAt;
   int _statusRetryGeneration = 0;
   bool _sbpFlowTriggered = false;
-
-  static final _bankSbpPathPattern = RegExp(
-    r'paymentsbp|/sbp/|/sbp$|paysbp|sbp-pay',
-    caseSensitive: false,
-  );
-
-  static const _bankSbpHosts = {
-    'online.vtb.ru',
-    'vtb.ru',
-    'online.sberbank.ru',
-    'sberbank.ru',
-    'online.alfabank.ru',
-    'alfabank.ru',
-    'www.tinkoff.ru',
-    'tinkoff.ru',
-    'qr.nspk.ru',
-    'sub.nspk.ru',
-  };
 
   @override
   void initState() {
@@ -226,12 +209,12 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
               return;
             }
 
-            _handleExternalUrl(url, fromNavigationRequest: false);
+            _handleExternalUrl(url);
           },
           onPageFinished: (url) {
             if (!mounted || _paymentCompleted) return;
             unawaited(_maybeTriggerSbpFlow());
-            if (_isPaymentReturnUrl(url)) {
+            if (isPaymentReturnUrl(url)) {
               _checkPaymentStatus(showErrors: false);
             }
           },
@@ -242,22 +225,11 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
             if (!isMainFrame) return;
 
             final failingUrl = error.url ?? '';
-            if (failingUrl.isNotEmpty &&
-                _shouldOpenOutsideWebView(failingUrl) &&
-                _handleExternalUrl(failingUrl, fromNavigationRequest: false)) {
-              return;
-            }
+            if (failingUrl.isEmpty) return;
 
-            if (error.errorCode == -10 ||
-                error.errorCode == -2 ||
-                error.description.contains('ERR_UNKNOWN_URL_SCHEME') ||
-                error.description.contains('ERR_NAME_NOT_RESOLVED')) {
-              if (failingUrl.isNotEmpty &&
-                  _shouldOpenOutsideWebView(failingUrl) &&
-                  _handleExternalUrl(failingUrl, fromNavigationRequest: false)) {
-                return;
-              }
-              return;
+            // WebView не умеет bank:// / intent:// — открываем приложение банка.
+            if (shouldOpenPaymentUrlExternally(failingUrl)) {
+              _handleExternalUrl(failingUrl);
             }
           },
         ),
@@ -270,44 +242,28 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   NavigationDecision _handleNavigation(NavigationRequest request) {
     final url = request.url;
 
-    if (_isPaymentReturnUrl(url)) {
+    if (isPaymentReturnUrl(url)) {
       unawaited(_checkPaymentStatusWithRetries());
+      return NavigationDecision.navigate;
     }
 
     if (isCard3dsPaymentUrl(url)) {
       return NavigationDecision.navigate;
     }
 
-    if (_handleExternalUrl(url, fromNavigationRequest: true)) {
-      return NavigationDecision.prevent;
-    }
-
-    if (!isAllowedPaymentUrl(url) && !_isPaymentReturnUrl(url)) {
-      final uri = Uri.tryParse(normalizePaymentUrl(url));
-      final scheme = uri?.scheme.toLowerCase() ?? '';
-      if ((scheme == 'https' || scheme == 'http') &&
-          !_shouldOpenOutsideWebView(url)) {
+    switch (classifyPaymentNavigationUrl(url)) {
+      case PaymentUrlAction.ignore:
+        return NavigationDecision.prevent;
+      case PaymentUrlAction.openExternally:
+        _handleExternalUrl(url);
+        return NavigationDecision.prevent;
+      case PaymentUrlAction.stayInWebView:
         return NavigationDecision.navigate;
-      }
-      return NavigationDecision.prevent;
     }
-
-    return NavigationDecision.navigate;
   }
 
-  bool _handleExternalUrl(
-    String url, {
-    required bool fromNavigationRequest,
-  }) {
-    if (_isPaymentReturnUrl(url)) {
-      return false;
-    }
-
-    if (isCard3dsPaymentUrl(url)) {
-      return false;
-    }
-
-    if (!_shouldOpenOutsideWebView(url)) {
+  bool _handleExternalUrl(String url) {
+    if (!shouldOpenPaymentUrlExternally(url)) {
       return false;
     }
 
@@ -323,7 +279,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     final now = DateTime.now();
     if (_lastLaunchedExternalUrl == url &&
         _lastLaunchedAt != null &&
-        now.difference(_lastLaunchedAt!) < const Duration(seconds: 3)) {
+        now.difference(_lastLaunchedAt!) < const Duration(seconds: 2)) {
       return false;
     }
 
@@ -332,153 +288,98 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     return true;
   }
 
-  bool _shouldOpenOutsideWebView(String url) {
-    if (_isPaymentReturnUrl(url)) {
-      return false;
-    }
-
-    final uri = Uri.tryParse(url);
-    if (uri == null) {
-      return false;
-    }
-
-    if (_isAlfaPaymentHost(uri)) {
-      return false;
-    }
-
-    final scheme = uri.scheme.toLowerCase();
-    if (scheme != 'http' && scheme != 'https') {
-      return scheme != 'about' &&
-          scheme != 'data' &&
-          scheme != 'javascript';
-    }
-
-    return _isBankSbpPaymentUrl(uri);
-  }
-
-  bool _isAlfaPaymentHost(Uri uri) {
-    final host = uri.host.toLowerCase();
-
-    return host.contains('alfabank') ||
-        host.contains('rbsuat') ||
-        host.contains('securepayecom');
-  }
-
-  bool _isBankSbpPaymentUrl(Uri uri) {
-    final host = uri.host.toLowerCase();
-    final path = '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}'
-        .toLowerCase();
-
-    if (host == 'qr.nspk.ru' || host == 'sub.nspk.ru') {
-      return true;
-    }
-
-    if (_bankSbpHosts.contains(host) || host.endsWith('.vtb.ru')) {
-      return _bankSbpPathPattern.hasMatch(path) || host.startsWith('online.');
-    }
-
-    if (host.contains('sberbank.ru') && _bankSbpPathPattern.hasMatch(path)) {
-      return true;
-    }
-
-    return _bankSbpPathPattern.hasMatch(path);
-  }
-
   Future<void> _launchExternalPaymentUrl(String url) async {
     _awaitingBankReturn = true;
 
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _errorMessage = null;
+      });
     }
 
     final launched = await _tryLaunchExternalUrl(url);
 
-    if (!mounted || launched) {
+    if (!mounted) {
       return;
+    }
+
+    if (launched) {
+      return;
+    }
+
+    // Нет приложения / universal link не сработал — веб-форма банка в WebView.
+    final httpsFallback = _httpsFallbackForFailedLaunch(url);
+    if (httpsFallback != null) {
+      try {
+        await _webViewController?.loadRequest(Uri.parse(httpsFallback));
+        if (mounted) {
+          setState(() {
+            _awaitingBankReturn = false;
+          });
+        }
+        return;
+      } catch (error) {
+        debugPrint('Не удалось загрузить fallback URL банка: $error');
+      }
     }
 
     AppHaptics.error();
     setState(() {
       _errorMessage =
-          'Не удалось открыть приложение банка. Установите приложение '
-          'вашего банка и повторите оплату.';
+          'Не удалось открыть приложение банка. Выберите другой банк '
+          'или установите приложение вашего банка и повторите оплату.';
     });
   }
 
+  String? _httpsFallbackForFailedLaunch(String url) {
+    if (isHttpOrHttpsUrl(url)) {
+      return url;
+    }
+
+    for (final candidate in paymentExternalLaunchCandidates(url)) {
+      if (isHttpOrHttpsUrl(candidate) &&
+          !candidate.contains('play.google.com') &&
+          !candidate.startsWith('market:')) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
   Future<bool> _tryLaunchExternalUrl(String url) async {
-    if (url.startsWith('intent://')) {
-      final intentUri = Uri.tryParse(url);
-      if (intentUri != null &&
-          await launchUrl(intentUri, mode: LaunchMode.externalApplication)) {
-        return true;
+    final candidates = paymentExternalLaunchCandidates(url);
+
+    for (final candidate in candidates) {
+      final uri = Uri.tryParse(candidate);
+      if (uri == null) {
+        continue;
       }
 
-      final bankSchemeUrl = _buildUrlFromAndroidIntent(url);
-      if (bankSchemeUrl != null &&
-          await launchUrl(
-            Uri.parse(bankSchemeUrl),
-            mode: LaunchMode.externalApplication,
+      // Не вызываем canLaunchUrl: на iOS лимит LSApplicationQueriesSchemes (~50)
+      // не покрывает все банки СБП. openURL работает без whitelist схем.
+      try {
+        if (isHttpOrHttpsUrl(candidate)) {
+          // Только приложение банка. Браузер ломает return URL;
+          // если приложения нет — caller загрузит URL в WebView.
+          if (await launchUrl(
+            uri,
+            mode: LaunchMode.externalNonBrowserApplication,
           )) {
-        return true;
+            return true;
+          }
+          continue;
+        }
+
+        if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+          return true;
+        }
+      } catch (error) {
+        debugPrint('Не удалось открыть банковский URL ($candidate): $error');
       }
-
-      final fallbackUrl = _extractAndroidIntentFallback(url);
-      if (fallbackUrl != null) {
-        return _tryLaunchExternalUrl(fallbackUrl);
-      }
-
-      return false;
     }
 
-    final uri = Uri.tryParse(url);
-    if (uri == null) {
-      return false;
-    }
-
-    return launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  String? _buildUrlFromAndroidIntent(String intentUrl) {
-    final schemeMatch = RegExp(
-      r';scheme=([^;]+);',
-      caseSensitive: false,
-    ).firstMatch(intentUrl);
-    final scheme = schemeMatch?.group(1);
-    if (scheme == null || scheme.isEmpty) {
-      return null;
-    }
-
-    final path = intentUrl
-        .replaceFirst(RegExp(r'^intent://', caseSensitive: false), '')
-        .split('#Intent')
-        .first;
-
-    if (path.isEmpty) {
-      return null;
-    }
-
-    return '$scheme://$path';
-  }
-
-  String? _extractAndroidIntentFallback(String intentUrl) {
-    final fallbackMatch = RegExp(
-      r';S\.browser_fallback_url=([^;]+);',
-      caseSensitive: false,
-    ).firstMatch(intentUrl);
-
-    final encoded = fallbackMatch?.group(1);
-    if (encoded == null || encoded.isEmpty) {
-      return null;
-    }
-
-    return Uri.decodeComponent(encoded);
-  }
-
-  bool _isPaymentReturnUrl(String url) {
-    final normalized = url.toLowerCase();
-
-    return normalized.contains('/api/payments/success') ||
-        normalized.contains('/api/payments/fail');
+    return false;
   }
 
   void _startPolling() {

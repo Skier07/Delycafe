@@ -1,7 +1,21 @@
 from django.db.models import Prefetch
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .models import Category, Product, ProductGalleryImage, ProductInfoNote, ProductSnippet, ProductVariant
+from .content_serializers import AppPageContentSerializer, ContentPostSerializer
+from .models import (
+    AppPageContent,
+    Category,
+    ContentPost,
+    Product,
+    ProductGalleryImage,
+    ProductInfoNote,
+    ProductSnippet,
+    ProductVariant,
+)
 from .serializers import CategorySerializer, ProductSerializer
 
 
@@ -64,4 +78,31 @@ class ProductViewSet(ReadOnlyModelViewSet):
                 ),
             )
             .select_related('category')
+        )
+
+
+class ContentPostViewSet(ReadOnlyModelViewSet):
+    serializer_class = ContentPostSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = ContentPost.objects.filter(is_published=True)
+
+        post_type = self.request.query_params.get('type')
+        if post_type in {
+            ContentPost.PostType.NEWS,
+            ContentPost.PostType.PROMO,
+        }:
+            queryset = queryset.filter(post_type=post_type)
+
+        return queryset
+
+
+class AppPageContentAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, key):
+        page = get_object_or_404(AppPageContent, key=key)
+        return Response(
+            AppPageContentSerializer(page, context={'request': request}).data,
         )

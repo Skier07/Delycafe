@@ -1,0 +1,23 @@
+<div class="page-content-editor" data-page-editor-root>
+  <input
+    type="hidden"
+    name="{{ widget.name }}"
+    {% if widget.attrs.id %}id="{{ widget.attrs.id }}"{% endif %}
+    value="{{ widget.value }}"
+    class="page-content-hidden-input"
+  >
+  <div class="page-content-toolbar-help">
+    Строки текста: размер, выравнивание, цвет, шрифт, B/I/U.
+    Можно добавить картинку по URL (загрузите файл ниже в «Картинки» и вставьте URL).
+    Плейсхолдеры:
+    <code>{% templatetag openvariable %}earn_percent{% templatetag closevariable %}</code>,
+    <code>{% templatetag openvariable %}max_spend_percent{% templatetag closevariable %}</code>,
+    <code>{% templatetag openvariable %}pickup_discount_percent{% templatetag closevariable %}</code>.
+  </div>
+  <div class="page-content-lines"></div>
+  <div class="page-content-actions">
+    <button type="button" class="page-content-add-line">+ Текст</button>
+    <button type="button" class="page-content-add-image">+ Картинка (URL)</button>
+    <button type="button" class="page-content-add-spacer">+ Отступ</button>
+  </div>
+</div>

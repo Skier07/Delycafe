@@ -1,11 +1,13 @@
 import 'package:delycafe/constants/app_features.dart';
-import 'package:delycafe/constants/bonus_rules.dart';
 import 'package:delycafe/models/bonus_summary.dart';
+import 'package:delycafe/models/content_post.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/bonus_api_service.dart';
+import 'package:delycafe/services/content_api_service.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
+import 'package:delycafe/widgets/content/content_blocks_renderer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -260,12 +262,59 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-class _RulesCard extends StatelessWidget {
+class _RulesCard extends StatefulWidget {
   final BonusSummary summary;
 
   const _RulesCard({
     required this.summary,
   });
+
+  @override
+  State<_RulesCard> createState() => _RulesCardState();
+}
+
+class _RulesCardState extends State<_RulesCard> {
+  final ContentApiService _contentApi = ContentApiService();
+  late Future<AppPageContent?> _pageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageFuture = _loadPage();
+  }
+
+  Future<AppPageContent?> _loadPage() async {
+    try {
+      return await _contentApi.fetchPage('bonus_rules');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<ContentLine> get _fallbackLines {
+    final summary = widget.summary;
+    return [
+      ContentLine(
+        text:
+            'После заказа начисляется ${summary.earnPercent}% бонусами от суммы заказа.',
+        marker: 'bullet',
+      ),
+      const ContentLine(
+        text: '1 бонус = 1 ₽.',
+        marker: 'bullet',
+      ),
+      ContentLine(
+        text:
+            'Бонусами можно оплатить до ${summary.maxSpendPercent}% суммы заказа. Если бонусов меньше — спишутся все имеющиеся.',
+        marker: 'bullet',
+      ),
+      ContentLine(
+        text:
+            'При самовывозе действует скидка ${summary.pickupDiscountPercent}% на сумму заказа только в мобильном приложении.',
+        marker: 'bullet',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -275,66 +324,20 @@ class _RulesCard extends StatelessWidget {
         children: [
           const _SectionTitle('Как работают бонусы'),
           const SizedBox(height: 12),
-          _RuleRow(
-            icon: CupertinoIcons.plus_circle_fill,
-            text:
-                'После заказа начисляется ${summary.earnPercent}% бонусами от суммы заказа.',
-          ),
-          const SizedBox(height: 10),
-          const _RuleRow(
-            icon: CupertinoIcons.circle_grid_3x3_fill,
-            text: '1 бонус = 1 ₽.',
-          ),
-          const SizedBox(height: 10),
-          _RuleRow(
-            icon: CupertinoIcons.creditcard_fill,
-            text:
-                'Бонусами можно оплатить до ${summary.maxSpendPercent}% суммы заказа. Если бонусов меньше — спишутся все имеющиеся.',
-          ),
-          const SizedBox(height: 10),
-          const _RuleRow(
-            icon: CupertinoIcons.bag_fill,
-            text:
-                'При самовывозе действует скидка ${BonusRules.pickupDiscountPercent}% на сумму заказа.',
+          FutureBuilder<AppPageContent?>(
+            future: _pageFuture,
+            builder: (context, snapshot) {
+              final page = snapshot.data;
+              final lines =
+                  (page != null && page.bodyLines.isNotEmpty)
+                      ? page.bodyLines
+                      : _fallbackLines;
+
+              return ContentBlocksRenderer(lines: lines);
+            },
           ),
         ],
       ),
-    );
-  }
-}
-
-class _RuleRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _RuleRow({
-    required this.icon,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          color: AppColors.header,
-          size: 20,
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.black.withValues(alpha: 0.70),
-              fontSize: 14,
-              height: 1.4,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

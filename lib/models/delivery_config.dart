@@ -1,3 +1,5 @@
+import 'package:delycafe/models/content_post.dart';
+
 class DeliveryPriceTier {
   final int minCartTotal;
   final int price;
@@ -88,15 +90,22 @@ class DeliveryInfoSectionConfig {
 class DeliveryConfig {
   final List<DeliveryZoneConfig> zones;
   final List<DeliveryInfoSectionConfig> infoSections;
+  final PromotionPercents promotions;
 
   const DeliveryConfig({
     required this.zones,
     required this.infoSections,
+    this.promotions = const PromotionPercents(
+      earnPercent: 3,
+      maxSpendPercent: 25,
+      pickupDiscountPercent: 5,
+    ),
   });
 
   factory DeliveryConfig.fromJson(Map<String, dynamic> json) {
     final zonesJson = json['zones'];
     final sectionsJson = json['info_sections'];
+    final promotionsJson = json['promotions'];
 
     return DeliveryConfig(
       zones: zonesJson is List
@@ -117,6 +126,11 @@ class DeliveryConfig {
               )
               .toList(growable: false)
           : const [],
+      promotions: PromotionPercents.fromJson(
+        promotionsJson is Map
+            ? Map<String, dynamic>.from(promotionsJson)
+            : null,
+      ),
     );
   }
 
@@ -145,10 +159,12 @@ class DeliveryConfig {
           title: 'Промплощадка',
           pricingMode: 'fixed',
           fixedPrice: 400,
-          requiresAddress: true,
+          requiresAddress: false,
           defaultLocality: 'Промплощадка',
           leadMinutes: 90,
-          checkoutDescription: 'Промплощадка: доставка 400 ₽',
+          checkoutDescription:
+              'Промплощадка: доставка 400 ₽. Адрес указывать не нужно — '
+              'доставка на производственную территорию.',
           tiers: const [],
         ),
         DeliveryZoneConfig(
@@ -171,11 +187,12 @@ class DeliveryConfig {
           requiresAddress: false,
           defaultLocality: '',
           leadMinutes: 90,
-          checkoutDescription: 'Самовывоз: скидка 5% на сумму заказа',
+          checkoutDescription: 'Самовывоз: скидка на сумму заказа в приложении',
           tiers: const [],
         ),
       ],
       infoSections: const [],
+      promotions: PromotionPercents.fallback(),
     );
   }
 }

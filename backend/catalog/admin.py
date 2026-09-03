@@ -7,8 +7,11 @@ from django.utils.html import format_html, format_html_join
 
 from .gallery import append_gallery_images
 from .models import (
+    AppPageContent,
     CatalogSnippet,
     Category,
+    ContentPost,
+    ContentPostImage,
     InfoSectionDefinition,
     NewSabyProduct,
     Product,
@@ -17,6 +20,7 @@ from .models import (
     ProductSnippet,
     ProductVariant,
 )
+from .page_widgets import PageContentField
 from .widgets import InfoContentField, MultipleFileField, MultipleFileInput
 from .snippets import attach_default_snippets
 
@@ -642,3 +646,91 @@ class CatalogSnippetAdmin(admin.ModelAdmin):
         ).update(is_enabled=False)
 
         self.message_user(request, f'Выключено связей: {updated}')
+
+
+class ContentPostImageInline(admin.TabularInline):
+    model = ContentPostImage
+    extra = 1
+    fields = ('preview', 'image', 'image_url', 'sort_order')
+    readonly_fields = ('preview', 'image_url')
+    ordering = ('sort_order', 'id')
+
+    @admin.display(description='Превью')
+    def preview(self, obj):
+        if not obj.image:
+            return '—'
+        return format_html(
+            '<img src="{}" alt="" style="max-width:80px;max-height:60px;" />',
+            obj.image.url,
+        )
+
+    @admin.display(description='URL для вставки в текст')
+    def image_url(self, obj):
+        if not obj.image:
+            return '—'
+        return obj.image.url
+
+
+@admin.register(ContentPost)
+class ContentPostAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'post_type',
+        'is_published',
+        'sort_order',
+        'published_at',
+        'updated_at',
+    )
+    list_filter = ('post_type', 'is_published')
+    list_editable = ('is_published', 'sort_order')
+    search_fields = ('title', 'plain_text')
+    inlines = [ContentPostImageInline]
+    formfield_overrides = {
+        django_models.JSONField: {'form_class': PageContentField},
+    }
+    fieldsets = (
+        (
+            None,
+            {
+                'fields': (
+                    'post_type',
+                    'title',
+                    'cover_image',
+                    'is_published',
+                    'sort_order',
+                    'published_at',
+                ),
+            },
+        ),
+        (
+            'Содержимое',
+            {
+                'fields': ('body',),
+                'description': (
+                    'Плейсхолдеры: {{earn_percent}}, {{max_spend_percent}}, '
+                    '{{pickup_discount_percent}} — цифры из настроек промо.'
+                ),
+            },
+        ),
+    )
+
+    class Media:
+        css = {
+            'all': ('catalog/admin/page_content_editor.css',),
+        }
+        js = ('catalog/admin/page_content_editor.js',)
+
+
+@admin.register(AppPageContent)
+class AppPageContentAdmin(admin.ModelAdmin):
+    list_display = ('key', 'title', 'updated_at')
+    formfield_overrides = {
+        django_models.JSONField: {'form_class': PageContentField},
+    }
+    fields = ('key', 'title', 'body')
+
+    class Media:
+        css = {
+            'all': ('catalog/admin/page_content_editor.css',),
+        }
+        js = ('catalog/admin/page_content_editor.js',)

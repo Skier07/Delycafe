@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/constants/bonus_rules.dart';
+import 'package:delycafe/models/content_post.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/models/delivery_config.dart';
 import 'package:delycafe/services/delivery_config_service.dart';
@@ -130,6 +131,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   final _timeController = TextEditingController();
 
   List<DeliveryZoneConfig> _zones = DeliveryConfig.fallback().zones;
+  PromotionPercents _promotions = PromotionPercents.fallback();
   String _selectedZoneCode = 'ozersk';
   DeliveryUrgency _urgency = DeliveryUrgency.asap;
   PaymentMethod _paymentMethod = PaymentMethod.card;
@@ -206,7 +208,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   int get _pickupDiscount {
     if (_selectedZoneCode != 'pickup') return 0;
 
-    return widget.cartTotal * BonusRules.pickupDiscountPercent ~/ 100;
+    return widget.cartTotal * _promotions.pickupDiscountPercent ~/ 100;
   }
 
   int get _productsAfterDiscount {
@@ -223,7 +225,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     }
 
     final maxByPercent =
-        _productsAfterDiscount * BonusRules.maxSpendPercent ~/ 100;
+        _productsAfterDiscount * _promotions.maxSpendPercent ~/ 100;
 
     final values = [
       widget.availableBonuses,
@@ -306,11 +308,40 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
     setState(() {
       _zones = config.zones;
+      _promotions = config.promotions;
 
       if (!_zones.any((zone) => zone.code == _selectedZoneCode)) {
         _selectedZoneCode = _zones.first.code;
       }
+
+      _clearAddressIfNotNeeded();
     });
+  }
+
+  void _clearAddressIfNotNeeded() {
+    if (_needsAddress) {
+      return;
+    }
+
+    _selectedSavedAddress = null;
+    _useManualAddress = false;
+    _addressController.clear();
+    _entranceController.clear();
+    _floorController.clear();
+    _apartmentController.clear();
+  }
+
+  String get _addressForSubmit {
+    if (_needsAddress) {
+      return _addressController.text.trim();
+    }
+
+    final locality = _selectedZone?.defaultLocality.trim() ?? '';
+    if (locality.isNotEmpty) {
+      return locality;
+    }
+
+    return _selectedZone?.title ?? 'Самовывоз';
   }
 
   Future<void> _restoreDraft() async {
@@ -767,9 +798,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       phone: fullPhone,
       deliveryTypeCode: _selectedZoneCode,
       deliveryPrice: _deliveryPrice,
-      address: _needsAddress ? _addressController.text.trim() : 'Самовывоз',
+      address: _addressForSubmit,
       addressLocality:
-          _needsAddress ? (_selectedZone?.defaultLocality ?? '') : '',
+          _needsAddress ? (_selectedZone?.defaultLocality ?? '') : (_selectedZone?.defaultLocality ?? ''),
       addressEntrance: _needsAddress ? _entranceController.text.trim() : '',
       addressFloor: _needsAddress ? _floorController.text.trim() : '',
       addressApartment: _needsAddress ? _apartmentController.text.trim() : '',
@@ -911,6 +942,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                     onTap: () {
                       setState(() {
                         _selectedZoneCode = zone.code;
+                        _clearAddressIfNotNeeded();
                         _syncDeliveryTimeWithSchedule();
                       });
                       _scheduleDraftSave();
@@ -1179,6 +1211,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
               _BonusSpendCard(
                 availableBonuses: widget.availableBonuses,
                 bonusSpent: _bonusSpent,
+                maxSpendPercent: _promotions.maxSpendPercent,
                 useBonuses: _useBonuses,
                 onChanged: widget.availableBonuses > 0 && _maxBonusSpend > 0
                     ? (value) {
@@ -1233,7 +1266,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
                 if (_pickupDiscount > 0) ...[
                   _PriceRow(
                     title:
-                        'Скидка самовывоза ${BonusRules.pickupDiscountPercent}%',
+                        'Скидка самовывоза ${_promotions.pickupDiscountPercent}%',
                     value: '-$_pickupDiscount ₽',
                   ),
                   const SizedBox(height: 10),
@@ -1400,12 +1433,14 @@ class _DiscountInfoCard extends StatelessWidget {
 class _BonusSpendCard extends StatelessWidget {
   final int availableBonuses;
   final int bonusSpent;
+  final int maxSpendPercent;
   final bool useBonuses;
   final ValueChanged<bool>? onChanged;
 
   const _BonusSpendCard({
     required this.availableBonuses,
     required this.bonusSpent,
+    required this.maxSpendPercent,
     required this.useBonuses,
     required this.onChanged,
   });
@@ -1451,8 +1486,8 @@ class _BonusSpendCard extends StatelessWidget {
                 Text(
                   hasBonuses
                       ? useBonuses
-                          ? 'Спишется до ${BonusRules.maxSpendPercent}%: $bonusSpent бонусов'
-                          : 'Доступно: $availableBonuses · до ${BonusRules.maxSpendPercent}% суммы'
+                          ? 'Спишется до $maxSpendPercent%: $bonusSpent бонусов'
+                          : 'Доступно: $availableBonuses · до $maxSpendPercent% суммы'
                       : 'Бонусов пока нет',
                   style: TextStyle(
                     fontSize: 13,
