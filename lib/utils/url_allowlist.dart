@@ -118,11 +118,19 @@ bool isAllowedPaymentUrl(String url) {
 
 /// ACS / 3-D Secure банка-эмитента. Без этого WebView режет редирект
 /// после «Оплатить», кнопка крутится, деньги не списываются.
+///
+/// Только http(s): deep link СБП вида `bank100…://qr.nspk.ru/...` тоже
+/// имеет host `qr.nspk.ru`, но должен открывать приложение банка, не WebView.
 bool isCard3dsPaymentUrl(String url) {
   final normalized = normalizePaymentUrl(url);
   final uri = Uri.tryParse(normalized);
 
   if (uri == null) {
+    return false;
+  }
+
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme != 'http' && scheme != 'https') {
     return false;
   }
 

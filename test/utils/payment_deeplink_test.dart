@@ -1,4 +1,5 @@
 import 'package:delycafe/utils/payment_deeplink.dart';
+import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -27,6 +28,24 @@ void main() {
         classifyPaymentNavigationUrl('https://sub.nspk.ru/proxyapp/c2bmembers.json'),
         PaymentUrlAction.stayInWebView,
       );
+    });
+
+    test('opens NSPK bank100 deep links externally (not 3DS)', () {
+      const urls = [
+        'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET',
+        'bank100000000140://qr.nspk.ru/AD10100IQ8AIV6ET?type=01',
+        'bank100000000004://qr.nspk.ru/AS100001ORTF4GAF80KPJ53K186D9A3G',
+      ];
+
+      for (final url in urls) {
+        expect(isCard3dsPaymentUrl(url), isFalse, reason: url);
+        expect(isSbpBankAppDeepLink(url), isTrue, reason: url);
+        expect(
+          classifyPaymentNavigationUrl(url),
+          PaymentUrlAction.openExternally,
+          reason: url,
+        );
+      }
     });
 
     test('opens any bank custom scheme externally', () {
@@ -111,6 +130,30 @@ void main() {
         candidates,
         contains('market://details?id=com.idamob.tinkoff.android'),
       );
+    });
+
+    test('builds https NSPK fallback from bank100 deep link', () {
+      expect(
+        httpsFallbackFromSbpBankDeepLink(
+          'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET',
+        ),
+        'https://qr.nspk.ru/AD10100IQ8AIV6ET',
+      );
+      expect(
+        httpsFallbackFromSbpBankDeepLink(
+          'bank100000000140://qr.nspk.ru/AD10100IQ8AIV6ET?type=01',
+        ),
+        'https://qr.nspk.ru/AD10100IQ8AIV6ET?type=01',
+      );
+    });
+
+    test('launch candidates include https NSPK after bank scheme', () {
+      final candidates = paymentExternalLaunchCandidates(
+        'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET',
+      );
+
+      expect(candidates.first, 'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET');
+      expect(candidates, contains('https://qr.nspk.ru/AD10100IQ8AIV6ET'));
     });
 
     test('returns plain url as single candidate', () {

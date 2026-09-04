@@ -200,6 +200,16 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   void _setupWebView(String paymentUrl) {
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setOnJavaScriptAlertDialog((request) async {
+        // Виджет СБП/Альфы сам пишет alert, если bank-app не установлен.
+        // Мы уже открываем https://qr.nspk.ru/... в браузере — глушим шум.
+        final message = request.message.toLowerCase();
+        if (message.contains('не установлен') ||
+            message.contains('not installed') ||
+            message.contains('приложение не')) {
+          return;
+        }
+      })
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: _handleNavigation,
@@ -221,15 +231,20 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
           onWebResourceError: (error) {
             if (!mounted || _paymentCompleted) return;
 
-            final isMainFrame = error.isForMainFrame ?? true;
-            if (!isMainFrame) return;
-
             final failingUrl = error.url ?? '';
             if (failingUrl.isEmpty) return;
 
-            // WebView не умеет bank:// / intent:// — открываем приложение банка.
-            if (shouldOpenPaymentUrlExternally(failingUrl)) {
-              _handleExternalUrl(failingUrl);
+            final isUnknownScheme =
+                error.errorCode == -10 ||
+                error.description.contains('ERR_UNKNOWN_URL_SCHEME') ||
+                isSbpBankAppDeepLink(failingUrl);
+
+            // bank100…:// не грузится в WebView — всегда пробуем приложение банка,
+            // даже если ошибка не main-frame.
+            if (isUnknownScheme || shouldOpenPaymentUrlExternally(failingUrl)) {
+              if (_handleExternalUrl(failingUrl)) {
+                unawaited(_recoverWebViewAfterBankHandoff());
+              }
             }
           },
         ),
@@ -237,6 +252,30 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       ..loadRequest(Uri.parse(paymentUrl));
 
     _webViewController = controller;
+  }
+
+  /// Убирает страницу «Webpage not available» после handoff в банк.
+  Future<void> _recoverWebViewAfterBankHandoff() async {
+    final controller = _webViewController;
+    if (controller == null) return;
+
+    try {
+      if (await controller.canGoBack()) {
+        await controller.goBack();
+        return;
+      }
+    } catch (_) {
+      // fall through
+    }
+
+    final paymentUrl = _paymentUrl;
+    if (paymentUrl != null && paymentUrl.isNotEmpty) {
+      try {
+        await controller.loadRequest(Uri.parse(paymentUrl));
+      } catch (error) {
+        debugPrint('Не удалось восстановить платёжную страницу: $error');
+      }
+    }
   }
 
   NavigationDecision _handleNavigation(NavigationRequest request) {
@@ -297,24 +336,42 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       });
     }
 
-    final launched = await _tryLaunchExternalUrl(url);
+    final launchedApp = await _tryLaunchExternalUrl(
+      url,
+      preferBrowserFallback: false,
+    );
 
     if (!mounted) {
       return;
     }
 
-    if (launched) {
+    if (launchedApp) {
       return;
     }
 
-    // Нет приложения / universal link не сработал — веб-форма банка в WebView.
-    final httpsFallback = _httpsFallbackForFailedLaunch(url);
-    if (httpsFallback != null) {
+    // Приложения нет — открываем https://qr.nspk.ru/... в браузере.
+    final browserFallback = httpsFallbackFromSbpBankDeepLink(url) ??
+        _httpsFallbackForFailedLaunch(url);
+
+    if (browserFallback != null) {
+      final openedBrowser = await _tryLaunchHttpsInBrowser(browserFallback);
+      if (!mounted) {
+        return;
+      }
+      if (openedBrowser) {
+        setState(() {
+          _errorMessage = null;
+        });
+        return;
+      }
+
+      // Браузер тоже не открылся — форма НСПК внутри WebView.
       try {
-        await _webViewController?.loadRequest(Uri.parse(httpsFallback));
+        await _webViewController?.loadRequest(Uri.parse(browserFallback));
         if (mounted) {
           setState(() {
             _awaitingBankReturn = false;
+            _errorMessage = null;
           });
         }
         return;
@@ -326,12 +383,17 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     AppHaptics.error();
     setState(() {
       _errorMessage =
-          'Не удалось открыть приложение банка. Выберите другой банк '
-          'или установите приложение вашего банка и повторите оплату.';
+          'Не удалось открыть оплату. Установите приложение банка '
+          'или выберите другой банк в списке СБП.';
     });
   }
 
   String? _httpsFallbackForFailedLaunch(String url) {
+    final fromDeepLink = httpsFallbackFromSbpBankDeepLink(url);
+    if (fromDeepLink != null) {
+      return fromDeepLink;
+    }
+
     if (isHttpOrHttpsUrl(url)) {
       return url;
     }
@@ -347,7 +409,24 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     return null;
   }
 
-  Future<bool> _tryLaunchExternalUrl(String url) async {
+  Future<bool> _tryLaunchHttpsInBrowser(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !isHttpOrHttpsUrl(url)) {
+      return false;
+    }
+
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (error) {
+      debugPrint('Не удалось открыть браузер для СБП ($url): $error');
+      return false;
+    }
+  }
+
+  Future<bool> _tryLaunchExternalUrl(
+    String url, {
+    bool preferBrowserFallback = false,
+  }) async {
     final candidates = paymentExternalLaunchCandidates(url);
 
     for (final candidate in candidates) {
@@ -360,12 +439,18 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
       // не покрывает все банки СБП. openURL работает без whitelist схем.
       try {
         if (isHttpOrHttpsUrl(candidate)) {
-          // Только приложение банка. Браузер ломает return URL;
-          // если приложения нет — caller загрузит URL в WebView.
-          if (await launchUrl(
-            uri,
-            mode: LaunchMode.externalNonBrowserApplication,
-          )) {
+          if (!preferBrowserFallback) {
+            // Сначала только приложение банка (не браузер).
+            if (await launchUrl(
+              uri,
+              mode: LaunchMode.externalNonBrowserApplication,
+            )) {
+              return true;
+            }
+            continue;
+          }
+
+          if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
             return true;
           }
           continue;
