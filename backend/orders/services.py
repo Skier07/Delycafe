@@ -1047,12 +1047,16 @@ class SabyOrderService:
 
     def _build_nomenclatures(self, order: Order) -> list[dict]:
         """
-        При самовывозе cost уже со скидкой 5% (зеркало расчёта в приложении).
+        При самовывозе cost уже со скидкой 5% — тот же алгоритм, что в
+        приложении и OrderCreateSerializer (построчное округление вниз).
 
         Акция Saby «Скидка на самовывоз» на API-заказы обычно не срабатывает —
         урезание cost нужно, чтобы bankSum = итог продажи и чек АТОЛ закрывался.
         """
-        from orders.promotions import PICKUP_DISCOUNT_PERCENT
+        from orders.promotions import (
+            PICKUP_DISCOUNT_PERCENT,
+            discounted_unit_price,
+        )
 
         nomenclatures = []
         apply_pickup_discount = (
@@ -1067,9 +1071,9 @@ class SabyOrderService:
 
             unit_cost = item.price
             if apply_pickup_discount:
-                unit_cost = max(
-                    0,
-                    item.price * (100 - PICKUP_DISCOUNT_PERCENT) // 100,
+                unit_cost = discounted_unit_price(
+                    item.price,
+                    PICKUP_DISCOUNT_PERCENT,
                 )
 
             entry = {

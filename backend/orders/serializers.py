@@ -28,6 +28,7 @@ from .promotions import (
     BONUS_EARN_PERCENT,
     MAX_BONUS_SPEND_PERCENT,
     PICKUP_DISCOUNT_PERCENT,
+    pickup_discount_amount,
 )
 from .services import rollback_order
 from payments.services import (
@@ -438,9 +439,14 @@ class OrderCreateSerializer(serializers.Serializer):
         first_order_discount_applied = False
 
         # Скидка первого заказа отключена. Постоянная скидка — только самовывоз.
+        # Построчно, как cost в Saby — не percent% от всей суммы корзины.
         if is_pickup_delivery(delivery_type):
-            discount_amount = (
-                products_total * PICKUP_DISCOUNT_PERCENT // 100
+            discount_amount = pickup_discount_amount(
+                (
+                    (item_data['price'], item_data['quantity'])
+                    for item_data in items_data
+                ),
+                PICKUP_DISCOUNT_PERCENT,
             )
 
         products_after_discount = max(products_total - discount_amount, 0)

@@ -17,6 +17,7 @@ import 'package:delycafe/utils/delivery_pricing.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/legal_consent_prompt.dart';
+import 'package:delycafe/utils/pickup_discount.dart';
 import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:delycafe/widgets/checkout/legal_consent_checkout_section.dart';
@@ -94,6 +95,7 @@ class GuestCheckoutData {
 
 class GuestCheckoutForm extends StatefulWidget {
   final int cartTotal;
+  final List<({int unitPrice, int quantity})> cartLines;
   final String? initialName;
   final String? initialAddress;
   final String? initialPhone;
@@ -105,6 +107,7 @@ class GuestCheckoutForm extends StatefulWidget {
   const GuestCheckoutForm({
     super.key,
     required this.cartTotal,
+    this.cartLines = const [],
     this.initialName,
     this.initialAddress,
     this.initialPhone,
@@ -208,7 +211,13 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   int get _pickupDiscount {
     if (_selectedZoneCode != 'pickup') return 0;
 
-    return widget.cartTotal * _promotions.pickupDiscountPercent ~/ 100;
+    final percent = _promotions.pickupDiscountPercent;
+    if (widget.cartLines.isNotEmpty) {
+      return pickupDiscountForLines(widget.cartLines, percent);
+    }
+
+    // Fallback только если строки корзины не передали (старые вызовы).
+    return widget.cartTotal * percent ~/ 100;
   }
 
   int get _productsAfterDiscount {

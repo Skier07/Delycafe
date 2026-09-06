@@ -97,6 +97,10 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                   const SizedBox(height: 24),
                   GuestCheckoutForm(
                     cartTotal: cart.totalPrice,
+                    cartLines: [
+                      for (final item in cart.items)
+                        (unitPrice: item.unitPrice, quantity: item.quantity),
+                    ],
                     initialName: user?.name,
                     initialAddress: user?.checkoutAddress,
                     initialPhone: user?.phone,
