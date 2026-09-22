@@ -6,12 +6,14 @@ class DarkGlassSheet extends StatelessWidget {
   final List<Widget> children;
   final double widthFactor;
   final VoidCallback onClose;
+  final bool fromLeft;
 
   const DarkGlassSheet({
     super.key,
     required this.children,
     required this.onClose,
     this.widthFactor = 1.0,
+    this.fromLeft = false,
   });
 
   @override
@@ -31,11 +33,11 @@ class DarkGlassSheet extends StatelessWidget {
           ),
         ),
         Align(
-          alignment: Alignment.centerRight,
+          alignment: fromLeft ? Alignment.centerLeft : Alignment.centerRight,
           child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(28),
-              bottomLeft: Radius.circular(28),
+            borderRadius: BorderRadius.horizontal(
+              left: fromLeft ? Radius.zero : const Radius.circular(28),
+              right: fromLeft ? const Radius.circular(28) : Radius.zero,
             ),
             child: BackdropFilter(
               filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
@@ -59,7 +61,7 @@ class DarkGlassSheet extends StatelessWidget {
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.20),
                       blurRadius: 16,
-                      offset: const Offset(-4, 0),
+                      offset: Offset(fromLeft ? 4 : -4, 0),
                     ),
                   ],
                 ),

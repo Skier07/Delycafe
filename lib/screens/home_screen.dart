@@ -174,29 +174,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onAccountPressed: () => _openOverlay(HomeOverlayType.account),
             ),
           ),
-          IgnorePointer(
-            ignoring: _activeOverlay == HomeOverlayType.none,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 50),
-              curve: Curves.easeOut,
-              opacity: _activeOverlay == HomeOverlayType.none ? 0 : 1,
-              child: AnimatedSlide(
-                duration: const Duration(milliseconds: 140),
-                curve: Curves.easeOutCubic,
-                offset: _activeOverlay == HomeOverlayType.none
-                    ? const Offset(1, 0)
-                    : Offset.zero,
-                child: _buildOverlay(context),
+          for (final type in [HomeOverlayType.menu, HomeOverlayType.account])
+            IgnorePointer(
+              ignoring: _activeOverlay != type,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 50),
+                curve: Curves.easeOut,
+                opacity: _activeOverlay == type ? 1 : 0,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutCubic,
+                  // Отрицательный X — выезд слева, положительный — справа.
+                  offset: _activeOverlay != type
+                      ? Offset(type == HomeOverlayType.account ? -1 : 1, 0)
+                      : Offset.zero,
+                  child: _buildOverlay(context, type),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildOverlay(BuildContext context) {
-    switch (_activeOverlay) {
+  Widget _buildOverlay(BuildContext context, HomeOverlayType type) {
+    switch (type) {
       case HomeOverlayType.menu:
         return DarkGlassSheet(
           onClose: _closeOverlay,
@@ -290,6 +292,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       case HomeOverlayType.account:
         return DarkGlassSheet(
+          fromLeft: true,
           onClose: _closeOverlay,
           children: [
             DarkGlassSheetItem(
@@ -577,6 +580,21 @@ class _BannerGlassIconButton extends StatelessWidget {
   }
 }
 
+Route<void> _bannerPageRoute({required Widget page, required bool fromLeft}) {
+  return PageRouteBuilder<void>(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: Offset(fromLeft ? -1 : 1, 0),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(animation),
+        child: child,
+      );
+    },
+  );
+}
+
 class _BannerCartButton extends StatelessWidget {
   const _BannerCartButton({
     required this.scale,
@@ -598,8 +616,9 @@ class _BannerCartButton extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const CheckoutScreens(),
+              _bannerPageRoute(
+                page: const CheckoutScreens(),
+                fromLeft: false,
               ),
             );
           },
@@ -654,8 +673,9 @@ class _BannerBonusesButton extends StatelessWidget {
       onPressed: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => const BonusesScreen(),
+          _bannerPageRoute(
+            page: const BonusesScreen(),
+            fromLeft: true,
           ),
         );
       },

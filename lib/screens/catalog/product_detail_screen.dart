@@ -496,15 +496,18 @@ class _ProductHeroState extends State<_ProductHero> {
                 );
               },
             ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.10),
-                  Colors.black.withValues(alpha: 0.34),
-                ],
+          // Градиент только визуально — иначе перекрывает свайп PageView.
+          const IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x1A000000),
+                    Color(0x57000000),
+                  ],
+                ),
               ),
             ),
           ),
@@ -512,21 +515,23 @@ class _ProductHeroState extends State<_ProductHero> {
             Positioned(
               top: 14,
               right: 14,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_currentPage + 1}/${images.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+              child: IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_currentPage + 1}/${images.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -536,44 +541,48 @@ class _ProductHeroState extends State<_ProductHero> {
               bottom: 52,
               left: 0,
               right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(images.length, (index) {
-                  final selected = index == _currentPage;
+              child: IgnorePointer(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(images.length, (index) {
+                    final selected = index == _currentPage;
 
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: selected ? 18 : 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  );
-                }),
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: selected ? 18 : 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           Positioned(
             left: 16,
             right: 16,
             bottom: 18,
-            child: Row(
-              children: [
-                if (item.isHit)
-                  const _StatusChip(
-                    text: 'HOT',
-                    color: Color(0xFFEE101B),
-                  ),
-                if (item.isHit && item.isNew) const SizedBox(width: 8),
-                if (item.isNew)
-                  const _StatusChip(
-                    text: 'New',
-                    color: Color(0xFF7BEE10),
-                  ),
-              ],
+            child: IgnorePointer(
+              child: Row(
+                children: [
+                  if (item.isHit)
+                    const _StatusChip(
+                      text: 'HOT',
+                      color: Color(0xFFEE101B),
+                    ),
+                  if (item.isHit && item.isNew) const SizedBox(width: 8),
+                  if (item.isNew)
+                    const _StatusChip(
+                      text: 'New',
+                      color: Color(0xFF7BEE10),
+                    ),
+                ],
+              ),
             ),
           ),
         ],
