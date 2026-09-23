@@ -1109,13 +1109,14 @@ class SabyOrderService:
             'datetime': delivery_time.strftime('%Y-%m-%d %H:%M:%S'),
             'nomenclatures': nomenclatures,
             'delivery': {
+                # Saby требует флаг именно в delivery, не в корне запроса.
+                'isPickup': is_pickup,
+                'paymentType': 'online',
                 'addressJSON': self._build_delivery_address_json(
                     order,
                     is_pickup,
                 ),
             },
-            'isPickup': is_pickup,
-            'paymentType': 'online',
         }
 
     def _build_delivery_address_json(
@@ -1175,11 +1176,16 @@ class SabyOrderService:
         )
 
     def _extract_error_message(self, payload: dict, status_code: int) -> str:
+        # Ошибки валидации Saby приходят в JSON-RPC error.details даже при HTTP 500.
+        error = payload.get('error')
+        error = error if isinstance(error, dict) else {}
         message = (
-            payload.get('errorMessage')
+            error.get('details')
+            or payload.get('errorMessage')
             or payload.get('message')
             or payload.get('detail')
             or payload.get('resultMessage')
+            or error.get('message')
         )
 
         if message:

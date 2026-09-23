@@ -121,6 +121,10 @@ class _CatalogCardState extends State<CatalogCard> {
                         aspectRatio: 1.2,
                         child: ProductImage(
                           image: widget.item.image,
+                          fit: widget.item.category.trim().toLowerCase() ==
+                                  'пицца'
+                              ? BoxFit.contain
+                              : BoxFit.cover,
                         ),
                       ),
                       if (widget.item.isHit || widget.item.isNew)
@@ -179,9 +183,7 @@ class _CatalogCardState extends State<CatalogCard> {
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
-                                  canOrderNow
-                                      ? 'В корзину'
-                                      : 'Недоступно',
+                                  canOrderNow ? 'В корзину' : 'Недоступно',
                                   maxLines: 1,
                                   softWrap: false,
                                   style: TextStyle(

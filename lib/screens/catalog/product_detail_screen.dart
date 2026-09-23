@@ -116,11 +116,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       backgroundColor: const Color(0xFFFEF7FF),
       body: Stack(
         children: [
-          Column(
-            children: [
-              _ProductHero(item: item),
-              Expanded(
-                child: SingleChildScrollView(
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                _ProductHero(item: item),
+                Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,8 +342,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           SafeArea(
             child: Padding(
@@ -464,10 +464,12 @@ class _ProductHeroState extends State<_ProductHero> {
   Widget build(BuildContext context) {
     final images = widget.item.galleryImages;
     final item = widget.item;
+    final isPizza = item.category.trim().toLowerCase() == 'пицца';
 
-    return SizedBox(
+    return Container(
       height: 320,
       width: double.infinity,
+      color: isPizza ? Colors.white : null,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -476,7 +478,7 @@ class _ProductHeroState extends State<_ProductHero> {
               image: images.isNotEmpty ? images.first : item.image,
               width: double.infinity,
               height: 320,
-              fit: BoxFit.cover,
+              fit: isPizza ? BoxFit.contain : BoxFit.cover,
             )
           else
             PageView.builder(
@@ -492,25 +494,26 @@ class _ProductHeroState extends State<_ProductHero> {
                   image: images[index],
                   width: double.infinity,
                   height: 320,
-                  fit: BoxFit.cover,
+                  fit: isPizza ? BoxFit.contain : BoxFit.cover,
                 );
               },
             ),
           // Градиент только визуально — иначе перекрывает свайп PageView.
-          const IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0x1A000000),
-                    Color(0x57000000),
-                  ],
+          if (!isPizza)
+            const IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x1A000000),
+                      Color(0x57000000),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           if (images.length > 1)
             Positioned(
               top: 14,
@@ -546,6 +549,7 @@ class _ProductHeroState extends State<_ProductHero> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(images.length, (index) {
                     final selected = index == _currentPage;
+                    final dotColor = isPizza ? Colors.black : Colors.white;
 
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
@@ -554,8 +558,8 @@ class _ProductHeroState extends State<_ProductHero> {
                       height: 7,
                       decoration: BoxDecoration(
                         color: selected
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.45),
+                            ? dotColor
+                            : dotColor.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     );

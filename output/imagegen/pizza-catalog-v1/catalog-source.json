@@ -1,0 +1,233 @@
+[
+  {
+    "id": 58,
+    "title": "Ассорти",
+    "ingredients": "Сервелат элитный, ветчина, свинина варено-копченая, шампиньоны жаренные с луком, сыр, помидоры, соус томатный, оливки, зелень, соус сливочно-чесночный",
+    "source": "assets/images/pizza/picca_assorti.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_assorti.jpg"
+  },
+  {
+    "id": 59,
+    "title": "Барбекью",
+    "ingredients": "Ветчина, бекон, помидоры, красный лук, сыр, соус Барбекю, зелень",
+    "source": "assets/images/pizza/picca_barbekyu.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_barbekyu.jpg"
+  },
+  {
+    "id": 60,
+    "title": "Вечеринка",
+    "ingredients": "Ветчина, шампиньоны, жареный лук, томатный соус, помидоры, сыр, оливки, зелень, соус сливочно-чесночный",
+    "source": "assets/images/pizza/picca_vecherinka.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_vecherinka.jpg"
+  },
+  {
+    "id": 61,
+    "title": "Гавайская",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/piczcza-gavajskaya.jpg"
+  },
+  {
+    "id": 62,
+    "title": "Голодный мясник ЧИЛИ",
+    "ingredients": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус острый, сыр, оливки, зелень",
+    "source": "assets/images/pizza/golodnyy_myasnik_chili.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/golodnyy_myasnik_chili.jpg"
+  },
+  {
+    "id": 63,
+    "title": "Голодный мясник",
+    "ingredients": "Шашлычное мясо (шея свинины), колбаски охотничьи копченые, бекон варено-копченый, лук красный маринованный, помидоры, соус томатный, сыр, оливки, зелень",
+    "source": "assets/images/pizza/golodnyy_myasnik.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/golodnyy_myasnik.jpg"
+  },
+  {
+    "id": 64,
+    "title": "Грибная",
+    "ingredients": "Грибы, соус картофельно-чесночный, сыр, оливки, зелень, жареный лучок",
+    "source": "assets/images/pizza/picca_gribnaya.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_gribnaya.jpg"
+  },
+  {
+    "id": 65,
+    "title": "Деревенская с курицей",
+    "ingredients": "Куриная грудка, картофель,соус Портабелло, лук красный, сыр, оливки, зелень",
+    "source": "assets/images/pizza/picca_derevenskaya_s_kuricey.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_derevenskaya_s_kuricey.jpg"
+  },
+  {
+    "id": 66,
+    "title": "Детская",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/piczcza-detskaya.jpg"
+  },
+  {
+    "id": 67,
+    "title": "Дьявольская",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/piczcza-dyavolskaya.jpg"
+  },
+  {
+    "id": 68,
+    "title": "Жгучая чика",
+    "ingredients": "Соус жгуче-острый Сальса, копченая куриная грудка, острый перец Халапеньо, шампиньоны, помидоры, болгарский перец, сыр, оливки, зелень",
+    "source": "assets/images/pizza/picca_zhguchaya_chika.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_zhguchaya_chika.jpg"
+  },
+  {
+    "id": 69,
+    "title": "Злодейка",
+    "ingredients": "Колбаски Баварские, мясной фарш, огурчики маринованные, лук красный маринованный, сыр, зелень, соусы Сальса и Фирменный",
+    "source": "assets/images/pizza/picca_zlodeyka.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_zlodeyka.jpg"
+  },
+  {
+    "id": 70,
+    "title": "Карбонара",
+    "ingredients": "Ветчина, свинина варено-копченая, яйцо, сыры Моцарелла и Пармезан, зелень, соус сливочно-чесночный",
+    "source": "assets/images/pizza/picca_karbonara.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_karbonara.jpg"
+  },
+  {
+    "id": 71,
+    "title": "Корона",
+    "ingredients": "Копченая курочка, кукуруза, болгарский перчик, сыр, томаты, сливочно-чесночный соус, оливки, зелень",
+    "source": "assets/images/pizza/picca_korona.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_korona.jpg"
+  },
+  {
+    "id": 72,
+    "title": "Маргарита",
+    "ingredients": "Итальянские травы, томатный соус, сыр Моцарелла, помидоры, оливки, зелень",
+    "source": "assets/images/pizza/picca_margarita.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_margarita.jpg"
+  },
+  {
+    "id": 73,
+    "title": "Мистер Бекон",
+    "ingredients": "Бекон, томат, лук красный маринованный, жареный лук-фри, соус сливочно-чесночный, сыр, зелень",
+    "source": "assets/images/pizza/picca_mister_bekon.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_mister_bekon.jpg"
+  },
+  {
+    "id": 74,
+    "title": "Морская",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/piczcza-morskaya.jpg"
+  },
+  {
+    "id": 75,
+    "title": "Мясная",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/delycafe.jpg"
+  },
+  {
+    "id": 76,
+    "title": "Окей",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/piczcza-okej.jpg"
+  },
+  {
+    "id": 77,
+    "title": "Пицца «Пепперони»",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/pizza-pepperoni-min.jpg"
+  },
+  {
+    "id": 78,
+    "title": "Просто космос",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/pizza-kosmos.jpg"
+  },
+  {
+    "id": 79,
+    "title": "Прошутто",
+    "ingredients": "Курица-гриль, шампиньоны жаренные с луком, соус томатный, соус сливочно-чесночный, сыр, оливки, помидоры, зелень",
+    "source": "assets/images/pizza/picca_proshutto.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_proshutto.jpg"
+  },
+  {
+    "id": 80,
+    "title": "Фруктовая",
+    "ingredients": null,
+    "source": null,
+    "fallbackImage": "https://api.delycafe.ru/media/products/piczcza-fruktovaya.jpg"
+  },
+  {
+    "id": 81,
+    "title": "Цезарь",
+    "ingredients": "Куриная грудка, пекинская капуста, сливочно-чесночный соус, помидоры, сыр, оливки, зелень",
+    "source": "assets/images/pizza/picca_cezar.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_cezar.jpg"
+  },
+  {
+    "id": 82,
+    "title": "Цыпленок барбекью",
+    "ingredients": "Курица копченая, помидоры, соус BBQ, соус сливочно-чесночный, сыр, перец болгарский, красный лук, зелень",
+    "source": "assets/images/pizza/picca_cyplenok_barbekyu.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_cyplenok_barbekyu.jpg"
+  },
+  {
+    "id": 83,
+    "title": "Чикен",
+    "ingredients": "Курица копченая, морковь по-корейски, помидоры, сыр, соус сливочно-чесночный, оливки, зелень",
+    "source": "assets/images/pizza/picca_chiken.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_chiken.jpg"
+  },
+  {
+    "id": 84,
+    "title": "Ягодная",
+    "ingredients": "Брусника, клюква, ананас, молоко сгущенное, творожная масса",
+    "source": "assets/images/pizza/picca_yagodnaya.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_yagodnaya.jpg"
+  },
+  {
+    "id": 85,
+    "title": "Морской бриз",
+    "ingredients": "Состав : Семга, брокколи, сыр Моцареллла, сыр Голландский, сливочный соус, зелень",
+    "source": "assets/images/pizza/picca_morskoy_briz.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_morskoy_briz.jpg"
+  },
+  {
+    "id": 86,
+    "title": "Маркиза",
+    "ingredients": "Сервелат элитный, курочка варено-копченая, томат, кетчуп, соус фирменный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "source": "assets/images/pizza/picca_markiza.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_markiza.jpg"
+  },
+  {
+    "id": 87,
+    "title": "Фантазия",
+    "ingredients": "Курица варёно- копченая, фасоль красная, помидор, Морковь по- корейски, соус сливочно - чесночный, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "source": "assets/images/pizza/picca_fantaziya.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_fantaziya.jpg"
+  },
+  {
+    "id": 88,
+    "title": "Сливочный лосось",
+    "ingredients": "Лосось, Сливочный соус , сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "source": "assets/images/pizza/slivochnyy_losos.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/slivochnyy_losos.jpg"
+  },
+  {
+    "id": 89,
+    "title": "Пикантный лосось",
+    "ingredients": "Лосось, cливочный соус, соус Спайси, сыр Голландский, сыр Моцарелла, оливки, зелень",
+    "source": "assets/images/pizza/pikantnyy_losos.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/pikantnyy_losos.jpg"
+  },
+  {
+    "id": 90,
+    "title": "Угорь с Унаги",
+    "ingredients": "Жареный угорь, томат, сыр сливочный, сыр Моцарелла, салат Чука, сливочно-чесночный соус, соус Унаги, зелень",
+    "source": "assets/images/pizza/picca_ugor_s_unagi.jpg",
+    "fallbackImage": "https://api.delycafe.ru/media/products/picca/picca_ugor_s_unagi.jpg"
+  }
+]

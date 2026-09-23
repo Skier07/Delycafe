@@ -1,0 +1,530 @@
+[
+  {
+    "original": "originals\\058-assorti.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\058-assorti.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4340444
+      }
+    }
+  },
+  {
+    "original": "originals\\059-barbecue.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\059-barbecue.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4565431
+      }
+    }
+  },
+  {
+    "original": "originals\\060-vecherinka.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\060-vecherinka.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4408020
+      }
+    }
+  },
+  {
+    "original": "originals\\061-hawaiian.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\061-hawaiian.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4276505
+      }
+    }
+  },
+  {
+    "original": "originals\\062-hungry-butcher-chili.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\062-hungry-butcher-chili.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4424148
+      }
+    }
+  },
+  {
+    "original": "originals\\063-hungry-butcher.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\063-hungry-butcher.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4495649
+      }
+    }
+  },
+  {
+    "original": "originals\\064-mushroom.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\064-mushroom.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4324136
+      }
+    }
+  },
+  {
+    "original": "originals\\065-country-chicken.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\065-country-chicken.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4340494
+      }
+    }
+  },
+  {
+    "original": "originals\\066-kids.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\066-kids.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4200127
+      }
+    }
+  },
+  {
+    "original": "originals\\067-diavola.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\067-diavola.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4552937
+      }
+    }
+  },
+  {
+    "original": "originals\\068-hot-chica.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\068-hot-chica.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4336749
+      }
+    }
+  },
+  {
+    "original": "originals\\069-zlodeyka.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\069-zlodeyka.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4510326
+      }
+    }
+  },
+  {
+    "original": "originals\\070-carbonara.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\070-carbonara.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4301736
+      }
+    }
+  },
+  {
+    "original": "originals\\071-korona.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\071-korona.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4306404
+      }
+    }
+  },
+  {
+    "original": "originals\\072-margherita.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\072-margherita.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4616263
+      }
+    }
+  },
+  {
+    "original": "originals\\073-mister-bacon.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\073-mister-bacon.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4499014
+      }
+    }
+  },
+  {
+    "original": "originals\\074-seafood.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\074-seafood.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4285868
+      }
+    }
+  },
+  {
+    "original": "originals\\075-meat.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\075-meat.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4350813
+      }
+    }
+  },
+  {
+    "original": "originals\\076-okay.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\076-okay.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4487406
+      }
+    }
+  },
+  {
+    "original": "originals\\077-pepperoni.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\077-pepperoni.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4445660
+      }
+    }
+  },
+  {
+    "original": "originals\\078-cosmos.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\078-cosmos.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4505117
+      }
+    }
+  },
+  {
+    "original": "originals\\079-prosciutto.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\079-prosciutto.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4506514
+      }
+    }
+  },
+  {
+    "original": "originals\\080-fruit.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\080-fruit.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 3921194
+      }
+    }
+  },
+  {
+    "original": "originals\\081-caesar.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\081-caesar.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4181300
+      }
+    }
+  },
+  {
+    "original": "originals\\082-chicken-bbq.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\082-chicken-bbq.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4422580
+      }
+    }
+  },
+  {
+    "original": "originals\\083-chicken.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\083-chicken.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4408392
+      }
+    }
+  },
+  {
+    "original": "originals\\084-berry.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\084-berry.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4228059
+      }
+    }
+  },
+  {
+    "original": "originals\\085-sea-breeze.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\085-sea-breeze.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4494661
+      }
+    }
+  },
+  {
+    "original": "originals\\086-marquise.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\086-marquise.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4534181
+      }
+    }
+  },
+  {
+    "original": "originals\\087-fantasy.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\087-fantasy.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4409595
+      }
+    }
+  },
+  {
+    "original": "originals\\088-creamy-salmon.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\088-creamy-salmon.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4372854
+      }
+    }
+  },
+  {
+    "original": "originals\\089-spicy-salmon.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\089-spicy-salmon.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4045197
+      }
+    }
+  },
+  {
+    "original": "originals\\090-unagi.png",
+    "native_size": [
+      1254,
+      1254
+    ],
+    "method": "Pillow LANCZOS resampling; not native 4K",
+    "exports": {
+      "4k": {
+        "path": "4k\\090-unagi.jpg",
+        "width": 3840,
+        "height": 3840,
+        "bytes": 4369156
+      }
+    }
+  }
+]
