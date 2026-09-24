@@ -12,6 +12,11 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+# Резервная сверка оплат: пропущенный callback не оставит заказ unpaid.
+# --apply подтверждает найденную оплату и запускает письмо/передачу в Saby.
+# flock не допускает пересечения двух запусков cron. Проверяются последние 7 дней.
+* * * * * cd /var/www/delycafe_backend/Delycafe/backend && /usr/bin/flock -n /var/www/delycafe_backend/alfa-payments.lock /var/www/delycafe_backend/venv/bin/python manage.py sync_alfa_payments --apply --limit=100 >> /var/www/delycafe_backend/alfa-payments.log 2>&1
+
 # Синхронизация статусов заказов из Saby Presto (в т.ч. отмена).
 # Рекомендуется: каждые 2 минуты.
 */2 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_order_statuses --limit=200 >> /var/log/delycafe_saby_sync.log 2>&1

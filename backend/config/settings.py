@@ -373,6 +373,7 @@ EMAIL_BACKEND = os.getenv(
 )
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.mail.ru')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465'))
+EMAIL_TIMEOUT = float(os.getenv('EMAIL_TIMEOUT', '10'))
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'True').lower() == 'true'
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')

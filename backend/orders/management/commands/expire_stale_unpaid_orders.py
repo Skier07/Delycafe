@@ -5,8 +5,8 @@ from payments.services import expire_all_stale_unpaid_orders
 
 class Command(BaseCommand):
     help = (
-        'Помечает неоплаченные заказы старше 20 минут '
-        'как ошибка оплаты и откатывает бонусы'
+        'Проверяет старые заказы в банке: подтверждает оплату, '
+        'а при завершённой неоплаченной сессии закрывает заказ'
     )
 
     def handle(self, *args, **options):

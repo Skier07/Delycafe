@@ -1,13 +1,23 @@
+from unittest.mock import patch
+
 from django.test import TestCase, override_settings
 
 from catalog.models import Category, Product
 from orders.models import Order, OrderItem
+from orders.services import confirm_order_paid
 from orders.order_notification_service import (
     _should_send_admin_email,
     try_send_admin_order_email,
 )
 
 
+@override_settings(
+    ORDER_ADMIN_EMAIL_ENABLED=True,
+    ORDER_ADMIN_EMAIL='admin@example.com',
+    EMAIL_HOST_USER='smtp@example.com',
+    EMAIL_HOST_PASSWORD='test-password',
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+)
 class AdminOrderEmailTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(
@@ -32,7 +42,6 @@ class AdminOrderEmailTests(TestCase):
         )
         OrderItem.objects.create(
             order=self.order,
-            product=self.product,
             product_title=self.product.title,
             quantity=1,
             price=40,
@@ -63,3 +72,30 @@ class AdminOrderEmailTests(TestCase):
 
         self.order.refresh_from_db()
         self.assertIsNotNone(self.order.admin_email_sent_at)
+
+    def test_zero_messages_does_not_mark_email_sent(self):
+        with patch('orders.order_notification_service.send_mail', return_value=0):
+            self.assertFalse(try_send_admin_order_email(self.order.id))
+        self.order.refresh_from_db()
+        self.assertIsNone(self.order.admin_email_sent_at)
+
+    def test_smtp_timeout_does_not_prevent_saby_dispatch(self):
+        with (
+            patch(
+                'orders.order_notification_service.send_mail',
+                side_effect=TimeoutError('SMTP timed out'),
+            ),
+            patch('orders.services._dispatch_order_to_saby_core') as dispatch,
+        ):
+            confirm_order_paid(self.order)
+        dispatch.assert_called_once()
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.payment_status, Order.PaymentStatus.PAID)
+        self.assertIsNone(self.order.admin_email_sent_at)
+
+    def test_unpaid_order_does_not_send_email(self):
+        self.order.payment_status = Order.PaymentStatus.UNPAID
+        self.order.save(update_fields=['payment_status'])
+        with patch('orders.order_notification_service.send_mail') as send:
+            self.assertFalse(try_send_admin_order_email(self.order.id))
+        send.assert_not_called()

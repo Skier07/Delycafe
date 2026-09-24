@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 
 from orders.models import Order
@@ -275,13 +276,43 @@ def unpaid_order_is_stale(order, now=None) -> bool:
 
 
 def expire_stale_unpaid_order(order) -> bool:
-    """Закрывает заказ, который ждёт оплату дольше 20 минут."""
+    """Не закрывать старый заказ без проверки банковской сессии."""
     order.refresh_from_db()
 
     if not unpaid_order_is_stale(order):
         return False
 
-    close_unpaid_alfa_order(order)
+    if order.payment_external_id or getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
+        try:
+            response = _fetch_alfa_status_response(order)
+            if response is None:
+                logger.warning('Cannot verify bank status before expiring order #%s', order.id)
+                return False
+            bank_status, action_code = _parse_alfa_order_status(response)
+            state = _classify_alfa_order_state(bank_status, action_code)
+            if state == 'paid':
+                from payments.reconciliation import validate_paid_response
+
+                validate_paid_response(order, response)
+                confirm_order_paid(order)
+                order.refresh_from_db()
+                return False
+            if (
+                bank_status not in _ALFA_EXPIRED_ORDER_STATUSES
+                and action_code not in _ALFA_EXPIRED_ACTION_CODES
+            ):
+                return False
+        except AlfaPaymentError:
+            logger.exception('Bank status check failed before expiring order #%s', order.id)
+            return False
+
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        if not unpaid_order_is_stale(locked_order):
+            order.refresh_from_db()
+            return False
+        close_unpaid_alfa_order(locked_order)
+    order.refresh_from_db()
     logger.info(
         'Marked unpaid order #%s as failed after %s',
         order.id,

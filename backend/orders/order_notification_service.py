@@ -174,13 +174,21 @@ def try_send_admin_order_email(order_id: int) -> bool:
             subject, body = build_admin_order_email(order)
             recipient = settings.ORDER_ADMIN_EMAIL.strip()
 
-            send_mail(
+            sent_count = send_mail(
                 subject=subject,
                 message=body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[recipient],
                 fail_silently=False,
             )
+
+            if sent_count != 1:
+                logger.warning(
+                    'Admin order email not sent for order #%s: backend returned %s',
+                    order_id,
+                    sent_count,
+                )
+                return False
 
             order.admin_email_sent_at = timezone.now()
             order.save(
