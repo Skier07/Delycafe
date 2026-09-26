@@ -465,19 +465,24 @@ class _ProductHeroState extends State<_ProductHero> {
     final images = widget.item.galleryImages;
     final item = widget.item;
     final isPizza = item.category.trim().toLowerCase() == 'пицца';
+    final heroHeight = MediaQuery.sizeOf(context).shortestSide >= 600
+        ? (MediaQuery.sizeOf(context).width * 0.7).clamp(320.0, 960.0)
+        : 320.0;
 
     return Container(
-      height: 320,
+      height: heroHeight,
       width: double.infinity,
-      color: isPizza ? Colors.white : null,
       child: Stack(
         fit: StackFit.expand,
         children: [
           if (images.length <= 1)
             ProductImage(
               image: images.isNotEmpty ? images.first : item.image,
+              variants: item.imageVariants[
+                      images.isNotEmpty ? images.first : item.image] ??
+                  const [],
               width: double.infinity,
-              height: 320,
+              height: heroHeight,
               fit: isPizza ? BoxFit.contain : BoxFit.cover,
             )
           else
@@ -492,8 +497,9 @@ class _ProductHeroState extends State<_ProductHero> {
               itemBuilder: (context, index) {
                 return ProductImage(
                   image: images[index],
+                  variants: item.imageVariants[images[index]] ?? const [],
                   width: double.infinity,
-                  height: 320,
+                  height: heroHeight,
                   fit: isPizza ? BoxFit.contain : BoxFit.cover,
                 );
               },

@@ -100,6 +100,7 @@ class Product(models.Model):
     )
 
     price = models.PositiveIntegerField(default=0)
+    image_variants = models.JSONField(default=list, blank=True, editable=False)
     weight = models.CharField(max_length=60, blank=True)
 
     is_new = models.BooleanField(default=False)
@@ -128,6 +129,7 @@ class Product(models.Model):
 
 
 class ProductGalleryImage(models.Model):
+    image_variants = models.JSONField(default=list, blank=True, editable=False)
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,

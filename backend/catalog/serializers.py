@@ -49,6 +49,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category_preorder_cutoff_time = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
+    image_variants = serializers.SerializerMethodField()
     variants = serializers.SerializerMethodField()
     info_blocks = serializers.SerializerMethodField()
     can_order = serializers.SerializerMethodField()
@@ -68,6 +69,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'description',
             'image',
             'images',
+            'image_variants',
             'price',
             'weight',
             'is_new',
@@ -133,6 +135,26 @@ class ProductSerializer(serializers.ModelSerializer):
             active_variants,
             many=True,
         ).data
+
+    def get_image_variants(self, product):
+        gallery = getattr(product, 'prefetched_gallery_images', None)
+        if gallery is None:
+            gallery = list(product.gallery_images.all())
+        sources = [entry for entry in gallery if entry.image] or [product]
+        request = self.context.get('request')
+        result = {}
+        for entry in sources:
+            if not entry.image or not entry.image_variants:
+                continue
+            variants = []
+            for variant in entry.image_variants:
+                url = entry.image.storage.url(variant['name'])
+                variants.append({
+                    'url': request.build_absolute_uri(url) if request else url,
+                    'width': variant['width'], 'height': variant['height'],
+                })
+            result[build_absolute_media_url(request, entry.image)] = variants
+        return result
 
     def get_info_blocks(self, product):
         return resolve_info_blocks(product)

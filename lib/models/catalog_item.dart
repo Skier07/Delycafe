@@ -1,4 +1,5 @@
 import 'package:delycafe/models/product_info_block.dart';
+import 'package:delycafe/models/catalog_image_variant.dart';
 
 class ProductVariant {
   final String id;
@@ -48,6 +49,7 @@ class CatalogItem {
   final int price;
   final String image;
   final List<String> images;
+  final Map<String, List<CatalogImageVariant>> imageVariants;
   final String description;
   final String? shortDescription;
   final bool isHit;
@@ -75,6 +77,7 @@ class CatalogItem {
     required this.price,
     required this.image,
     this.images = const [],
+    this.imageVariants = const {},
     required this.description,
     this.shortDescription,
     this.isHit = false,
@@ -116,6 +119,10 @@ class CatalogItem {
       'price': price,
       'image': image,
       'images': images,
+      'image_variants': imageVariants.map(
+        (url, variants) =>
+            MapEntry(url, variants.map((v) => v.toJson()).toList()),
+      ),
       'description': description,
       'short_description': shortDescription,
       'is_hit': isHit,
@@ -190,6 +197,7 @@ class CatalogItem {
       price: _toInt(json['price']),
       image: json['image']?.toString() ?? '',
       images: images,
+      imageVariants: CatalogImageVariant.parseMap(json['image_variants']),
       description: json['description']?.toString() ?? '',
       shortDescription: json['short_description']?.toString(),
       isHit: json['is_hit'] == true,

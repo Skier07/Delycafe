@@ -121,6 +121,9 @@ class _CatalogCardState extends State<CatalogCard> {
                         aspectRatio: 1.2,
                         child: ProductImage(
                           image: widget.item.image,
+                          variants:
+                              widget.item.imageVariants[widget.item.image] ??
+                                  const [],
                           fit: widget.item.category.trim().toLowerCase() ==
                                   'пицца'
                               ? BoxFit.contain

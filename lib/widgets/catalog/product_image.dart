@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:delycafe/config/api_config.dart';
+import 'package:delycafe/models/catalog_image_variant.dart';
+import 'package:delycafe/widgets/catalog/product_image_resolution.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ProductImage extends StatelessWidget {
   final String image;
+  final List<CatalogImageVariant> variants;
   final BoxFit fit;
   final double? width;
   final double? height;
@@ -13,6 +16,7 @@ class ProductImage extends StatelessWidget {
   const ProductImage({
     super.key,
     required this.image,
+    this.variants = const [],
     this.fit = BoxFit.cover,
     this.width,
     this.height,
@@ -22,7 +26,24 @@ class ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalizedImage = ApiConfig.normalizeMediaUrl(image);
-    final child = _buildImage(normalizedImage);
+    final child = LayoutBuilder(builder: (context, constraints) {
+      final screen = MediaQuery.sizeOf(context);
+      final size = Size(
+        constraints.hasBoundedWidth ? constraints.maxWidth : screen.width,
+        constraints.hasBoundedHeight ? constraints.maxHeight : screen.height,
+      );
+      final dpr = MediaQuery.devicePixelRatioOf(context);
+      final variant = selectProductImageVariant(variants, size, dpr, fit);
+      final decodeWidth = variant == null
+          ? (size.longestSide * dpr).ceil().clamp(1, 1254)
+          : productImageDecodeWidth(variant, size, dpr, fit);
+      return _buildImage(
+        variant == null
+            ? normalizedImage
+            : ApiConfig.normalizeMediaUrl(variant.url),
+        decodeWidth,
+      );
+    });
 
     if (borderRadius == null) {
       return child;
@@ -34,13 +55,14 @@ class ProductImage extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(String normalizedImage) {
+  Widget _buildImage(String normalizedImage, int decodeWidth) {
     final resolvedWidth = width ?? double.infinity;
     final resolvedHeight = height ?? double.infinity;
 
     if (normalizedImage.startsWith('http')) {
       return CachedNetworkImage(
         imageUrl: normalizedImage,
+        memCacheWidth: decodeWidth,
         fit: fit,
         width: resolvedWidth,
         height: resolvedHeight,
@@ -55,6 +77,7 @@ class ProductImage extends StatelessWidget {
     if (normalizedImage.startsWith('assets/')) {
       return Image.asset(
         normalizedImage,
+        cacheWidth: decodeWidth,
         fit: fit,
         width: resolvedWidth,
         height: resolvedHeight,
