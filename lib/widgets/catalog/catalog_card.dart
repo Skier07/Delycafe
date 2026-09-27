@@ -100,15 +100,7 @@ class _CatalogCardState extends State<CatalogCard> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.96),
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 2,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -124,10 +116,7 @@ class _CatalogCardState extends State<CatalogCard> {
                           variants:
                               widget.item.imageVariants[widget.item.image] ??
                                   const [],
-                          fit: widget.item.category.trim().toLowerCase() ==
-                                  'пицца'
-                              ? BoxFit.contain
-                              : BoxFit.cover,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       if (widget.item.isHit || widget.item.isNew)
@@ -206,75 +195,78 @@ class _CatalogCardState extends State<CatalogCard> {
                           );
                         }
 
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            narrow ? 10 : 12,
-                            narrow ? 10 : 12,
-                            narrow ? 10 : 12,
-                            narrow ? 8 : 10,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.item.title,
-                                maxLines: narrow ? 2 : 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: titleSize,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                  height: 1.2,
-                                ),
-                              ),
-                              SizedBox(height: narrow ? 4 : 6),
-                              Text(
-                                widget.item.description,
-                                maxLines: narrow ? 1 : 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: narrow ? 12 : 13,
-                                  height: 1.35,
-                                  color: Colors.black.withValues(alpha: 0.55),
-                                ),
-                              ),
-                              const Spacer(),
-                              if (narrow) ...[
+                        return ColoredBox(
+                          color: Colors.white.withValues(alpha: 0.96),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              narrow ? 10 : 12,
+                              narrow ? 10 : 12,
+                              narrow ? 10 : 12,
+                              narrow ? 8 : 10,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  '${widget.item.price} ₽',
+                                  widget.item.title,
+                                  maxLines: narrow ? 2 : 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: priceSize,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: titleSize,
+                                    fontWeight: FontWeight.w700,
                                     color: Colors.black87,
+                                    height: 1.2,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                cartButton(expanded: true),
-                              ] else
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        '${widget.item.price} ₽',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: priceSize,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.black87,
+                                SizedBox(height: narrow ? 4 : 6),
+                                Text(
+                                  widget.item.description,
+                                  maxLines: narrow ? 1 : 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: narrow ? 12 : 13,
+                                    height: 1.35,
+                                    color: Colors.black.withValues(alpha: 0.55),
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (narrow) ...[
+                                  Text(
+                                    '${widget.item.price} ₽',
+                                    style: TextStyle(
+                                      fontSize: priceSize,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  cartButton(expanded: true),
+                                ] else
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '${widget.item.price} ₽',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: priceSize,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.black87,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Align(
-                                        alignment: Alignment.centerRight,
-                                        child: cartButton(expanded: false),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: cartButton(expanded: false),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                            ],
+                                    ],
+                                  ),
+                              ],
+                            ),
                           ),
                         );
                       },

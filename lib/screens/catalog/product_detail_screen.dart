@@ -464,7 +464,6 @@ class _ProductHeroState extends State<_ProductHero> {
   Widget build(BuildContext context) {
     final images = widget.item.galleryImages;
     final item = widget.item;
-    final isPizza = item.category.trim().toLowerCase() == 'пицца';
     final heroHeight = MediaQuery.sizeOf(context).shortestSide >= 600
         ? (MediaQuery.sizeOf(context).width * 0.7).clamp(320.0, 960.0)
         : 320.0;
@@ -483,7 +482,7 @@ class _ProductHeroState extends State<_ProductHero> {
                   const [],
               width: double.infinity,
               height: heroHeight,
-              fit: isPizza ? BoxFit.contain : BoxFit.cover,
+              fit: BoxFit.contain,
             )
           else
             PageView.builder(
@@ -500,25 +499,9 @@ class _ProductHeroState extends State<_ProductHero> {
                   variants: item.imageVariants[images[index]] ?? const [],
                   width: double.infinity,
                   height: heroHeight,
-                  fit: isPizza ? BoxFit.contain : BoxFit.cover,
+                  fit: BoxFit.contain,
                 );
               },
-            ),
-          // Градиент только визуально — иначе перекрывает свайп PageView.
-          if (!isPizza)
-            const IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x1A000000),
-                      Color(0x57000000),
-                    ],
-                  ),
-                ),
-              ),
             ),
           if (images.length > 1)
             Positioned(
@@ -555,7 +538,7 @@ class _ProductHeroState extends State<_ProductHero> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(images.length, (index) {
                     final selected = index == _currentPage;
-                    final dotColor = isPizza ? Colors.black : Colors.white;
+                    const dotColor = Colors.black;
 
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
