@@ -98,19 +98,6 @@ flutter:
   assets:
     - assets/icon.png
     - assets/images/
-    - assets/images/pizza/
-    - assets/images/shaurma/
-    - assets/images/burger/
-    - assets/images/drinks/
-    - assets/images/sauces/
-    - assets/images/potato/
-    - assets/images/desserts/
-    - assets/images/pancakes/
-    - assets/images/pasta/
-    - assets/images/pies/
-    - assets/images/salads/
-    - assets/images/soups/
-    - assets/images/fastfood/
     
 
   # An image asset can refer to one or more resolution-specific "variants", see
