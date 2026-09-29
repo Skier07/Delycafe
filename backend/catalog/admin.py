@@ -7,6 +7,7 @@ from django.utils.html import format_html, format_html_join
 
 from .gallery import append_gallery_images
 from .models import (
+    FoodPhrase,
     AppPageContent,
     CatalogSnippet,
     Category,
@@ -734,3 +735,11 @@ class AppPageContentAdmin(admin.ModelAdmin):
             'all': ('catalog/admin/page_content_editor.css',),
         }
         js = ('catalog/admin/page_content_editor.js',)
+
+
+@admin.register(FoodPhrase)
+class FoodPhraseAdmin(admin.ModelAdmin):
+    list_display = ('text', 'is_active', 'sort_order')
+    list_editable = ('is_active', 'sort_order')
+    list_filter = ('is_active',)
+    search_fields = ('text',)

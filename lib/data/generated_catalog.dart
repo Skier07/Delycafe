@@ -11,7 +11,8 @@ const List<CatalogItem> generatedCatalog = [
     category: 'Блины',
     price: 150,
     image: 'assets/images/pancakes/blin_s_gribami_i_syrom.jpg',
-    description: 'Вкусный блин с начинкой из свежих грибов и расплавленного сыра. Идеально подходит для быстрого перекуса или как основное блюдо. Легко готовится и отлично сочетается с различными соусами. Подойдёт как для завтрака, так и для ужина, порадует любителей сытной и ароматной еды.',
+    description:
+        'Вкусный блин с начинкой из свежих грибов и расплавленного сыра. Идеально подходит для быстрого перекуса или как основное блюдо. Легко готовится и отлично сочетается с различными соусами. Подойдёт как для завтрака, так и для ужина, порадует любителей сытной и ароматной еды.',
     weight: '150 г',
     sortOrder: 22001,
   ),
@@ -457,7 +458,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Паста  Болоньезе',
     category: 'Паста',
     price: 380,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Паста  Болоньезе из меню DelyCafe.',
     sortOrder: 170001,
   ),
@@ -476,7 +477,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Паста с лососем',
     category: 'Паста',
     price: 400,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Паста с лососем из меню DelyCafe.',
     sortOrder: 172001,
   ),
@@ -545,7 +546,7 @@ const List<CatalogItem> generatedCatalog = [
     title: '50 оттенков сырного',
     category: 'Пицца',
     price: 830,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца 50 оттенков сырного.',
     sortOrder: 192001,
     variants: [
@@ -664,7 +665,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Гавайская',
     category: 'Пицца',
     price: 795,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Гавайская.',
     sortOrder: 204001,
     variants: [
@@ -814,7 +815,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Детская',
     category: 'Пицца',
     price: 720,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Детская.',
     sortOrder: 216001,
     variants: [
@@ -843,7 +844,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Дьявольская',
     category: 'Пицца',
     price: 820,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Дьявольская.',
     sortOrder: 219001,
     variants: [
@@ -1054,7 +1055,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Морская',
     category: 'Пицца',
     price: 1150,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Морская.',
     sortOrder: 240001,
     variants: [
@@ -1083,7 +1084,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Мясная',
     category: 'Пицца',
     price: 800,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Мясная.',
     sortOrder: 243001,
     variants: [
@@ -1112,7 +1113,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Окей',
     category: 'Пицца',
     price: 790,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Окей.',
     sortOrder: 246001,
     variants: [
@@ -1141,7 +1142,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Пицца «Пепперони»',
     category: 'Пицца',
     price: 800,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Пицца «Пепперони».',
     sortOrder: 249001,
     variants: [
@@ -1170,7 +1171,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Просто космос',
     category: 'Пицца',
     price: 795,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Просто космос.',
     sortOrder: 252001,
     variants: [
@@ -1229,7 +1230,7 @@ const List<CatalogItem> generatedCatalog = [
     title: 'Фруктовая',
     category: 'Пицца',
     price: 700,
-    image: 'assets/images/delycafe.jpg',
+    image: 'assets/images/delycafe.png',
     description: 'Пицца Фруктовая.',
     sortOrder: 258001,
     variants: [

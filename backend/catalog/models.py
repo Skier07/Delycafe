@@ -528,3 +528,17 @@ class ProductInfoNote(models.Model):
 
         self.text = content_to_plain_text(self.content)
         super().save(*args, **kwargs)
+
+
+class FoodPhrase(models.Model):
+    text = models.CharField(max_length=100, verbose_name='Фраза')
+    is_active = models.BooleanField(default=True, verbose_name='Показывать в приложении')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        ordering = ['sort_order', 'id']
+        verbose_name = 'Фраза про еду'
+        verbose_name_plural = 'Фразы про еду'
+
+    def __str__(self):
+        return self.text

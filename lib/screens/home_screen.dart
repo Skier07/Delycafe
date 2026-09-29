@@ -19,13 +19,15 @@ import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/catalog_sync_service.dart';
 import 'package:delycafe/services/jivo_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
-import 'package:delycafe/widgets/app_update_dialog.dart';
 import 'package:delycafe/ui/components/glass/dark_glass_sheet.dart';
 import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/ui/tokens/app_radius.dart';
 import 'package:delycafe/ui/tokens/banner_scale.dart';
+import 'package:delycafe/widgets/app_update_dialog.dart';
+import 'package:delycafe/widgets/catalog/cart_shortcut.dart';
 import 'package:delycafe/widgets/catalog/catalog_section.dart';
+import 'package:delycafe/widgets/catalog/food_brand.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -44,6 +46,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  int _brandRevision = 0;
   HomeOverlayType _activeOverlay = HomeOverlayType.none;
   final GlobalKey _cartIconKey = GlobalKey();
   String? _lastRefreshedPhone;
@@ -155,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (_activeOverlay == HomeOverlayType.none) return;
     setState(() {
       _activeOverlay = HomeOverlayType.none;
+      _brandRevision++;
     });
   }
 
@@ -163,15 +167,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final screenHeight = MediaQuery.sizeOf(context).height;
 
     return Scaffold(
+      bottomNavigationBar: _activeOverlay == HomeOverlayType.none
+          ? const FloatingCartBar()
+          : null,
       body: Stack(
         children: [
           CatalogSection(
             cartIconKey: _cartIconKey,
-            banner: HomeBanner(
-              screenHeight: screenHeight,
-              cartIconKey: _cartIconKey,
-              onMenuPressed: () => _openOverlay(HomeOverlayType.menu),
-              onAccountPressed: () => _openOverlay(HomeOverlayType.account),
+            banner: Column(
+              children: [
+                HomeBanner(
+                  screenHeight: screenHeight,
+                  cartIconKey: _cartIconKey,
+                  onMenuPressed: () => _openOverlay(HomeOverlayType.menu),
+                  onAccountPressed: () => _openOverlay(HomeOverlayType.account),
+                ),
+                Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 14, 12),
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FoodBrand(key: ValueKey(_brandRevision)))),
+              ],
             ),
           ),
           for (final type in [HomeOverlayType.menu, HomeOverlayType.account])

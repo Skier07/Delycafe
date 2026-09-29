@@ -1,3 +1,4 @@
+import 'package:delycafe/widgets/catalog/food_brand.dart';
 import 'package:delycafe/data/hive/hive_init.dart';
 import 'package:delycafe/screens/splash_screen.dart';
 import 'package:delycafe/services/address_service.dart';
@@ -61,10 +62,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      navigatorObservers: [foodRouteObserver],
       debugShowCheckedModeBanner: false,
-      locale: Locale('ru', 'RU'),
-      supportedLocales: [
+      locale: const Locale('ru', 'RU'),
+      supportedLocales: const [
         Locale('ru', 'RU'),
       ],
       localizationsDelegates: [
@@ -72,8 +74,7 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }
-

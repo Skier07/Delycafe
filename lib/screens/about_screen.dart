@@ -30,7 +30,7 @@ class AboutScreen extends StatelessWidget {
             height: screenHeight * 0.45,
             width: double.infinity,
             child: Image.asset(
-              'assets/images/delycafe.jpg',
+              'assets/images/delycafe.png',
               fit: BoxFit.cover,
             ),
           ),

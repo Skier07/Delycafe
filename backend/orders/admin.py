@@ -485,6 +485,7 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 class DeliveryPriceTierInline(admin.TabularInline):
     model = DeliveryPriceTier
+    template = 'admin/orders/deliverypricetier/tabular.html'
     extra = 1
     ordering = ('sort_order', 'min_cart_total')
     fields = (
@@ -538,6 +539,14 @@ class DeliveryZoneAdmin(admin.ModelAdmin):
         (
             'Тариф',
             {
+                'description': (
+                    '«По сумме заказа» — используются строки таблицы «Тарифы доставки» ниже. '
+                    '«Фиксированная» — используется только поле «Фиксированная цена». '
+                    '«Бесплатно» — доставка стоит 0 ₽. '
+                    'Стоимость доставки добавляется при оформлении после выбора зоны, '
+                    'а не к сумме товаров в корзине. '
+                    'Описание в оформлении заказа — отдельный текст, он не меняет расчёт.'
+                ),
                 'fields': (
                     'pricing_mode',
                     'fixed_price',

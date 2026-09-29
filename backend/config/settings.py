@@ -49,7 +49,7 @@ CSRF_COOKIE_SECURE = not DEBUG
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'config.admin_site.DelyCafeAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

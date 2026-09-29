@@ -9,7 +9,7 @@ OUTPUT_FILE = Path("lib/data/generated_catalog.dart")
 REPORT_FILE = Path("tools/generated_catalog_report.json")
 OVERRIDES_FILE = Path("tools/catalog_overrides.json")
 
-DEFAULT_IMAGE = "assets/images/delycafe.jpg"
+DEFAULT_IMAGE = "assets/images/delycafe.png"
 
 PIZZA_CATEGORY_NAME = "Пицца"
 

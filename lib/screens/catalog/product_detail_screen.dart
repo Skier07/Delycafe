@@ -6,6 +6,8 @@ import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/utils/product_info_sections.dart';
+import 'package:delycafe/widgets/catalog/cart_shortcut.dart';
+import 'package:delycafe/widgets/catalog/food_brand.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -119,6 +121,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           SingleChildScrollView(
             child: Column(
               children: [
+                SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 9, 12),
+                      child: Row(children: [
+                        SizedBox.square(
+                          dimension: 44,
+                          child: ShaderGlassContainer(
+                            padding: EdgeInsets.zero,
+                            borderRadius: 30,
+                            child: IconButton(
+                              iconSize: 24,
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(CupertinoIcons.chevron_left_2,
+                                  color: AppColors.header),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(child: FoodBrand()),
+                      ]),
+                    )),
                 _ProductHero(item: item),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
@@ -345,21 +369,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
             ),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: ShaderGlassContainer(
-                borderRadius: 30,
-                onPressed: () => Navigator.pop(context),
-                padding: const EdgeInsets.all(8),
-                child: const Icon(
-                  CupertinoIcons.chevron_left_2,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -389,18 +398,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        '$_currentPrice ₽',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.header,
-                        ),
-                      ),
+                      child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '$_currentPrice ₽',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.header,
+                            ),
+                          )),
                     ),
                   ),
                   SizedBox(
-                    width: 170,
+                    width: MediaQuery.sizeOf(context).width < 360 ? 120 : 150,
                     height: double.infinity,
                     child: GestureDetector(
                       onTap: canOrderNow ? _addToCart : _showCannotOrderMessage,
@@ -423,6 +435,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  const CartShortcut(compact: true),
                 ],
               ),
             ),

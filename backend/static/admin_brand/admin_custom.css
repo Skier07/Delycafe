@@ -540,7 +540,20 @@ input[type="submit"].default,
    Sidebar
    ========================================================== */
 
-#nav-sidebar,
+#nav-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  border-radius: 10px !important;
+}
+
 #nav-sidebar .module {
   border-radius: 10px !important;
   overflow: visible !important;
