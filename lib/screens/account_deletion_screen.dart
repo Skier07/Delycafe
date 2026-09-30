@@ -1,3 +1,4 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/root_screen.dart';
 import 'package:delycafe/screens/legal_document_screen.dart';
@@ -177,6 +178,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFFEF7FF),
         appBar: AppBar(
+          leading: Navigator.of(context).canPop() ? const Center(child: GlassBackButton(lightBackground: false)) : null,
           backgroundColor: AppColors.header,
           elevation: 0,
           iconTheme: const IconThemeData(color: Colors.white),

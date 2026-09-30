@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:haptic_feedback/haptic_feedback.dart' as apple;
+import 'package:delycafe/utils/product_size_feedback.dart';
 
 /// Центральная точка тактильной отдачи.
 ///
@@ -52,6 +53,23 @@ class AppHaptics {
       ios: apple.HapticsType.success,
       android: HapticFeedback.mediumImpact,
     );
+  }
+
+  /// One short impact, shared by size selection and confirmed addition.
+  static void productSize(ProductSizeFeedback size) {
+    switch (size) {
+      case ProductSizeFeedback.small:
+        _play(
+            ios: apple.HapticsType.light, android: HapticFeedback.lightImpact);
+      case ProductSizeFeedback.large:
+        _play(
+            ios: apple.HapticsType.heavy, android: HapticFeedback.heavyImpact);
+      case ProductSizeFeedback.medium:
+      case ProductSizeFeedback.regular:
+        _play(
+            ios: apple.HapticsType.medium,
+            android: HapticFeedback.mediumImpact);
+    }
   }
 
   /// Ошибка оплаты и неверный SMS-код.

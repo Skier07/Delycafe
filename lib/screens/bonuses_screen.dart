@@ -1,3 +1,4 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/constants/app_features.dart';
 import 'package:delycafe/models/bonus_summary.dart';
 import 'package:delycafe/models/content_post.dart';
@@ -5,7 +6,6 @@ import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/bonus_api_service.dart';
 import 'package:delycafe/services/content_api_service.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/widgets/content/content_blocks_renderer.dart';
 import 'package:flutter/cupertino.dart';
@@ -91,16 +91,7 @@ class _BonusesScreenState extends State<BonusesScreen> {
         titleSpacing: 16,
         title: Row(
           children: [
-            ShaderGlassContainer(
-              borderRadius: 30,
-              onPressed: () => Navigator.pop(context),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(
-                CupertinoIcons.chevron_left_2,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
+            const GlassBackButton(),
             const SizedBox(width: 12),
             const Text(
               'Бонусы',

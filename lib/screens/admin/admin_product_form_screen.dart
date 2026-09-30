@@ -1,3 +1,4 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -134,6 +135,7 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFEF7FF),
       appBar: AppBar(
+          leading: Navigator.of(context).canPop() ? const Center(child: GlassBackButton(lightBackground: true)) : null,
         backgroundColor: AppColors.header,
         foregroundColor: Colors.white,
         title: const Text(

@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:delycafe/services/payment_api_service.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/payment_deeplink.dart';
 import 'package:delycafe/utils/url_allowlist.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -234,8 +233,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
             final failingUrl = error.url ?? '';
             if (failingUrl.isEmpty) return;
 
-            final isUnknownScheme =
-                error.errorCode == -10 ||
+            final isUnknownScheme = error.errorCode == -10 ||
                 error.description.contains('ERR_UNKNOWN_URL_SCHEME') ||
                 isSbpBankAppDeepLink(failingUrl);
 
@@ -382,8 +380,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
     AppHaptics.error();
     setState(() {
-      _errorMessage =
-          'Не удалось открыть оплату. Установите приложение банка '
+      _errorMessage = 'Не удалось открыть оплату. Установите приложение банка '
           'или выберите другой банк в списке СБП.';
     });
   }
@@ -487,7 +484,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     ];
 
     for (final delay in delays) {
-      if (_paymentCompleted || !mounted || generation != _statusRetryGeneration) {
+      if (_paymentCompleted ||
+          !mounted ||
+          generation != _statusRetryGeneration) {
         return;
       }
 
@@ -495,7 +494,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
         await Future.delayed(delay);
       }
 
-      if (_paymentCompleted || !mounted || generation != _statusRetryGeneration) {
+      if (_paymentCompleted ||
+          !mounted ||
+          generation != _statusRetryGeneration) {
         return;
       }
 
@@ -603,25 +604,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
           titleSpacing: 16,
           title: Row(
             children: [
-              ShaderGlassContainer(
-                borderRadius: 30,
-                onPressed:
-                    _isClosing ? null : () => unawaited(_onClosePressed()),
-                padding: const EdgeInsets.all(8),
-                child: _isClosing
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(
-                        CupertinoIcons.chevron_left_2,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+              GlassBackButton(
+                busy: _isClosing,
+                onPressed: () => unawaited(_onClosePressed()),
               ),
               const SizedBox(width: 12),
               Expanded(

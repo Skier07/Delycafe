@@ -1,4 +1,5 @@
 import 'package:delycafe/widgets/catalog/food_brand.dart';
+import 'package:delycafe/services/glass_settings.dart';
 import 'package:delycafe/data/hive/hive_init.dart';
 import 'package:delycafe/screens/splash_screen.dart';
 import 'package:delycafe/services/address_service.dart';
@@ -20,6 +21,7 @@ void main() async {
 
   await initHive();
   await ApiAuthStorage.instance.load();
+  await GlassSettings.instance.load();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

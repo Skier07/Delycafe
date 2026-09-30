@@ -1,7 +1,9 @@
 import 'dart:ui' as ui;
 
+import 'package:delycafe/services/glass_settings.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 class ShaderGlassContainer extends StatefulWidget {
   final Widget child;
@@ -10,6 +12,10 @@ class ShaderGlassContainer extends StatefulWidget {
   final double borderRadius;
   final Color tint;
   final double blur;
+  final double liquidBlur;
+  final double liquidThickness;
+  final double liquidRefractiveIndex;
+  final bool forceSimpleBlur;
 
   const ShaderGlassContainer({
     super.key,
@@ -19,6 +25,10 @@ class ShaderGlassContainer extends StatefulWidget {
     this.borderRadius = 30,
     this.tint = const Color(0xFF5AC8FA),
     this.blur = 3,
+    this.liquidBlur = 1.5,
+    this.liquidThickness = 24,
+    this.liquidRefractiveIndex = 1.22,
+    this.forceSimpleBlur = false,
   });
 
   @override
@@ -26,6 +36,9 @@ class ShaderGlassContainer extends StatefulWidget {
 }
 
 class _ShaderGlassContainerState extends State<ShaderGlassContainer> {
+  // Build with --dart-define=LIQUID_GLASS=false to compare with the old look.
+  static const _liquidGlassEnabled =
+      bool.fromEnvironment('LIQUID_GLASS', defaultValue: true);
   bool _pressed = false;
 
   void _setPressed(bool value) {
@@ -35,145 +48,168 @@ class _ShaderGlassContainerState extends State<ShaderGlassContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final glass = ClipRRect(
-      borderRadius: BorderRadius.circular(widget.borderRadius),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
-        child: Stack(
-          children: [
-            // Базовый стеклянный слой
-            Container(
-              padding: widget.padding,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(widget.borderRadius),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.13),
-                    Colors.white.withValues(alpha: 0.05),
-                  ],
-                ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+    return ListenableBuilder(
+        listenable: GlassSettings.instance,
+        builder: (context, _) => _buildGlass(context));
+  }
+
+  Widget _buildGlass(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final isButton = widget.onPressed != null || widget.child is IconButton;
+    final useLiquidGlass = _liquidGlassEnabled &&
+        GlassSettings.instance.enabled &&
+        !widget.forceSimpleBlur &&
+        isButton &&
+        ui.ImageFilter.isShaderFilterSupported &&
+        !MediaQuery.highContrastOf(context);
+    final glass = useLiquidGlass
+        ? _buildLiquidGlass()
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            child: BackdropFilter(
+              filter:
+                  ui.ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
+              child: Stack(
+                children: [
+                  // Базовый стеклянный слой
+                  Container(
+                    padding: widget.padding,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.13),
+                          Colors.white.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: widget.child,
+                  ),
+
+                  // Холодная синяя линза слева-сверху
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(widget.borderRadius),
+                          gradient: RadialGradient(
+                            center: const Alignment(-0.75, -0.8),
+                            radius: 1.25,
+                            colors: [
+                              widget.tint.withValues(alpha: 0.14),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Мягкий верхний блик
+                  Positioned(
+                    top: 1,
+                    left: 2,
+                    right: 2,
+                    child: IgnorePointer(
+                      child: Container(
+                        height: 10,
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(widget.borderRadius),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.20),
+                              Colors.white.withValues(alpha: 0.07),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Диагональный отражённый свет
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(widget.borderRadius),
+                          gradient: LinearGradient(
+                            begin: const Alignment(-0.9, -0.8),
+                            end: const Alignment(0.7, 0.9),
+                            colors: [
+                              Colors.white.withValues(alpha: 0.10),
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.28, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Лёгкая выпуклость в центре
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(widget.borderRadius),
+                          gradient: RadialGradient(
+                            center: const Alignment(0.0, -0.2),
+                            radius: 1.1,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.05),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Затемнение при нажатии
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 90),
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(widget.borderRadius),
+                          color: Colors.black.withValues(
+                            alpha: _pressed ? 0.10 : 0.0,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: widget.child,
             ),
-
-            // Холодная синяя линза слева-сверху
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    gradient: RadialGradient(
-                      center: const Alignment(-0.75, -0.8),
-                      radius: 1.25,
-                      colors: [
-                        widget.tint.withValues(alpha: 0.14),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Мягкий верхний блик
-            Positioned(
-              top: 1,
-              left: 2,
-              right: 2,
-              child: IgnorePointer(
-                child: Container(
-                  height: 10,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.20),
-                        Colors.white.withValues(alpha: 0.07),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Диагональный отражённый свет
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    gradient: LinearGradient(
-                      begin: const Alignment(-0.9, -0.8),
-                      end: const Alignment(0.7, 0.9),
-                      colors: [
-                        Colors.white.withValues(alpha: 0.10),
-                        Colors.transparent,
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.28, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Лёгкая выпуклость в центре
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    gradient: RadialGradient(
-                      center: const Alignment(0.0, -0.2),
-                      radius: 1.1,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.05),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Затемнение при нажатии
-            Positioned.fill(
-              child: IgnorePointer(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 90),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    color: Colors.black.withValues(
-                      alpha: _pressed ? 0.10 : 0.0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+          );
 
     final scaledGlass = AnimatedScale(
-      duration: const Duration(milliseconds: 90),
-      scale: _pressed ? 0.97 : 1,
+      duration: Duration(milliseconds: reduceMotion ? 0 : 140),
+      curve: Curves.easeOutCubic,
+      scale: _pressed && !reduceMotion ? 0.97 : 1,
       child: glass,
     );
 
@@ -195,6 +231,40 @@ class _ShaderGlassContainerState extends State<ShaderGlassContainer> {
         // splashColor: Colors.transparent,
         // highlightColor: Colors.transparent,
         child: scaledGlass,
+      ),
+    );
+  }
+
+  Widget _buildLiquidGlass() {
+    // Keep the layer local to this small button, never a full-screen texture.
+    // Text/icons sit above the glass and are not refracted.
+    return LiquidGlass.withOwnLayer(
+      shape: LiquidRoundedSuperellipse(borderRadius: widget.borderRadius),
+      settings: LiquidGlassSettings(
+        thickness: widget.liquidThickness,
+        // Keep the backdrop visible so the edge reads as a lens, not frost.
+        blur: widget.liquidBlur.clamp(0.0, 12.0).toDouble(),
+        refractiveIndex: widget.liquidRefractiveIndex,
+        chromaticAberration: 0,
+        lightIntensity: 0.45,
+        ambientStrength: 0.04,
+        saturation: 1.05,
+        glassColor: Color.lerp(Colors.white, widget.tint, 0.06)!
+            .withValues(alpha: 0.06),
+      ),
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          border: Border.all(
+              color: Colors.white.withValues(alpha: 0.28), width: 0.7),
+          color: _pressed ? Colors.black.withValues(alpha: 0.08) : null,
+        ),
+        child: Padding(
+          // Original Container had a 1px border in addition to this padding.
+          padding: widget.padding + const EdgeInsets.all(1),
+          child: widget.child,
+        ),
       ),
     );
   }

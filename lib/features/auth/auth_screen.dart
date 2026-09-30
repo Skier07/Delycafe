@@ -1,3 +1,4 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/features/auth/auth_form.dart';
 import 'package:delycafe/screens/code_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
@@ -62,6 +63,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+          leading: Navigator.of(context).canPop() ? const Center(child: GlassBackButton(lightBackground: true)) : null,
         title: const Text(
           'DelyCafe',
           style: TextStyle(color: Color.fromRGBO(31, 31, 28, 1)),

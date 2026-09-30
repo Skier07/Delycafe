@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
+import 'dart:async';
 
 import 'package:delycafe/root_screen.dart';
 import 'package:delycafe/services/auth_service.dart';
@@ -276,7 +277,8 @@ class _CodeScreenState extends State<CodeScreen> {
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Подтверждение номера')),
+        appBar: AppBar(
+          leading: Navigator.of(context).canPop() ? const Center(child: GlassBackButton(lightBackground: true)) : null,title: const Text('Подтверждение номера')),
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),

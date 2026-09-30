@@ -1,11 +1,10 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/screens/legal_document_screen.dart';
 import 'package:delycafe/services/legal_api_service.dart';
 import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -146,16 +145,7 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
         leadingWidth: 60,
         leading: Padding(
           padding: const EdgeInsets.all(8),
-          child: ShaderGlassContainer(
-            borderRadius: 30,
-            onPressed: () => Navigator.pop(context),
-            padding: const EdgeInsets.all(8),
-            child: const Icon(
-              CupertinoIcons.chevron_left_2,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
+          child: const GlassBackButton(),
         ),
         title: const Text('Политика'),
         titleTextStyle: const TextStyle(

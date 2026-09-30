@@ -4,7 +4,6 @@ import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/catalog_repository.dart';
 import 'package:delycafe/services/catalog_sync_service.dart';
-import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/widgets/catalog/catalog_card.dart';
@@ -29,7 +28,8 @@ class _CatalogSectionState extends State<CatalogSection> {
   final CatalogRepository _catalogRepository = CatalogRepository();
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoriesScrollController = ScrollController();
-  final CategoryEncoderHaptics _categoryEncoderHaptics = CategoryEncoderHaptics();
+  final CategoryEncoderHaptics _categoryEncoderHaptics =
+      CategoryEncoderHaptics();
 
   List<CatalogItem>? _catalog;
   List<String>? _categories;
@@ -187,20 +187,6 @@ class _CatalogSectionState extends State<CatalogSection> {
     return items;
   }
 
-  ProductVariant? _getDefaultVariant(CatalogItem item) {
-    if (item.variants.isEmpty) {
-      return null;
-    }
-
-    for (final variant in item.variants) {
-      if (variant.title == 'Средняя') {
-        return variant;
-      }
-    }
-
-    return item.variants.first;
-  }
-
   void _selectCategory(String category) {
     if (_selectedCategory == category) return;
 
@@ -209,24 +195,10 @@ class _CatalogSectionState extends State<CatalogSection> {
     });
   }
 
-  Future<void> _handleAddToCart(
+  void _handleAddToCart(
     CatalogItem item, {
-    AddToCartDropletOrigin? origin,
-  }) async {
-    final variant = _getDefaultVariant(item);
-
-    if (origin != null) {
-      final end = CartAnimationTarget.resolve(context, widget.cartIconKey);
-
-      unawaited(
-        AddToCartDropletAnimation.play(
-          context: context,
-          origin: origin,
-          end: end,
-        ),
-      );
-    }
-
+    ProductVariant? variant,
+  }) {
     context.read<CartService>().addToCart(
           item,
           variant: variant,
@@ -322,10 +294,10 @@ class _CatalogSectionState extends State<CatalogSection> {
                         return CatalogCard(
                           key: ValueKey(item.id),
                           item: item,
-                          onAddToCart: ({origin}) {
+                          onAddToCart: ({variant}) {
                             _handleAddToCart(
                               item,
-                              origin: origin,
+                              variant: variant,
                             );
                           },
                         );
@@ -396,43 +368,43 @@ class _CatalogHeaderDelegate extends SliverPersistentHeaderDelegate {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: categories.map((category) {
-                final selected = category == selectedCategory;
+                  final selected = category == selectedCategory;
 
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      AppHaptics.selection();
-                      onCategorySelected(category);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? AppColors.header
-                            : Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        AppHaptics.selection();
+                        onCategorySelected(category);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
                           color: selected
                               ? AppColors.header
-                              : Colors.black.withValues(alpha: 0.08),
+                              : Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: selected
+                                ? AppColors.header
+                                : Colors.black.withValues(alpha: 0.08),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          color: selected ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            color: selected ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
               ),
             ),
           ),

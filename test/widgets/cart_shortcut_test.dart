@@ -26,7 +26,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1 товар · 380 ₽'), findsOneWidget);
     cart.addToCart(product, quantity: 2);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final pulse = tester.widget<ScaleTransition>(find
+        .descendant(
+            of: find.byType(CartAddPulse),
+            matching: find.byType(ScaleTransition))
+        .first);
+    expect(pulse.scale.value, greaterThan(1));
     await tester.pumpAndSettle();
+    expect(pulse.scale.value, 1);
     expect(find.text('3 товара · 1140 ₽'), findsOneWidget);
     cart.clear();
     await tester.pumpAndSettle();

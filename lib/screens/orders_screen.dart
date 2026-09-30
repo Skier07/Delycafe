@@ -1,3 +1,4 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'dart:async';
 
 import 'package:delycafe/constants/app_features.dart';
@@ -9,7 +10,6 @@ import 'package:delycafe/services/cart_service.dart';
 import 'package:delycafe/services/catalog_repository.dart';
 import 'package:delycafe/services/order_service.dart';
 import 'package:delycafe/services/repeat_order_service.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:flutter/cupertino.dart';
@@ -139,16 +139,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         titleSpacing: 16,
         title: Row(
           children: [
-            ShaderGlassContainer(
-              borderRadius: 30,
-              onPressed: () => Navigator.pop(context),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(
-                CupertinoIcons.chevron_left_2,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
+            const GlassBackButton(),
             const SizedBox(width: 12),
             const Text(
               'История заказов',

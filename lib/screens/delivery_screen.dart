@@ -1,11 +1,10 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'dart:async';
 
 import 'package:delycafe/models/delivery_config.dart';
 import 'package:delycafe/services/delivery_config_service.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class DeliveryScreen extends StatefulWidget {
@@ -94,16 +93,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
         leadingWidth: 60,
         leading: Padding(
           padding: const EdgeInsets.all(8),
-          child: ShaderGlassContainer(
-            borderRadius: 30,
-            onPressed: () => Navigator.pop(context),
-            padding: const EdgeInsets.all(8),
-            child: const Icon(
-              CupertinoIcons.chevron_left_2,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
+          child: const GlassBackButton(),
         ),
         title: const Text('Доставка и оплата'),
         titleTextStyle: const TextStyle(

@@ -1,11 +1,10 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/services/auth_service.dart';
 import 'package:delycafe/services/customer_api_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -233,16 +232,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
         titleSpacing: 16,
         title: Row(
           children: [
-            ShaderGlassContainer(
-              borderRadius: 30,
-              onPressed: () => Navigator.pop(context),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(
-                CupertinoIcons.chevron_left_2,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
+            const GlassBackButton(),
             const SizedBox(width: 12),
             const Text(
               'Адреса доставки',

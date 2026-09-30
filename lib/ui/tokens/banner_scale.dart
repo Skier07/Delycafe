@@ -16,7 +16,7 @@ class BannerScale {
 
   static BannerScale of(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final scale = (width / _referenceWidth).clamp(0.85, 1.0);
+    final scale = (width / _referenceWidth).clamp(0.90, 1.1);
     return BannerScale._(scale);
   }
 
@@ -48,7 +48,7 @@ class BannerScale {
 
   double get bonusPaddingV => _s(8);
 
-  double get bonusIconGap => _s(8);
+  double get bonusIconGap => _s(10);
 
   double get badgeTop => _s(25);
 

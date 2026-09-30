@@ -1,9 +1,8 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:delycafe/config/api_config.dart';
 import 'package:delycafe/models/content_post.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
 import 'package:delycafe/widgets/content/content_blocks_renderer.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class NewsDetailScreen extends StatelessWidget {
@@ -40,16 +39,7 @@ class NewsDetailScreen extends StatelessWidget {
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: ShaderGlassContainer(
-                    borderRadius: 30,
-                    onPressed: () => Navigator.pop(context),
-                    padding: const EdgeInsets.all(8),
-                    child: const Icon(
-                      CupertinoIcons.chevron_left_2,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
+                  child: const GlassBackButton(),
                 ),
               ),
             ],

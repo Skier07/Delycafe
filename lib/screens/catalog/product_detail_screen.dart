@@ -1,26 +1,25 @@
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/models/product_info_block.dart';
 import 'package:delycafe/services/cart_service.dart';
-import 'package:delycafe/ui/components/glass/shader_glass_container.dart';
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/utils/product_info_sections.dart';
+import 'package:delycafe/utils/product_size_feedback.dart';
 import 'package:delycafe/widgets/catalog/cart_shortcut.dart';
 import 'package:delycafe/widgets/catalog/food_brand.dart';
 import 'package:delycafe/widgets/catalog/product_image.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:delycafe/widgets/catalog/product_size_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final CatalogItem item;
-  final VoidCallback? onAddToCart;
 
   const ProductDetailScreen({
     super.key,
     required this.item,
-    this.onAddToCart,
   });
 
   @override
@@ -75,7 +74,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    AppHaptics.addToCart();
+    AppHaptics.productSize(
+        ProductSizeFeedback.fromTitle(_selectedVariant?.title));
     context.read<CartService>().addToCart(
           widget.item,
           variant: _selectedVariant,
@@ -121,29 +121,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           SingleChildScrollView(
             child: Column(
               children: [
-                SafeArea(
+                const SafeArea(
                     bottom: false,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 9, 12),
+                      padding: EdgeInsets.fromLTRB(8, 8, 9, 12),
                       child: Row(children: [
-                        SizedBox.square(
-                          dimension: 44,
-                          child: ShaderGlassContainer(
-                            padding: EdgeInsets.zero,
-                            borderRadius: 30,
-                            child: IconButton(
-                              iconSize: 24,
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(CupertinoIcons.chevron_left_2,
-                                  color: AppColors.header),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Expanded(child: FoodBrand()),
+                        GlassBackButton(lightBackground: true),
+                        SizedBox(width: 8),
+                        Expanded(child: FoodBrand()),
                       ]),
                     )),
-                _ProductHero(item: item),
+                _ProductHero(item: item, sizeTitle: _selectedVariant?.title),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                   child: Column(
@@ -180,8 +168,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            '$_currentPrice ₽',
+                          SizePrice(
+                            price: _currentPrice,
                             style: const TextStyle(
                               fontSize: 30,
                               fontWeight: FontWeight.w800,
@@ -254,13 +242,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                         ),
                                         child: GestureDetector(
                                           onTap: () {
+                                            if (selected) return;
+                                            AppHaptics.productSize(
+                                                ProductSizeFeedback.fromTitle(
+                                                    variant.title));
                                             setState(() {
                                               _selectedVariant = variant;
                                             });
                                           },
                                           child: AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 160,
+                                            duration: Duration(
+                                              milliseconds: MediaQuery
+                                                      .disableAnimationsOf(
+                                                          context)
+                                                  ? 0
+                                                  : 160,
                                             ),
                                             padding: EdgeInsets.symmetric(
                                               horizontal: horizontalPadding,
@@ -387,7 +383,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: Colors.black.withValues(alpha: 0.14),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
@@ -401,8 +397,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
-                          child: Text(
-                            '$_currentPrice ₽',
+                          child: SizePrice(
+                            price: _currentPrice,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
@@ -449,9 +445,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
 class _ProductHero extends StatefulWidget {
   final CatalogItem item;
+  final String? sizeTitle;
 
   const _ProductHero({
     required this.item,
+    this.sizeTitle,
   });
 
   @override
@@ -480,7 +478,7 @@ class _ProductHeroState extends State<_ProductHero> {
     final item = widget.item;
     final heroHeight = MediaQuery.sizeOf(context).shortestSide >= 600
         ? (MediaQuery.sizeOf(context).width * 0.7).clamp(320.0, 960.0)
-        : 320.0;
+        : 380.0;
 
     return Container(
       height: heroHeight,
@@ -489,15 +487,17 @@ class _ProductHeroState extends State<_ProductHero> {
         fit: StackFit.expand,
         children: [
           if (images.length <= 1)
-            ProductImage(
-              image: images.isNotEmpty ? images.first : item.image,
-              variants: item.imageVariants[
-                      images.isNotEmpty ? images.first : item.image] ??
-                  const [],
-              width: double.infinity,
-              height: heroHeight,
-              fit: BoxFit.contain,
-            )
+            SizePreview(
+                title: widget.sizeTitle,
+                child: ProductImage(
+                  image: images.isNotEmpty ? images.first : item.image,
+                  variants: item.imageVariants[
+                          images.isNotEmpty ? images.first : item.image] ??
+                      const [],
+                  width: double.infinity,
+                  height: heroHeight,
+                  fit: BoxFit.contain,
+                ))
           else
             PageView.builder(
               controller: _pageController,
@@ -508,13 +508,15 @@ class _ProductHeroState extends State<_ProductHero> {
                 });
               },
               itemBuilder: (context, index) {
-                return ProductImage(
-                  image: images[index],
-                  variants: item.imageVariants[images[index]] ?? const [],
-                  width: double.infinity,
-                  height: heroHeight,
-                  fit: BoxFit.contain,
-                );
+                return SizePreview(
+                    title: widget.sizeTitle,
+                    child: ProductImage(
+                      image: images[index],
+                      variants: item.imageVariants[images[index]] ?? const [],
+                      width: double.infinity,
+                      height: heroHeight,
+                      fit: BoxFit.contain,
+                    ));
               },
             ),
           if (images.length > 1)
@@ -771,7 +773,7 @@ class _MarkerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (line.marker) {
       case 'dash':
-        return Text(
+        return const Text(
           '—',
           style: TextStyle(
             fontSize: 14,
@@ -782,7 +784,7 @@ class _MarkerWidget extends StatelessWidget {
       case 'number':
         return Text(
           '${line.number > 0 ? line.number : 1}.',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: AppColors.header,

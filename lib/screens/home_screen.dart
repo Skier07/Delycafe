@@ -1,3 +1,4 @@
+import 'package:delycafe/screens/appearance_screen.dart';
 import 'dart:async';
 
 import 'package:delycafe/background/catalog_background_registration.dart';
@@ -167,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final screenHeight = MediaQuery.sizeOf(context).height;
 
     return Scaffold(
+      extendBody: true,
       bottomNavigationBar: _activeOverlay == HomeOverlayType.none
           ? const FloatingCartBar()
           : null,
@@ -277,6 +279,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             const DarkGlassSheetDivider(),
             DarkGlassSheetItem(
+              title: 'Оформление',
+              onTap: () {
+                _closeOverlay();
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const AppearanceScreen()));
+              },
+            ),
+            const DarkGlassSheetDivider(),
+            DarkGlassSheetItem(
               title: 'Поддержка',
               onTap: () async {
                 final user = context.read<AuthService>().currentUser;
@@ -383,6 +396,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 }
 
 class HomeBanner extends StatelessWidget {
+  // Shared frosting for account, menu, bonuses and cart, on both renderers.
+  static const double _buttonBlur = 1.5;
   final double screenHeight;
   final GlobalKey cartIconKey;
   final VoidCallback onMenuPressed;
@@ -584,6 +599,8 @@ class _BannerGlassIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderGlassContainer(
+      blur: HomeBanner._buttonBlur,
+      liquidBlur: HomeBanner._buttonBlur,
       onPressed: onPressed,
       padding: EdgeInsets.all(scale.glassPadding),
       borderRadius: scale.glassRadius,
@@ -629,6 +646,8 @@ class _BannerCartButton extends StatelessWidget {
       children: [
         ShaderGlassContainer(
           key: cartIconKey,
+          blur: HomeBanner._buttonBlur,
+          liquidBlur: HomeBanner._buttonBlur,
           onPressed: () {
             Navigator.push(
               context,
@@ -686,6 +705,8 @@ class _BannerBonusesButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderGlassContainer(
+      blur: HomeBanner._buttonBlur,
+      liquidBlur: HomeBanner._buttonBlur,
       onPressed: () {
         Navigator.push(
           context,

@@ -1,3 +1,4 @@
+import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,7 @@ class _LegalDocumentScreenState extends State<LegalDocumentScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+          leading: Navigator.of(context).canPop() ? const Center(child: GlassBackButton(lightBackground: false)) : null,
         backgroundColor: AppColors.header,
         foregroundColor: Colors.white,
         title: Text(

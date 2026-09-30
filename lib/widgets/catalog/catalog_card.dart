@@ -1,6 +1,7 @@
 import 'package:delycafe/models/catalog_item.dart';
 import 'package:delycafe/screens/catalog/product_detail_screen.dart';
-import 'package:delycafe/ui/animations/add_to_cart_droplet_animation.dart';
+import 'package:delycafe/utils/product_size_feedback.dart';
+import 'package:delycafe/widgets/catalog/product_size_picker.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/preorder_availability.dart';
@@ -8,7 +9,7 @@ import 'package:delycafe/widgets/catalog/product_image.dart';
 import 'package:flutter/material.dart';
 
 typedef CatalogAddToCartCallback = void Function({
-  AddToCartDropletOrigin? origin,
+  ProductVariant? variant,
 });
 
 class CatalogCard extends StatefulWidget {
@@ -26,8 +27,7 @@ class CatalogCard extends StatefulWidget {
 }
 
 class _CatalogCardState extends State<CatalogCard> {
-  final GlobalKey _cartButtonKey = GlobalKey();
-  bool _hideCartButton = false;
+  bool _choosingSize = false;
 
   void _openProductDetail() {
     AppHaptics.openProduct();
@@ -36,15 +36,13 @@ class _CatalogCardState extends State<CatalogCard> {
       MaterialPageRoute(
         builder: (_) => ProductDetailScreen(
           item: widget.item,
-          onAddToCart: widget.onAddToCart == null
-              ? null
-              : () => widget.onAddToCart!.call(),
         ),
       ),
     );
   }
 
-  void _handleAddToCart() {
+  Future<void> _handleAddToCart() async {
+    if (_choosingSize) return;
     if (widget.onAddToCart == null) {
       return;
     }
@@ -64,31 +62,35 @@ class _CatalogCardState extends State<CatalogCard> {
       return;
     }
 
-    final renderBox =
-        _cartButtonKey.currentContext?.findRenderObject() as RenderBox?;
-
-    AddToCartDropletOrigin? origin;
-
-    if (renderBox != null && renderBox.hasSize) {
-      final topLeft = renderBox.localToGlobal(Offset.zero);
-
-      origin = AddToCartDropletOrigin(
-        globalCenter: topLeft + renderBox.size.center(Offset.zero),
-        buttonSize: renderBox.size,
-        color: AppColors.header,
-        borderRadius: 14,
-      );
-    }
-
-    AppHaptics.addToCart();
-    setState(() => _hideCartButton = true);
-    widget.onAddToCart!(origin: origin);
-
-    Future<void>.delayed(AddToCartDropletAnimation.duration, () {
-      if (mounted) {
-        setState(() => _hideCartButton = false);
+    ProductVariant? variant;
+    final requestedItem = widget.item;
+    if (widget.item.variants.length > 1) {
+      _choosingSize = true;
+      try {
+        variant = await showProductSizePicker(context, widget.item);
+      } finally {
+        _choosingSize = false;
       }
-    });
+      if (!mounted || variant == null) return;
+      // Catalog refresh can replace this card while the sheet is open.
+      if (widget.item.id != requestedItem.id || widget.onAddToCart == null) {
+        return;
+      }
+      final matches = widget.item.variants.where((v) => v.id == variant!.id);
+      if (!catalogItemCanOrderNow(widget.item) ||
+          matches.isEmpty ||
+          matches.first.price != variant.price) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content:
+                Text('Товар изменился. Пожалуйста, выберите размер ещё раз.')));
+        return;
+      }
+      variant = matches.first;
+    } else if (widget.item.variants.isNotEmpty) {
+      variant = widget.item.variants.first;
+    }
+    AppHaptics.productSize(ProductSizeFeedback.fromTitle(variant?.title));
+    widget.onAddToCart!(variant: variant);
   }
 
   @override
@@ -100,7 +102,17 @@ class _CatalogCardState extends State<CatalogCard> {
         children: [
           Container(
             decoration: BoxDecoration(
+              color: Colors.white60,
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 2,
+                  offset: const Offset(0, 2),
+                  // Draw the shadow outside the card.
+                  blurStyle: BlurStyle.outer,
+                ),
+              ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -157,9 +169,8 @@ class _CatalogCardState extends State<CatalogCard> {
 
                         Widget cartButton({required bool expanded}) {
                           final button = Opacity(
-                            opacity: _hideCartButton ? 0 : 1,
+                            opacity: 1,
                             child: Container(
-                              key: _cartButtonKey,
                               width: expanded ? double.infinity : null,
                               alignment: Alignment.center,
                               padding: EdgeInsets.symmetric(
@@ -175,7 +186,11 @@ class _CatalogCardState extends State<CatalogCard> {
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
-                                  canOrderNow ? 'В корзину' : 'Недоступно',
+                                  canOrderNow
+                                      ? (widget.item.variants.length > 1
+                                          ? 'Выбрать'
+                                          : 'В корзину')
+                                      : 'Недоступно',
                                   maxLines: 1,
                                   softWrap: false,
                                   style: TextStyle(
