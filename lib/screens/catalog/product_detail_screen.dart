@@ -478,7 +478,7 @@ class _ProductHeroState extends State<_ProductHero> {
     final item = widget.item;
     final heroHeight = MediaQuery.sizeOf(context).shortestSide >= 600
         ? (MediaQuery.sizeOf(context).width * 0.7).clamp(320.0, 960.0)
-        : 380.0;
+        : 340.0;
 
     return Container(
       height: heroHeight,
