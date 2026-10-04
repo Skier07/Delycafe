@@ -28,10 +28,8 @@ String catalogItemCannotOrderReason(CatalogItem item) {
   final cutoff = item.categoryPreorderCutoffTime.trim();
 
   if (item.categoryPreorderLeadDays > 0) {
-    return (
-      'Заказ этой позиции сегодня принимается до $cutoff. '
-      'Минимум за ${item.categoryPreorderLeadDays} сут.'
-    );
+    return ('Заказ этой позиции сегодня принимается до $cutoff. '
+        'Минимум за ${item.categoryPreorderLeadDays} сутки');
   }
 
   return 'Заказ этой позиции сегодня принимается до $cutoff.';

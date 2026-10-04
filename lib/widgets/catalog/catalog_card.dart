@@ -13,6 +13,40 @@ typedef CatalogAddToCartCallback = void Function({
 });
 
 class CatalogCard extends StatefulWidget {
+  /// Reserve space for every text row, including enlarged system fonts.
+  static double gridHeight(double width, TextScaler textScaler) {
+    final narrow = width < 168;
+    double lineHeight(double size, double height, FontWeight weight) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: 'Ару',
+          style: TextStyle(fontSize: size, height: height, fontWeight: weight),
+        ),
+        textDirection: TextDirection.ltr,
+        textScaler: textScaler,
+      )..layout();
+      final result = painter.height;
+      painter.dispose();
+      return result;
+    }
+
+    final title = lineHeight(narrow ? 14 : 16, 1.2, FontWeight.w700);
+    final description = lineHeight(narrow ? 12 : 13, 1.35, FontWeight.normal);
+    final price = lineHeight(narrow ? 14 : 16, 1.2, FontWeight.w800);
+    final button =
+        textScaler.scale(narrow ? 11 : 12) * 1.2 + (narrow ? 14 : 16);
+    final footer =
+        narrow ? price + 8 + button : (price > button ? price : button);
+    return width / 1.2 +
+        (narrow ? 18 : 22) +
+        title * (narrow ? 2 : 1) +
+        (narrow ? 4 : 6) +
+        description * (narrow ? 1 : 2) +
+        12 +
+        footer +
+        4;
+  }
+
   final CatalogItem item;
   final CatalogAddToCartCallback? onAddToCart;
 
@@ -172,6 +206,10 @@ class _CatalogCardState extends State<CatalogCard> {
                             opacity: 1,
                             child: Container(
                               width: expanded ? double.infinity : null,
+                              height: MediaQuery.textScalerOf(context)
+                                          .scale(buttonFont) *
+                                      1.2 +
+                                  buttonPadV * 2,
                               alignment: Alignment.center,
                               padding: EdgeInsets.symmetric(
                                 horizontal: buttonPadH,
@@ -197,6 +235,7 @@ class _CatalogCardState extends State<CatalogCard> {
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                     fontSize: buttonFont,
+                                    height: 1.2,
                                   ),
                                 ),
                               ),
@@ -246,12 +285,19 @@ class _CatalogCardState extends State<CatalogCard> {
                                 ),
                                 const Spacer(),
                                 if (narrow) ...[
-                                  Text(
-                                    '${widget.item.price} ₽',
-                                    style: TextStyle(
-                                      fontSize: priceSize,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.black87,
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      '${widget.item.price} ₽',
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      style: TextStyle(
+                                        fontSize: priceSize,
+                                        height: 1.2,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black87,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -275,6 +321,7 @@ class _CatalogCardState extends State<CatalogCard> {
                                       Flexible(
                                         child: Align(
                                           alignment: Alignment.centerRight,
+                                          heightFactor: 1,
                                           child: cartButton(expanded: false),
                                         ),
                                       ),

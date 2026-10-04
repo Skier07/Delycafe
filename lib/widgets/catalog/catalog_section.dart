@@ -272,8 +272,6 @@ class _CatalogSectionState extends State<CatalogSection> {
             Builder(
               builder: (context) {
                 final screenWidth = MediaQuery.sizeOf(context).width;
-                // На узких экранах (iPhone 13 и меньше) карточка выше:
-                // кнопка «В корзину» уходит под цену и не обрезается.
                 final aspectRatio = screenWidth < 400 ? 0.56 : 0.63;
                 final horizontalPad = screenWidth < 400 ? 12.0 : 16.0;
                 final spacing = screenWidth < 400 ? 10.0 : 12.0;
@@ -285,32 +283,43 @@ class _CatalogSectionState extends State<CatalogSection> {
                     horizontalPad,
                     120,
                   ),
-                  sliver: SliverGrid(
-                    key: ValueKey(currentCategory),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = items[index];
+                  sliver: SliverLayoutBuilder(builder: (context, constraints) {
+                    final cardWidth =
+                        (constraints.crossAxisExtent - spacing) / 2;
+                    final requiredHeight = CatalogCard.gridHeight(
+                      cardWidth,
+                      MediaQuery.textScalerOf(context),
+                    );
+                    final originalHeight = cardWidth / aspectRatio;
+                    return SliverGrid(
+                      key: ValueKey(currentCategory),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = items[index];
 
-                        return CatalogCard(
-                          key: ValueKey(item.id),
-                          item: item,
-                          onAddToCart: ({variant}) {
-                            _handleAddToCart(
-                              item,
-                              variant: variant,
-                            );
-                          },
-                        );
-                      },
-                      childCount: items.length,
-                    ),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: spacing,
-                      mainAxisSpacing: spacing,
-                      childAspectRatio: aspectRatio,
-                    ),
-                  ),
+                          return CatalogCard(
+                            key: ValueKey(item.id),
+                            item: item,
+                            onAddToCart: ({variant}) {
+                              _handleAddToCart(
+                                item,
+                                variant: variant,
+                              );
+                            },
+                          );
+                        },
+                        childCount: items.length,
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        mainAxisExtent: requiredHeight > originalHeight
+                            ? requiredHeight
+                            : originalHeight,
+                      ),
+                    );
+                  }),
                 );
               },
             ),

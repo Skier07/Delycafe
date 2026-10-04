@@ -33,7 +33,7 @@ def cannot_order_message(category: Category) -> str:
     if category.preorder_lead_days:
         return (
             f'Заказ этой позиции сегодня принимается до {clock}. '
-            f'Минимум за {category.preorder_lead_days} сут.'
+            f'Минимум за {category.preorder_lead_days} сутки'
         )
 
     return f'Заказ этой позиции сегодня принимается до {clock}.'
