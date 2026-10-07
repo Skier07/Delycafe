@@ -141,6 +141,11 @@ def build_admin_order_email(order: Order) -> tuple[str, str]:
         '',
         'Состав заказа:',
         *items_lines,
+        '',
+        f'Стоимость доставки: {order.delivery_price} ₽',
+        f'Скидка: −{order.discount_amount} ₽',
+        f'Списано бонусов: {order.bonus_spent} (−{order.bonus_spent} ₽)',
+        f'Итого оплачено: {amount} ₽',
     ]
 
     if comment:

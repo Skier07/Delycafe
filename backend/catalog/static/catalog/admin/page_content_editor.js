@@ -11,6 +11,7 @@
     italic: false,
     underline: false,
     image_url: '',
+    icon_url: '',
     full_bleed: false,
   };
 
@@ -141,6 +142,19 @@
             syncHiddenInput();
           });
           wrapper.appendChild(textarea);
+          const iconLabel = document.createElement('label');
+          iconLabel.textContent = 'Иконка слева (URL, PNG/WebP, размер в приложении 24×24)';
+          const iconInput = document.createElement('input');
+          iconInput.type = 'text';
+          iconInput.className = 'page-content-image-url';
+          iconInput.placeholder = 'https://api.delycafe.ru/media/...';
+          iconInput.value = line.icon_url || '';
+          iconInput.addEventListener('input', () => {
+            line.icon_url = iconInput.value;
+            syncHiddenInput();
+          });
+          iconLabel.appendChild(iconInput);
+          wrapper.appendChild(iconLabel);
         }
 
         const controls = document.createElement('div');

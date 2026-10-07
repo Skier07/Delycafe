@@ -4,7 +4,8 @@
 BonusTransaction). API баланса Presto по телефону у Saby пока нет: ручная
 правка в админке отображается в приложении, но может не совпадать с кассой.
 
-Списание в Presto — retail bonus-write-off после order/create (фискальный контур).
+В Presto локальные бонусы передаются скидкой в cost товаров при order/create.
+Бонусная программа Saby не используется.
 Скидка самовывоза 5%: в приложении; в Presto уходит в cost позиций
 (акция Saby на API-заказы ненадёжна — иначе разрыв суммы и нет чека АТОЛ).
 
@@ -19,13 +20,13 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Sequence
 
-# Бонусы включены: списание в приложении + write-off в Saby.
+# Бонусы включены: списание в приложении + скидка в ценах Saby.
 APP_BONUSES_ENABLED = True
 
 # Скидка 20% на первый заказ отключена и нигде не применяется.
 APP_FIRST_ORDER_DISCOUNT_ENABLED = False
 
-# Процент начисления в приложении (и ожидание в Presto при сверке).
+# Процент начисления в приложении.
 BONUS_EARN_PERCENT = 3
 
 # Максимум списания бонусами от суммы товаров после скидок.

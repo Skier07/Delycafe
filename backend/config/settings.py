@@ -299,6 +299,10 @@ SABY_PRICE_LIST_ID = int(
     os.getenv('SABY_PRICE_LIST_ID', '4')
 )
 
+# Общая услуга из подтверждённого прайса Delycafe (бывшая «Доставка 150»).
+# Цена каждой продажи берётся из order.delivery_price, а не из прайса Saby.
+SABY_DELIVERY_NOM_NUMBER = os.getenv('SABY_DELIVERY_NOM_NUMBER', 'X7443708').strip()
+
 SABY_RETAIL_PLACE = os.getenv(
     'SABY_RETAIL_PLACE',
     'https://delycafe.ru',

@@ -10,6 +10,7 @@ class ContentLine {
   final bool italic;
   final bool underline;
   final String imageUrl;
+  final String iconUrl;
   final bool fullBleed;
 
   const ContentLine({
@@ -24,6 +25,7 @@ class ContentLine {
     this.italic = false,
     this.underline = false,
     this.imageUrl = '',
+    this.iconUrl = '',
     this.fullBleed = false,
   });
 
@@ -40,6 +42,7 @@ class ContentLine {
       italic: json['italic'] == true,
       underline: json['underline'] == true,
       imageUrl: json['image_url']?.toString() ?? '',
+      iconUrl: json['icon_url']?.toString() ?? '',
       fullBleed: json['full_bleed'] == true,
     );
   }

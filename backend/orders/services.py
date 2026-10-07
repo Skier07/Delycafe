@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 
 import requests
 from django.conf import settings
@@ -172,7 +173,10 @@ def build_saby_comment(order: Order) -> str:
             lines.append(f'Скидка: −{order.discount_amount} ₽')
 
     if order.bonus_spent > 0:
-        lines.append(f'Списание бонусов: −{order.bonus_spent} ₽')
+        lines.append(
+            f'Бонусы Деликафе: списано {order.bonus_spent} баллов = '
+            f'скидка {order.bonus_spent} ₽ (учтена в ценах товаров)'
+        )
 
     lines.append('Источник: приложение Delycafe')
 
@@ -202,7 +206,7 @@ def save_saby_order_response(order: Order, saby_response: dict) -> None:
         saby_response.get('sale_id')
         or saby_response.get('saleId')
     )
-    # saleKey — UUID для bonus-write-off / register-payment.
+    # saleKey — UUID для проверки продажи и register-payment.
     external_id = (
         saby_response.get('saleKey')
         or saby_response.get('sale_key')
@@ -231,6 +235,15 @@ def save_saby_order_response(order: Order, saby_response: dict) -> None:
 
 
 def register_saby_payment(order: Order) -> dict | None:
+    try:
+        return _register_saby_payment_atomic(order)
+    except SabyOrderError as exc:
+        # Save after the inner transaction rolled back, otherwise the error is lost.
+        Order.objects.filter(pk=order.pk).update(saby_payment_error=str(exc))
+        raise
+
+
+def _register_saby_payment_atomic(order: Order) -> dict | None:
     """Регистрирует онлайн-оплату в Saby и пробивает чек (кнопка «Оплачено»)."""
     with transaction.atomic():
         locked_order = Order.objects.select_for_update().get(pk=order.pk)
@@ -824,12 +837,6 @@ class SabyOrderService:
     REGISTER_PAYMENT_URL = (
         'https://api.sbis.ru/retail/order/{external_id}/register-payment'
     )
-    BONUS_WRITE_OFF_URL = (
-        'https://api.sbis.ru/retail/order/{external_id}/bonus-write-off'
-    )
-    BONUS_READ_URL = (
-        'https://api.sbis.ru/retail/order/{external_id}/bonus-read'
-    )
 
     def create_order(self, order: Order) -> dict:
         nomenclatures = self._build_nomenclatures(order)
@@ -879,6 +886,9 @@ class SabyOrderService:
                 self._extract_error_message(saby_response, response.status_code)
             )
 
+        if not isinstance(saby_response, dict) or saby_response.get('error') or saby_response.get('successFlag') is False:
+            raise SabyOrderError('Saby сообщил об ошибке операции; успех не подтверждён.')
+
         result_code = saby_response.get('resultCode')
         if result_code not in (0, '0', None):
             raise SabyOrderError(
@@ -897,88 +907,20 @@ class SabyOrderService:
 
         return saby_response
 
-    def apply_bonuses(self, order: Order) -> dict | None:
-        """Списывает или инициирует начисление бонусов в Saby (до оплаты)."""
-        if order.saby_bonus_applied:
-            logger.info(
-                'Order #%s Saby bonuses already applied, skipping',
-                order.id,
-            )
-            return None
+    def apply_bonuses(self, order: Order) -> dict:
+        """Проверяет скидку локальной программы, уже переданную в cost позиций.
 
+        Saby не ведёт бонусный баланс приложения. bonus-write-off здесь нельзя
+        вызывать: он меняет баланс другой программы и может списать меньше.
+        Проверяем и старые заказы с флагом, сохранённым прежней версией.
+        """
         if not order_already_in_saby(order):
-            raise SabyOrderError(
-                'Нельзя применить бонусы в Saby: заказ ещё не создан.'
-            )
-
-        response = self.write_off_bonuses(order)
-
+            raise SabyOrderError('Нельзя проверить скидку: заказ ещё не создан в Saby.')
+        response = self.read_sale(order)
+        self._assert_sale_total(order, response)
         order.saby_bonus_applied = True
         order.save(update_fields=['saby_bonus_applied', 'updated_at'])
-
-        # История и баланс — после register-payment (см. register_saby_payment).
-
         return response
-
-    def write_off_bonuses(self, order: Order) -> dict:
-        """
-        POST bonus-write-off.
-
-        bonusDec > 0 — списание; 0/null — начисление по программе лояльности.
-        """
-        external_id = saby_external_id(order)
-        bonus_dec = int(order.bonus_spent or 0)
-        payload = {
-            # 0 — начислить по акции Saby без списания.
-            'bonusDec': bonus_dec if bonus_dec > 0 else 0,
-        }
-
-        token = SabyCatalogService().get_token()
-        url = self.BONUS_WRITE_OFF_URL.format(external_id=external_id)
-
-        logger.info(
-            'Saby bonus-write-off payload for order #%s: %s',
-            order.id,
-            payload,
-        )
-
-        response = requests.post(
-            url,
-            headers={
-                'X-SBISAccessToken': token,
-                'Content-Type': 'application/json',
-            },
-            json=payload,
-            timeout=60,
-        )
-
-        logger.info(
-            'Saby bonus-write-off response for order #%s: status=%s body=%s',
-            order.id,
-            response.status_code,
-            response.text,
-        )
-
-        try:
-            saby_response = response.json() if response.content else {}
-        except ValueError as exc:
-            raise SabyOrderError(
-                'Saby вернул не-JSON ответ при списании бонусов '
-                f'(HTTP {response.status_code}).'
-            ) from exc
-
-        if response.status_code >= 400:
-            raise SabyOrderError(
-                self._extract_error_message(saby_response, response.status_code)
-            )
-
-        result_code = saby_response.get('resultCode')
-        if result_code not in (0, '0', None):
-            raise SabyOrderError(
-                self._extract_error_message(saby_response, response.status_code)
-            )
-
-        return saby_response
 
     def register_payment(self, order: Order) -> dict:
         amount = order.payment_amount or order.total_price
@@ -986,6 +928,15 @@ class SabyOrderService:
         if amount <= 0:
             raise SabyOrderError(
                 'Сумма оплаты для Saby должна быть больше 0.'
+            )
+
+        # Проверяем реальную сумму даже для заказов, созданных старой версией.
+        self._assert_sale_total(order, self.read_sale(order))
+        state = self._read_sale_resource(order, '/state')
+        if state.get('payments') or state.get('payState') in (200, '200'):
+            raise SabyOrderError(
+                'В Saby уже есть оплата или задание на чек. '
+                'Проверьте его результат перед повторной регистрацией.'
             )
 
         external_id = saby_external_id(order)
@@ -1037,6 +988,9 @@ class SabyOrderService:
                 self._extract_error_message(saby_response, response.status_code)
             )
 
+        if not isinstance(saby_response, dict) or saby_response.get('error') or saby_response.get('successFlag') is False:
+            raise SabyOrderError('Saby сообщил об ошибке операции; успех не подтверждён.')
+
         result_code = saby_response.get('resultCode')
         if result_code not in (0, '0', None):
             raise SabyOrderError(
@@ -1065,9 +1019,12 @@ class SabyOrderService:
             and PICKUP_DISCOUNT_PERCENT > 0
         )
 
-        for item in order.items.all():
+        for item in order.items.order_by('pk'):
             if not item.saby_id:
-                continue
+                raise SabyOrderError(
+                    f'У позиции «{item.product_title}» нет saby_id. '
+                    'Нельзя отправить в Saby неполный заказ.'
+                )
 
             unit_cost = item.price
             if apply_pickup_discount:
@@ -1091,7 +1048,99 @@ class SabyOrderService:
 
             nomenclatures.append(entry)
 
+        nomenclatures = self._discount_local_bonuses(nomenclatures, order.bonus_spent)
+
+        if order.delivery_price:
+            nom_number = getattr(settings, 'SABY_DELIVERY_NOM_NUMBER', '')
+            if not nom_number:
+                raise SabyOrderError(
+                    'Не настроена услуга доставки: задайте SABY_DELIVERY_NOM_NUMBER '
+                    'из каталога Saby. Заказ без оплаченной доставки не отправлен.'
+                )
+            nomenclatures.append({
+                'nomNumber': nom_number,
+                'priceListId': settings.SABY_PRICE_LIST_ID,
+                'count': 1,
+                # Направление остаётся в адресе и build_saby_comment(order).
+                'name': 'Доставка',
+                'cost': order.delivery_price,
+            })
+
+        expected = Decimal(order.payment_amount or order.total_price)
+        actual = sum(Decimal(str(row['cost'])) * row['count'] for row in nomenclatures)
+        if actual != expected:
+            raise SabyOrderError(
+                f'Сумма позиций Saby {actual} ₽ не совпадает с оплаченной суммой '
+                f'{expected} ₽. Проверьте скидку и доставку.'
+            )
+
         return nomenclatures
+
+    @staticmethod
+    def _discount_local_bonuses(rows, bonus_spent):
+        """Распределяет фиксированную скидку в копейках только по товарам.
+
+        Метод наибольших остатков сохраняет точную сумму. При неделимом
+        количестве разбиваем строку на две цены с разницей в одну копейку.
+        Расчёты целочисленные; float используется только для JSON API.
+        """
+        if not bonus_spent:
+            return rows
+        totals = [int(Decimal(str(row['cost'])) * 100) * row['count'] for row in rows]
+        total = sum(totals)
+        discount = int(bonus_spent) * 100
+        if discount < 0 or discount > total or total <= 0:
+            raise SabyOrderError('Бонусная скидка превышает стоимость товаров.')
+        shares = [divmod(discount * amount, total) for amount in totals]
+        discounts = [share[0] for share in shares]
+        remainder = discount - sum(discounts)
+        for index in sorted(range(len(rows)), key=lambda i: (-shares[i][1], i))[:remainder]:
+            discounts[index] += 1
+        result = []
+        for row, amount, row_discount in zip(rows, totals, discounts):
+            price, extra_units = divmod(amount - row_discount, row['count'])
+            for cents, count in ((price, row['count'] - extra_units), (price + 1, extra_units)):
+                if count:
+                    result.append({**row, 'count': count, 'cost': cents / 100})
+        return result
+
+    @staticmethod
+    def _money(value, field):
+        try:
+            result = Decimal(str(value))
+            if not result.is_finite() or result < 0:
+                raise ValueError
+            return result
+        except (InvalidOperation, ValueError, TypeError) as exc:
+            raise SabyOrderError(f'Saby не вернул корректное поле {field}.') from exc
+
+    def _assert_sale_total(self, order, response):
+        actual = self._money(response.get('totalPrice'), 'totalPrice')
+        expected = Decimal(order.payment_amount or order.total_price)
+        if actual != expected:
+            raise SabyOrderError(
+                f'Сумма Saby {actual} ₽, оплачено {expected} ₽. '
+                f'Доставка {order.delivery_price} ₽, бонусы {order.bonus_spent} ₽. '
+                'Регистрация чека остановлена до сверки.'
+            )
+
+    def _read_sale_resource(self, order, suffix=''):
+        url = f'https://api.sbis.ru/retail/order/{saby_external_id(order)}{suffix}'
+        try:
+            response = requests.get(url, headers={
+                'X-SBISAccessToken': SabyCatalogService().get_token(),
+            }, timeout=30)
+            data = response.json()
+        except (requests.RequestException, ValueError) as exc:
+            raise SabyOrderError('Не удалось проверить сумму/бонусы заказа Saby.') from exc
+        if not isinstance(data, dict):
+            raise SabyOrderError('Saby вернул неожиданный формат заказа.')
+        if response.status_code >= 400 or data.get('error') or data.get('resultCode') not in (None, 0, '0'):
+            raise SabyOrderError(self._extract_error_message(data, response.status_code))
+        return data
+
+    def read_sale(self, order):
+        return self._read_sale_resource(order)
 
     def _build_payload(self, order: Order, nomenclatures: list[dict]) -> dict:
         is_pickup = order.delivery_type == Order.DeliveryType.PICKUP

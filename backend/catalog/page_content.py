@@ -15,6 +15,7 @@ DEFAULT_LINE: dict[str, Any] = {
     'italic': False,
     'underline': False,
     'image_url': '',
+    'icon_url': '',
     'full_bleed': False,
 }
 
@@ -54,6 +55,7 @@ def normalize_line(raw: dict[str, Any] | None) -> dict[str, Any]:
     line['italic'] = bool(raw.get('italic'))
     line['underline'] = bool(raw.get('underline'))
     line['image_url'] = str(raw.get('image_url') or '').strip()
+    line['icon_url'] = str(raw.get('icon_url') or '').strip()
     line['full_bleed'] = bool(raw.get('full_bleed'))
 
     return line

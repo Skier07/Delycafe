@@ -133,7 +133,7 @@ class _TextBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    final text = Text(
       '$_prefix${line.text}',
       textAlign: _align,
       style: TextStyle(
@@ -146,6 +146,30 @@ class _TextBlock extends StatelessWidget {
         decoration:
             line.underline ? TextDecoration.underline : TextDecoration.none,
       ),
+    );
+    final iconUrl = ApiConfig.normalizeMediaUrl(line.iconUrl.trim());
+    if (iconUrl.isEmpty) return text;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ExcludeSemantics(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CachedNetworkImage(
+              imageUrl: iconUrl,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+              placeholder: (_, __) => const SizedBox.shrink(),
+              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: text),
+      ],
     );
   }
 }
@@ -163,9 +187,8 @@ class _ImageBlock extends StatelessWidget {
     }
 
     final image = ClipRRect(
-      borderRadius: line.fullBleed
-          ? BorderRadius.zero
-          : BorderRadius.circular(16),
+      borderRadius:
+          line.fullBleed ? BorderRadius.zero : BorderRadius.circular(16),
       child: CachedNetworkImage(
         imageUrl: url,
         fit: BoxFit.cover,
