@@ -66,7 +66,9 @@ class ProductImage extends StatelessWidget {
         fit: fit,
         width: resolvedWidth,
         height: resolvedHeight,
-        fadeInDuration: const Duration(milliseconds: 180),
+        // Transparent photos must not cross-fade over a tinted placeholder.
+        fadeInDuration: Duration.zero,
+        fadeOutDuration: Duration.zero,
         placeholder: (context, url) => const _ImagePlaceholder(
           showProgress: true,
         ),
@@ -103,7 +105,9 @@ class _ImagePlaceholder extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: AppColors.header.withValues(alpha: 0.08),
+      color: showProgress
+          ? Colors.transparent
+          : AppColors.header.withValues(alpha: 0.08),
       alignment: Alignment.center,
       child: showProgress
           ? SizedBox(
