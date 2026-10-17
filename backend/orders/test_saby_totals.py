@@ -57,6 +57,38 @@ class SabyTotalsTests(TestCase):
         self.assertFalse(any('nomNumber' in row for row in rows))
         self.assertEqual(sum(r['cost'] * r['count'] for r in rows), 1180)
 
+    @override_settings(SABY_DELIVERY_MODE='native', SABY_DELIVERY_NOM_NUMBER='')
+    def test_native_delivery_does_not_duplicate_saby_tariff(self):
+        for zone, price in (
+            (Order.DeliveryType.OZERSK, 250),
+            (Order.DeliveryType.OZERSK, 300),
+            (Order.DeliveryType.PROMPLOSHADKA, 400),
+            (Order.DeliveryType.TATYSH, 550),
+            (Order.DeliveryType.OZERSK, 0),
+        ):
+            with self.subTest(zone=zone, price=price):
+                order = self.order(bonus=33)
+                order.delivery_type = zone
+                order.delivery_price = price
+                order.payment_amount = order.total_price = 1180 - 33 + price
+                service = SabyOrderService()
+                rows = service._build_nomenclatures(order)
+                self.assertFalse(any('nomNumber' in row for row in rows))
+                self.assertEqual(sum(Decimal(str(r['cost'])) * r['count'] for r in rows), 1147)
+                service._assert_sale_total(order, {'totalPrice': 1147 + price})
+                with self.assertRaises(SabyOrderError):
+                    service._assert_sale_total(order, {'totalPrice': 1147 + price + 250})
+
+    @override_settings(SABY_DELIVERY_MODE='native')
+    def test_native_mode_keeps_pickup_discount_and_bonus(self):
+        rows = SabyOrderService()._build_nomenclatures(self.order(pickup=True, bonus=33))
+        self.assertEqual(sum(Decimal(str(r['cost'])) * r['count'] for r in rows), 1591)
+
+    @override_settings(SABY_DELIVERY_MODE='typo')
+    def test_invalid_delivery_mode_does_not_silently_choose_pricing(self):
+        with self.assertRaisesMessage(SabyOrderError, 'SABY_DELIVERY_MODE'):
+            SabyOrderService()._build_nomenclatures(self.order())
+
     @override_settings(SABY_DELIVERY_NOM_NUMBER='')
     def test_missing_delivery_mapping_stops_incomplete_order(self):
         with self.assertRaises(SabyOrderError):
@@ -108,6 +140,72 @@ class SabyTotalsTests(TestCase):
             with self.assertRaises(SabyOrderError):
                 service.register_payment(order)
             post.assert_not_called()
+
+    def test_manually_completed_payment_clears_stale_error_without_post(self):
+        order = self.order()
+        order.saby_payment_error = 'Сумма Saby 1680, оплачено 1430'
+        order.save(update_fields=['saby_payment_error'])
+        state = {'payState': 200, 'payments': [{
+            'amount': 1430.0, 'isClosed': True, 'paymentType': 'full',
+            'errorMessage': '',
+        }]}
+        with (
+            patch.object(SabyOrderService, 'read_sale', return_value={'totalPrice': 1430}),
+            patch.object(SabyOrderService, '_read_sale_resource', return_value=state),
+            patch('orders.services.requests.post') as post,
+        ):
+            result = register_saby_payment(order)
+            self.assertTrue(result['alreadyRegistered'])
+            self.assertIsNone(register_saby_payment(order))
+            post.assert_not_called()
+        order.refresh_from_db()
+        self.assertTrue(order.saby_payment_registered)
+        self.assertEqual(order.saby_payment_error, '')
+
+    def test_ambiguous_or_incomplete_payment_is_not_reconciled_or_repeated(self):
+        order = self.order()
+        service = SabyOrderService()
+        completed = {'amount': 1430, 'isClosed': True, 'paymentType': 'full'}
+        states = [
+            {'payState': 200, 'payments': [{**completed, 'amount': 1180}]},
+            {'payState': 200, 'payments': [{**completed, 'amount': None}]},
+            {'payState': 200, 'payments': [{**completed, 'isClosed': None}]},
+            {'payState': 200, 'payments': [{**completed, 'isClosed': False}]},
+            {'payState': 200, 'payments': [{**completed, 'paymentType': 'refund'}]},
+            {'payState': 0, 'payments': [completed]},
+            {'payState': 200, 'payments': [completed, completed]},
+            {'payState': 200, 'payments': []},
+        ]
+        for state in states:
+            with (
+                self.subTest(state=state),
+                patch.object(service, 'read_sale', return_value={'totalPrice': 1430}),
+                patch.object(service, '_read_sale_resource', return_value=state),
+                patch('orders.services.requests.post') as post,
+            ):
+                with self.assertRaises(SabyOrderError):
+                    service.register_payment(order)
+                post.assert_not_called()
+
+    def test_173_closed_sale_for_wrong_amount_is_not_accepted(self):
+        order = self.order()
+        order.payment_amount = order.total_price = 900
+        order.delivery_price = 300
+        order.save()
+        state = {'payState': 200, 'payments': [{
+            'amount': 1200, 'isClosed': True, 'paymentType': 'full',
+        }]}
+        with (
+            patch.object(SabyOrderService, 'read_sale', return_value={'totalPrice': 1200}),
+            patch.object(SabyOrderService, '_read_sale_resource', return_value=state),
+            patch('orders.services.requests.post') as post,
+        ):
+            with self.assertRaisesMessage(SabyOrderError, 'оплачено 900'):
+                register_saby_payment(order)
+            post.assert_not_called()
+        order.refresh_from_db()
+        self.assertFalse(order.saby_payment_registered)
+        self.assertIn('1200', order.saby_payment_error)
 
     def test_matching_totals_send_exact_bank_amount(self):
         order = self.order(pickup=True, bonus=33)

@@ -13,6 +13,7 @@ import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
 import 'package:delycafe/utils/url_allowlist.dart';
 import 'package:delycafe/widgets/checkout/guest_checkout_form.dart';
+import 'package:delycafe/widgets/checkout/price_change_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -135,6 +136,13 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                       }
 
                       if (!context.mounted) return;
+
+                      final accepted = await confirmCheckoutPriceChange(
+                        context,
+                        previousAmount: data.totalPrice,
+                        currentAmount: order.paymentAmount,
+                      );
+                      if (!accepted || !context.mounted) return;
 
                       final auth = context.read<AuthService>();
                       try {

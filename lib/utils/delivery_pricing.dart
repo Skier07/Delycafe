@@ -16,7 +16,8 @@ int calculateDeliveryPrice(DeliveryZoneConfig zone, int cartTotal) {
         }
       }
 
-      return 0;
+      // Below the minimum the checkout is blocked; do not advertise free delivery.
+      return tiers.isEmpty ? 0 : tiers.last.price;
     default:
       return 0;
   }

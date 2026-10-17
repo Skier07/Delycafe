@@ -21,6 +21,7 @@ import 'package:delycafe/utils/pickup_discount.dart';
 import 'package:delycafe/utils/preorder_availability.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
 import 'package:delycafe/widgets/checkout/legal_consent_checkout_section.dart';
+import 'package:delycafe/widgets/checkout/price_change_dialog.dart';
 import 'package:delycafe/widgets/checkout/ordering_closed_banner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,7 @@ class GuestCheckoutData {
   final String phone;
   final String deliveryTypeCode;
   final int deliveryPrice;
+  final int totalPrice;
   final String address;
   final String addressLocality;
   final String addressEntrance;
@@ -80,6 +82,7 @@ class GuestCheckoutData {
     required this.phone,
     required this.deliveryTypeCode,
     required this.deliveryPrice,
+    required this.totalPrice,
     required this.address,
     required this.addressLocality,
     required this.addressEntrance,
@@ -121,7 +124,8 @@ class GuestCheckoutForm extends StatefulWidget {
   State<GuestCheckoutForm> createState() => _GuestCheckoutFormState();
 }
 
-class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
+class _GuestCheckoutFormState extends State<GuestCheckoutForm>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -144,6 +148,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   bool _useBonuses = false;
   bool _isSubmitting = false;
+  bool _priceAfterDiscounts = false;
   bool _consentNoticeShown = false;
   bool _draftListenersAttached = false;
   Timer? _scheduleTimer;
@@ -194,8 +199,12 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       return 0;
     }
 
-    return calculateDeliveryPrice(zone, widget.cartTotal);
+    return calculateDeliveryPrice(zone, _deliveryBase);
   }
+
+  int get _deliveryBase => _priceAfterDiscounts
+      ? _productsAfterDiscount - _bonusSpent
+      : widget.cartTotal;
 
   int get _firstOrderDiscount {
     if (!_hasAutomaticFirstOrderDiscount) return 0;
@@ -272,6 +281,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
       _phoneController.text = PhoneInputFormatter.formatDigits(
@@ -308,8 +318,11 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     unawaited(_loadDeliveryConfig());
   }
 
-  Future<void> _loadDeliveryConfig() async {
-    final config = await DeliveryConfigService.instance.fetch();
+  Future<void> _loadDeliveryConfig({bool requireFresh = false}) async {
+    final config = await DeliveryConfigService.instance.fetch(
+      forceRefresh: true,
+      requireFresh: requireFresh,
+    );
 
     if (!mounted) {
       return;
@@ -318,13 +331,22 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     setState(() {
       _zones = config.zones;
       _promotions = config.promotions;
+      _priceAfterDiscounts = config.priceAfterDiscounts;
 
       if (!_zones.any((zone) => zone.code == _selectedZoneCode)) {
         _selectedZoneCode = _zones.first.code;
       }
 
       _clearAddressIfNotNeeded();
+      _syncDeliveryTimeWithSchedule();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_isSubmitting) {
+      unawaited(_loadDeliveryConfig());
+    }
   }
 
   void _clearAddressIfNotNeeded() {
@@ -585,6 +607,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scheduleTimer?.cancel();
     _draftSaveTimer?.cancel();
     final draft = _buildDraft();
@@ -786,47 +809,72 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
     }
 
     final fullPhone = '+7$phoneDigits';
-
-    if (context.read<AuthService>().isLoggedIn) {
-      try {
-        await legalConsent.ensureSyncedForOrder();
-      } catch (error) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Не удалось сохранить согласия: $error'),
-          ),
-        );
-        return;
-      }
-    }
-
-    final data = GuestCheckoutData(
-      name: _nameController.text.trim(),
-      phone: fullPhone,
-      deliveryTypeCode: _selectedZoneCode,
-      deliveryPrice: _deliveryPrice,
-      address: _addressForSubmit,
-      addressLocality:
-          _needsAddress ? (_selectedZone?.defaultLocality ?? '') : (_selectedZone?.defaultLocality ?? ''),
-      addressEntrance: _needsAddress ? _entranceController.text.trim() : '',
-      addressFloor: _needsAddress ? _floorController.text.trim() : '',
-      addressApartment: _needsAddress ? _apartmentController.text.trim() : '',
-      urgency: _urgency,
-      deliveryTime: _urgency == DeliveryUrgency.byTime
-          ? _timeController.text.trim()
-          : null,
-      paymentMethod: _paymentMethod,
-      comment: _commentController.text.trim(),
-      bonusSpent: _bonusSpent,
-    );
-
-    setState(() {
-      _isSubmitting = true;
-    });
+    final previousAmount = _totalWithDelivery;
+    final previousZone = _selectedZoneCode;
+    setState(() => _isSubmitting = true);
 
     try {
+      await _loadDeliveryConfig(requireFresh: true);
+      if (!mounted) return;
+      if (previousZone != _selectedZoneCode) {
+        throw Exception(
+            'Выбранное направление доставки недоступно. Выберите другое направление.');
+      }
+      final zone = _selectedZone!;
+      if (zone.pricingMode == 'tiered' && zone.tiers.isNotEmpty) {
+        final minimum = zone.tiers
+            .map((tier) => tier.minCartTotal)
+            .reduce((a, b) => a < b ? a : b);
+        if (_deliveryBase < minimum) {
+          throw Exception(
+              'Минимальная сумма товаров для этой доставки — $minimum ₽ после скидок и бонусов.');
+        }
+      }
+      if (!_formKey.currentState!.validate()) return;
+      final accepted = await confirmCheckoutPriceChange(
+        context,
+        previousAmount: previousAmount,
+        currentAmount: _totalWithDelivery,
+      );
+      if (!accepted || !mounted) return;
+
+      if (context.read<AuthService>().isLoggedIn) {
+        try {
+          await legalConsent.ensureSyncedForOrder();
+        } catch (error) {
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Не удалось сохранить согласия: $error'),
+            ),
+          );
+          return;
+        }
+      }
+
+      final data = GuestCheckoutData(
+        name: _nameController.text.trim(),
+        phone: fullPhone,
+        deliveryTypeCode: _selectedZoneCode,
+        deliveryPrice: _deliveryPrice,
+        totalPrice: _totalWithDelivery,
+        address: _addressForSubmit,
+        addressLocality: _needsAddress
+            ? (_selectedZone?.defaultLocality ?? '')
+            : (_selectedZone?.defaultLocality ?? ''),
+        addressEntrance: _needsAddress ? _entranceController.text.trim() : '',
+        addressFloor: _needsAddress ? _floorController.text.trim() : '',
+        addressApartment: _needsAddress ? _apartmentController.text.trim() : '',
+        urgency: _urgency,
+        deliveryTime: _urgency == DeliveryUrgency.byTime
+            ? _timeController.text.trim()
+            : null,
+        paymentMethod: _paymentMethod,
+        comment: _commentController.text.trim(),
+        bonusSpent: _bonusSpent,
+      );
+
       await widget.onSubmit(data);
     } catch (error) {
       if (!mounted) return;
@@ -842,6 +890,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm> {
       setState(() {
         _isSubmitting = false;
       });
+      unawaited(_loadDeliveryConfig());
     }
   }
 

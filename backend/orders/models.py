@@ -436,6 +436,7 @@ class DeliveryZone(models.Model):
     checkout_description = models.TextField(
         blank=True,
         verbose_name='Описание в оформлении заказа',
+        help_text='Для актуальной цены используйте {{delivery_tariff:код_зоны}}, например {{delivery_tariff:ozersk}}. Остальной текст можно редактировать.',
     )
 
     class Meta:
@@ -486,6 +487,7 @@ class DeliveryInfoSection(models.Model):
     )
     content = models.TextField(
         verbose_name='Текст',
+        help_text='Автоматические тарифы: {{delivery_tariff:ozersk}}, {{delivery_tariff:promploshadka}}, {{delivery_tariff:tatysh}}. Вместо метки приложение получит актуальные цены.',
     )
     section_type = models.CharField(
         max_length=20,

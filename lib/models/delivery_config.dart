@@ -91,10 +91,12 @@ class DeliveryConfig {
   final List<DeliveryZoneConfig> zones;
   final List<DeliveryInfoSectionConfig> infoSections;
   final PromotionPercents promotions;
+  final bool priceAfterDiscounts;
 
   const DeliveryConfig({
     required this.zones,
     required this.infoSections,
+    this.priceAfterDiscounts = false,
     this.promotions = const PromotionPercents(
       earnPercent: 3,
       maxSpendPercent: 25,
@@ -108,6 +110,7 @@ class DeliveryConfig {
     final promotionsJson = json['promotions'];
 
     return DeliveryConfig(
+      priceAfterDiscounts: json['price_basis'] == 'after_discounts',
       zones: zonesJson is List
           ? zonesJson
               .map(

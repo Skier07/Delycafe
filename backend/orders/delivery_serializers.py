@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import DeliveryInfoSection, DeliveryPriceTier, DeliveryZone
+from .delivery_text import render_delivery_text
 
 
 class DeliveryPriceTierSerializer(serializers.ModelSerializer):
@@ -14,6 +15,10 @@ class DeliveryPriceTierSerializer(serializers.ModelSerializer):
 
 class DeliveryZoneSerializer(serializers.ModelSerializer):
     price_tiers = DeliveryPriceTierSerializer(many=True, read_only=True)
+    checkout_description = serializers.SerializerMethodField()
+
+    def get_checkout_description(self, obj):
+        return render_delivery_text(obj.checkout_description, self.context.get('zones', {obj.code: obj}))
 
     class Meta:
         model = DeliveryZone
@@ -31,6 +36,11 @@ class DeliveryZoneSerializer(serializers.ModelSerializer):
 
 
 class DeliveryInfoSectionSerializer(serializers.ModelSerializer):
+    content = serializers.SerializerMethodField()
+
+    def get_content(self, obj):
+        return render_delivery_text(obj.content, self.context.get('zones', {}))
+
     class Meta:
         model = DeliveryInfoSection
         fields = (

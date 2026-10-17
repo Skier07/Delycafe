@@ -28,6 +28,10 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Не используйте sync_saby_products в cron — она переписывает категории.
 0 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_prices >> /var/log/delycafe_saby_prices.log 2>&1
 
+# Тарифы доставки Saby -> backend -> цены и описания в приложении.
+# Дополнительно режим native сверяет их непосредственно перед созданием заказа.
+*/5 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /usr/bin/flock -n /var/www/delycafe_backend/delivery-tariffs.lock /var/www/delycafe_backend/venv/bin/python manage.py sync_saby_delivery_tariffs >> /var/www/delycafe_backend/delivery-tariffs.log 2>&1
+
 # Повторная отправка в Saby оплаченных заказов без sale_id (реже, раз в 10 минут):
 # */10 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py retry_saby_dispatch --limit=50 >> /var/log/delycafe_saby_retry.log 2>&1
 #

@@ -303,6 +303,19 @@ SABY_PRICE_LIST_ID = int(
 # Цена каждой продажи берётся из order.delivery_price, а не из прайса Saby.
 SABY_DELIVERY_NOM_NUMBER = os.getenv('SABY_DELIVERY_NOM_NUMBER', 'X7443708').strip()
 
+# item: передаём доставку отдельной позицией; автоматический тариф Saby
+# для таких заказов должен быть отключён. native: доставку начисляет Saby;
+# его тарифы должны совпадать с сохранённой стоимостью доставки приложения.
+SABY_DELIVERY_MODE = os.getenv('SABY_DELIVERY_MODE', 'item').strip().lower()
+
+# Районы точки 187 из retail/district/list, сверены 17.10.2026.
+# Используются только в native, чтобы тариф выбирался по зоне приложения.
+SABY_DELIVERY_DISTRICT_IDS = {
+    'ozersk': int(os.getenv('SABY_DISTRICT_OZERSK', '7744')),
+    'promploshadka': int(os.getenv('SABY_DISTRICT_PROMPLOSHADKA', '7746')),
+    'tatysh': int(os.getenv('SABY_DISTRICT_TATYSH', '7745')),
+}
+
 SABY_RETAIL_PLACE = os.getenv(
     'SABY_RETAIL_PLACE',
     'https://delycafe.ru',

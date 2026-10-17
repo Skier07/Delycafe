@@ -1,4 +1,5 @@
-from functools import lru_cache
+from django.conf import settings
+from django.db import transaction
 
 from .models import DeliveryZone
 
@@ -6,16 +7,17 @@ PICKUP_CODE = 'pickup'
 
 
 def clear_delivery_zone_cache():
-    _get_active_delivery_zone.cache_clear()
+    # Kept for signal/test compatibility. Tariffs must be visible across workers.
+    pass
 
 
-@lru_cache(maxsize=64)
+@transaction.atomic
 def _get_active_delivery_zone(code: str) -> DeliveryZone | None:
     if not code:
         return None
 
     return (
-        DeliveryZone.objects.filter(code=code, is_active=True)
+        DeliveryZone.objects.select_for_update().filter(code=code, is_active=True)
         .prefetch_related('price_tiers')
         .first()
     )
@@ -71,6 +73,8 @@ def lead_minutes_for_delivery(code: str) -> int:
 def calculate_delivery_price(delivery_type: str, products_total: int) -> int:
     zone = get_active_delivery_zone(delivery_type)
     if zone is None:
+        if native_delivery_pricing():
+            raise ValueError('Выбранная зона доставки недоступна.')
         return 0
 
     if zone.pricing_mode == DeliveryZone.PricingMode.FREE:
@@ -89,4 +93,15 @@ def calculate_delivery_price(delivery_type: str, products_total: int) -> int:
         if products_total >= tier.min_cart_total:
             return tier.price
 
+    if native_delivery_pricing() and not tiers:
+        raise ValueError('Тарифы выбранной зоны доставки ещё не настроены.')
+    if tiers and native_delivery_pricing():
+        raise ValueError(
+            f'Минимальная сумма товаров для доставки «{zone.title}» '
+            f'после скидок и бонусов — {tiers[-1].min_cart_total} ₽.'
+        )
     return 0
+
+
+def native_delivery_pricing():
+    return getattr(settings, 'SABY_DELIVERY_MODE', 'item') == 'native'

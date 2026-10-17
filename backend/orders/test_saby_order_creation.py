@@ -120,6 +120,69 @@ class SabyOrderCreationTests(TestCase):
         register_payment.assert_not_called()
         self.post.assert_called_once()
 
+    @override_settings(SABY_DELIVERY_MODE='item', SABY_DELIVERY_NOM_NUMBER='X7443708')
+    def test_177_extra_delivery_stops_receipt_and_callback_does_not_recreate_order(self):
+        order = self.create_order(Order.DeliveryType.OZERSK)
+        order.delivery_price = 250
+        order.payment_amount = order.total_price = 1600
+        order.save()
+        order.items.update(price=1150, total_price=1150)
+        OrderItem.objects.create(order=order, product_title='Картофель фри',
+                                 saby_id=395, price=200, quantity=1, total_price=200)
+        self.post.return_value = Mock(status_code=200, text='{}', json=Mock(return_value={
+            'resultCode': 0, 'orderNumber': '273', 'sale_id': 123,
+            'saleKey': 'sale-177', 'totalPrice': 1850,
+        }))
+        with (
+            patch.object(SabyOrderService, 'read_sale', return_value={'totalPrice': 1850}),
+            patch('orders.order_notification_service.try_send_admin_order_email'),
+            patch('orders.saby_order_status_service.SabyOrderStatusService.sync_order_status'),
+        ):
+            confirm_order_paid(order)
+            confirm_order_paid(order)
+        order.refresh_from_db()
+        self.assertEqual(order.saby_sale_id, '123')
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
+        self.assertFalse(order.saby_payment_registered)
+        self.assertIn('1850', order.saby_payment_error)
+        self.assertIn('1600', order.saby_payment_error)
+        self.post.assert_called_once()
+        sent = self.post.call_args.kwargs['json']['nomenclatures']
+        self.assertEqual(sum(row['cost'] * row['count'] for row in sent), 1600)
+        self.assertEqual(sum(row.get('nomNumber') == 'X7443708' for row in sent), 1)
+
+    @override_settings(SABY_DELIVERY_MODE='native')
+    def test_native_delivery_sends_goods_then_registers_full_total_once(self):
+        order = self.create_order(Order.DeliveryType.OZERSK)
+        order.delivery_price = 250
+        order.payment_amount = order.total_price = 550
+        order.save()
+        self.post.side_effect = [
+            Mock(status_code=200, text='{}', json=Mock(return_value={
+                'resultCode': 0, 'orderNumber': '274', 'sale_id': 124,
+                'saleKey': 'native-sale', 'totalPrice': 550,
+            })),
+            Mock(status_code=200, text='{}', json=Mock(return_value={
+                'successFlag': True, 'taskId': 10,
+            })),
+        ]
+        with (
+            patch.object(SabyOrderService, 'read_sale', return_value={'totalPrice': 550}),
+            patch.object(SabyOrderService, '_read_sale_resource', return_value={'payments': []}),
+            patch('orders.order_notification_service.try_send_admin_order_email'),
+            patch('orders.saby_order_status_service.SabyOrderStatusService.sync_order_status'),
+        ):
+            confirm_order_paid(order)
+            confirm_order_paid(order)
+        self.assertEqual(self.post.call_count, 2)
+        create, register = self.post.call_args_list
+        self.assertEqual(len(create.kwargs['json']['nomenclatures']), 1)
+        self.assertEqual(create.kwargs['json']['nomenclatures'][0]['cost'], 300)
+        self.assertIs(create.kwargs['json']['delivery']['isPickup'], False)
+        self.assertEqual(register.kwargs['json']['bankSum'], 550)
+        order.refresh_from_db()
+        self.assertTrue(order.saby_payment_registered)
+
 
 class SabyErrorMessageTests(SimpleTestCase):
     def test_existing_and_jsonrpc_error_formats(self):

@@ -14,17 +14,20 @@ class DeliveryScreen extends StatefulWidget {
   State<DeliveryScreen> createState() => _DeliveryScreenState();
 }
 
-class _DeliveryScreenState extends State<DeliveryScreen> {
+class _DeliveryScreenState extends State<DeliveryScreen>
+    with WidgetsBindingObserver {
   DeliveryConfig? _config;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_loadConfig());
   }
 
   Future<void> _loadConfig() async {
-    final config = await DeliveryConfigService.instance.fetch();
+    final config =
+        await DeliveryConfigService.instance.fetch(forceRefresh: true);
 
     if (!mounted) {
       return;
@@ -33,6 +36,17 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     setState(() {
       _config = config;
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_loadConfig());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   String _minLeadTimeLabel(DeliveryConfig config) {

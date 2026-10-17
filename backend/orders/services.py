@@ -244,7 +244,10 @@ def register_saby_payment(order: Order) -> dict | None:
 
 
 def _register_saby_payment_atomic(order: Order) -> dict | None:
-    """Регистрирует онлайн-оплату в Saby и пробивает чек (кнопка «Оплачено»)."""
+    """Регистрирует задание на чек или подтверждает уже завершённую оплату.
+
+    Принятие задания не подтверждает фискализацию и выход бумажного чека.
+    """
     with transaction.atomic():
         locked_order = Order.objects.select_for_update().get(pk=order.pk)
 
@@ -933,6 +936,11 @@ class SabyOrderService:
         # Проверяем реальную сумму даже для заказов, созданных старой версией.
         self._assert_sale_total(order, self.read_sale(order))
         state = self._read_sale_resource(order, '/state')
+        if self._has_completed_full_payment(state, amount):
+            # Оплату могли завершить на кассе после исправления суммы вручную.
+            # Восстанавливаем локальный флаг без повторного register-payment.
+            logger.info('Order #%s payment already completed in Saby', order.id)
+            return {'successFlag': True, 'alreadyRegistered': True}
         if state.get('payments') or state.get('payState') in (200, '200'):
             raise SabyOrderError(
                 'В Saby уже есть оплата или задание на чек. '
@@ -999,6 +1007,23 @@ class SabyOrderService:
 
         return saby_response
 
+    def _has_completed_full_payment(self, state, amount):
+        payments = state.get('payments')
+        if (
+            state.get('payState') not in (200, '200')
+            or not isinstance(payments, list)
+            or len(payments) != 1
+        ):
+            return False
+        payment = payments[0]
+        if (
+            not isinstance(payment, dict)
+            or payment.get('isClosed') is not True
+            or payment.get('paymentType') != 'full'
+        ):
+            return False
+        return self._money(payment.get('amount'), 'payments.amount') == Decimal(str(amount))
+
     def _build_nomenclatures(self, order: Order) -> list[dict]:
         """
         При самовывозе cost уже со скидкой 5% — тот же алгоритм, что в
@@ -1050,7 +1075,11 @@ class SabyOrderService:
 
         nomenclatures = self._discount_local_bonuses(nomenclatures, order.bonus_spent)
 
-        if order.delivery_price:
+        delivery_mode = getattr(settings, 'SABY_DELIVERY_MODE', 'item')
+        if delivery_mode not in ('item', 'native'):
+            raise SabyOrderError('SABY_DELIVERY_MODE должен быть item или native.')
+
+        if order.delivery_price and delivery_mode == 'item':
             nom_number = getattr(settings, 'SABY_DELIVERY_NOM_NUMBER', '')
             if not nom_number:
                 raise SabyOrderError(
@@ -1068,9 +1097,13 @@ class SabyOrderService:
 
         expected = Decimal(order.payment_amount or order.total_price)
         actual = sum(Decimal(str(row['cost'])) * row['count'] for row in nomenclatures)
+        if delivery_mode == 'native':
+            # В этом режиме товары идут без услуги доставки. Saby начисляет
+            # свой тариф; _assert_sale_total проверит фактический итог до чека.
+            actual += Decimal(order.delivery_price)
         if actual != expected:
             raise SabyOrderError(
-                f'Сумма позиций Saby {actual} ₽ не совпадает с оплаченной суммой '
+                f'Сумма товаров и доставки для Saby {actual} ₽ не совпадает с оплаченной суммой '
                 f'{expected} ₽. Проверьте скидку и доставку.'
             )
 
@@ -1145,6 +1178,21 @@ class SabyOrderService:
     def _build_payload(self, order: Order, nomenclatures: list[dict]) -> dict:
         is_pickup = order.delivery_type == Order.DeliveryType.PICKUP
         delivery_time = self._resolve_delivery_datetime(order)
+        delivery = {
+            # Saby требует флаг именно в delivery, не в корне запроса.
+            'isPickup': is_pickup,
+            'paymentType': 'online',
+            'addressJSON': self._build_delivery_address_json(order, is_pickup),
+        }
+        if not is_pickup and getattr(settings, 'SABY_DELIVERY_MODE', 'item') == 'native':
+            districts = getattr(settings, 'SABY_DELIVERY_DISTRICT_IDS', {})
+            district_id = districts.get(order.delivery_type)
+            if type(district_id) is not int or district_id <= 0:
+                raise SabyOrderError(
+                    f'Не задан район Saby для зоны {order.delivery_type!r}. '
+                    'Проверьте SABY_DELIVERY_DISTRICT_IDS перед отправкой заказа.'
+                )
+            delivery['district'] = district_id
 
         return {
             'product': 'delivery',
@@ -1157,15 +1205,7 @@ class SabyOrderService:
             },
             'datetime': delivery_time.strftime('%Y-%m-%d %H:%M:%S'),
             'nomenclatures': nomenclatures,
-            'delivery': {
-                # Saby требует флаг именно в delivery, не в корне запроса.
-                'isPickup': is_pickup,
-                'paymentType': 'online',
-                'addressJSON': self._build_delivery_address_json(
-                    order,
-                    is_pickup,
-                ),
-            },
+            'delivery': delivery,
         }
 
     def _build_delivery_address_json(

@@ -19,7 +19,9 @@ from .delivery_pricing import (
     get_default_locality,
     get_delivery_zone_title,
     is_pickup_delivery,
+    native_delivery_pricing,
 )
+from .saby_delivery_sync import DeliverySyncError, sync_delivery_tariffs
 from .delivery_schedule import validate_order_delivery_window
 from .models import Order, OrderItem
 from .promotions import (
@@ -430,11 +432,6 @@ class OrderCreateSerializer(serializers.Serializer):
             price = item_data['price']
             products_total += quantity * price
 
-        delivery_price = calculate_delivery_price(
-            delivery_type,
-            products_total,
-        )
-
         discount_amount = 0
         first_order_discount_applied = False
 
@@ -469,6 +466,13 @@ class OrderCreateSerializer(serializers.Serializer):
             products_after_discount - bonus_spent,
             0,
         )
+
+        # Saby sees overridden item prices after local discounts/bonuses.
+        delivery_base = paid_products_total if native_delivery_pricing() else products_total
+        try:
+            delivery_price = calculate_delivery_price(delivery_type, delivery_base)
+        except ValueError as error:
+            raise serializers.ValidationError({'delivery_type': str(error)}) from error
 
         # Ожидаемое начисление Saby (3%); локально баланс не меняем.
         bonus_earned = 0
@@ -540,6 +544,14 @@ class OrderCreateSerializer(serializers.Serializer):
 
     def create_or_reuse(self, validated_data):
         data = dict(validated_data)
+        if native_delivery_pricing() and not is_pickup_delivery(data.get('delivery_type')):
+            try:
+                # Before creating an order or a bank session, even for legacy app versions.
+                sync_delivery_tariffs()
+            except DeliverySyncError as error:
+                raise serializers.ValidationError({
+                    'detail': 'Не удалось проверить стоимость доставки. Попробуйте ещё раз чуть позже.'
+                }) from error
         expire_all_stale_unpaid_orders()
         return self._create_or_reuse_atomic(data)
 
