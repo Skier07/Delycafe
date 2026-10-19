@@ -47,14 +47,14 @@ def _alfa_post(url, payload):
             body = response.read().decode('utf-8')
     except HTTPError as error:
         body = error.read().decode('utf-8')
-        raise AlfaPaymentError(f'HTTP ошибка Альфы: {error.code}. {body}') from error
+        raise AlfaPaymentError(f'HTTP ошибка Альфы: {error.code}.') from error
     except URLError as error:
         raise AlfaPaymentError(f'Не удалось подключиться к Альфе: {error}') from error
 
     try:
         return json.loads(body)
     except json.JSONDecodeError as error:
-        raise AlfaPaymentError(f'Альфа вернула не JSON: {body}') from error
+        raise AlfaPaymentError('Альфа вернула не JSON') from error
 
 
 def _alfa_response_error_message(response):
@@ -164,8 +164,6 @@ def _classify_alfa_order_state(order_status, action_code):
     if order_status in _ALFA_PAYABLE_ORDER_STATUSES:
         return 'payable'
 
-    if order_status:
-        return 'expired'
 
     return 'unknown'
 
@@ -213,6 +211,8 @@ def _apply_alfa_status_response(order, response):
         order.payment_external_id = str(external_id)
 
     if state == 'paid':
+        from payments.reconciliation import validate_paid_response
+        validate_paid_response(order, response)
         confirm_order_paid(order)
     elif state == 'expired':
         close_unpaid_alfa_order(order)
@@ -220,18 +220,15 @@ def _apply_alfa_status_response(order, response):
     return state
 
 
+@transaction.atomic
 def close_unpaid_alfa_order(order):
     """Закрывает неоплаченный заказ с мёртвой сессией Альфы."""
+    order = Order.objects.select_for_update().get(pk=order.pk)
+    if order.payment_status in (Order.PaymentStatus.PAID, Order.PaymentStatus.REFUNDED):
+        return
     update_fields = ['updated_at']
 
-    if order.payment_provider:
-        order.payment_provider = ''
-        update_fields.append('payment_provider')
-
-    if order.payment_external_id:
-        order.payment_external_id = ''
-        update_fields.append('payment_external_id')
-
+    # Keep bank identity for audit and any delayed authoritative callback.
     if order.payment_url:
         order.payment_url = ''
         update_fields.append('payment_url')
@@ -541,6 +538,8 @@ def _lookup_alfa_order_by_number(order):
     state = _classify_alfa_order_state(order_status, action_code)
     if state != 'payable':
         if state == 'paid':
+            from payments.reconciliation import validate_paid_response
+            validate_paid_response(order, response)
             order.payment_external_id = str(external_id)
             order.save(update_fields=['payment_external_id', 'updated_at'])
             confirm_order_paid(order)
@@ -612,6 +611,9 @@ def _public_alfa_redirect_url(url, fallback):
 
 
 def create_alfa_payment(order, *, force=False):
+    order.refresh_from_db()
+    if order.status == Order.Status.CANCELED or order.payment_status in (Order.PaymentStatus.PAID, Order.PaymentStatus.REFUNDED):
+        raise AlfaPaymentError('Заказ уже закрыт или оплачен.')
     if not getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
         raise AlfaPaymentError('Оплата через Альфа-Банк выключена в настройках.')
 
@@ -701,11 +703,8 @@ def create_alfa_payment(order, *, force=False):
             if reused is not None:
                 return reused
 
-            close_unpaid_alfa_order(order)
-            raise AlfaPaymentError(
-                'Срок оплаты в Альфе истёк. Оформите заказ ещё раз — '
-                'будет создан новый заказ.'
-            )
+            # Duplicate registration is not proof of expiration. Preserve reservations.
+            raise AlfaPaymentError('Не удалось сверить существующую оплату. Повторите проверку позже.')
 
         raise AlfaPaymentError(message)
 
@@ -713,7 +712,7 @@ def create_alfa_payment(order, *, force=False):
     payment_url = response.get('formUrl')
 
     if not external_id or not payment_url:
-        raise AlfaPaymentError(f'Альфа не вернула ссылку оплаты: {response}')
+        raise AlfaPaymentError('Альфа не вернула ссылку оплаты')
 
     _persist_alfa_payment_session(order, external_id, payment_url)
 

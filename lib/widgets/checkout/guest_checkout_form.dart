@@ -13,6 +13,8 @@ import 'package:delycafe/services/legal_consent_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/delivery_address_parser.dart';
+import 'package:delycafe/utils/street_house_address.dart';
+import 'package:delycafe/widgets/checkout/street_house_fields.dart';
 import 'package:delycafe/utils/delivery_pricing.dart';
 import 'package:delycafe/utils/delivery_schedule.dart';
 import 'package:delycafe/utils/haptic_feedback.dart';
@@ -131,6 +133,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final _houseController = TextEditingController();
   final _entranceController = TextEditingController();
   final _floorController = TextEditingController();
   final _apartmentController = TextEditingController();
@@ -357,6 +360,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
     _selectedSavedAddress = null;
     _useManualAddress = false;
     _addressController.clear();
+    _houseController.clear();
     _entranceController.clear();
     _floorController.clear();
     _apartmentController.clear();
@@ -364,7 +368,10 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
 
   String get _addressForSubmit {
     if (_needsAddress) {
-      return _addressController.text.trim();
+      return StreetHouseAddress(
+        _addressController.text,
+        _houseController.text,
+      ).addressLine;
     }
 
     final locality = _selectedZone?.defaultLocality.trim() ?? '';
@@ -400,8 +407,12 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
       _phoneController.text = PhoneInputFormatter.formatDigits(draft.phone);
     }
 
-    if (draft.address.trim().isNotEmpty) {
-      _addressController.text = draft.address.trim();
+    if (draft.address.trim().isNotEmpty || draft.house.trim().isNotEmpty) {
+      final parts = draft.house.trim().isNotEmpty
+          ? StreetHouseAddress(draft.address, draft.house)
+          : splitStreetAndHouse(draft.address);
+      _addressController.text = parts.street;
+      _houseController.text = parts.house.trim();
     }
 
     if (draft.entrance.trim().isNotEmpty) {
@@ -461,6 +472,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
       _nameController,
       _phoneController,
       _addressController,
+      _houseController,
       _entranceController,
       _floorController,
       _apartmentController,
@@ -483,6 +495,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
       name: _nameController.text.trim(),
       phone: _phoneController.text,
       address: _addressController.text.trim(),
+      house: _houseController.text.trim(),
       entrance: _entranceController.text.trim(),
       floor: _floorController.text.trim(),
       apartment: _apartmentController.text.trim(),
@@ -577,7 +590,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
 
     _selectedSavedAddress = address;
     _useManualAddress = false;
-    _addressController.text = fields.street;
+    final parts = splitStreetAndHouse(fields.street);
+    _addressController.text = parts.street;
+    _houseController.text = parts.house;
     _entranceController.text = fields.entrance;
     _floorController.text = fields.floor;
     _apartmentController.text = fields.apartment;
@@ -591,7 +606,9 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
     final fields = parseDeliveryAddress(rawAddress);
 
     _selectedSavedAddress = null;
-    _addressController.text = fields.street;
+    final parts = splitStreetAndHouse(fields.street);
+    _addressController.text = parts.street;
+    _houseController.text = parts.house;
     _entranceController.text = fields.entrance;
     _floorController.text = fields.floor;
     _apartmentController.text = fields.apartment;
@@ -615,6 +632,7 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _houseController.dispose();
     _entranceController.dispose();
     _floorController.dispose();
     _apartmentController.dispose();
@@ -1074,22 +1092,10 @@ class _GuestCheckoutFormState extends State<GuestCheckoutForm>
               const SizedBox(height: 4),
             ],
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _addressController,
-              keyboardType: RussianTextInput.text,
-              hintLocales: RussianTextInput.hintLocales,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.next,
-              decoration: _inputDecoration('Улица, дом'),
-              validator: (value) {
-                if (!_needsAddress) return null;
-
-                if (value == null || value.trim().isEmpty) {
-                  return 'Введите адрес доставки';
-                }
-
-                return null;
-              },
+            StreetHouseFields(
+              streetController: _addressController,
+              houseController: _houseController,
+              decoration: _inputDecoration,
             ),
             const SizedBox(height: 12),
             Row(

@@ -5,6 +5,8 @@ import 'package:delycafe/services/customer_api_service.dart';
 import 'package:delycafe/ui/components/buttons/auth_button.dart';
 import 'package:delycafe/ui/tokens/app_colors.dart';
 import 'package:delycafe/utils/russian_text_input.dart';
+import 'package:delycafe/utils/street_house_address.dart';
+import 'package:delycafe/widgets/checkout/street_house_fields.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -413,6 +415,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
 
   late final TextEditingController _titleController;
   late final TextEditingController _addressController;
+  late final TextEditingController _houseController;
   late final TextEditingController _entranceController;
   late final TextEditingController _floorController;
   late final TextEditingController _apartmentController;
@@ -430,9 +433,9 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     _titleController = TextEditingController(
       text: address?.title ?? 'Дом',
     );
-    _addressController = TextEditingController(
-      text: address?.address ?? '',
-    );
+    final parts = splitStreetAndHouse(address?.checkoutFields.street ?? '');
+    _addressController = TextEditingController(text: parts.street);
+    _houseController = TextEditingController(text: parts.house);
     _entranceController = TextEditingController(
       text: address?.entrance ?? '',
     );
@@ -453,6 +456,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
   void dispose() {
     _titleController.dispose();
     _addressController.dispose();
+    _houseController.dispose();
     _entranceController.dispose();
     _floorController.dispose();
     _apartmentController.dispose();
@@ -475,7 +479,10 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     try {
       await widget.onSubmit(
         title: _titleController.text.trim(),
-        addressText: _addressController.text.trim(),
+        addressText: StreetHouseAddress(
+          _addressController.text,
+          _houseController.text,
+        ).addressLine,
         entrance: _entranceController.text.trim(),
         floor: _floorController.text.trim(),
         apartment: _apartmentController.text.trim(),
@@ -542,23 +549,13 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _addressController,
-                keyboardType: RussianTextInput.text,
-                hintLocales: RussianTextInput.hintLocales,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Адрес',
-                  hintText: 'Озёрск, ул. Ленина, 1',
-                  border: OutlineInputBorder(),
+              StreetHouseFields(
+                streetController: _addressController,
+                houseController: _houseController,
+                decoration: (label) => InputDecoration(
+                  labelText: label,
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Введите адрес';
-                  }
-
-                  return null;
-                },
               ),
               const SizedBox(height: 12),
               Row(

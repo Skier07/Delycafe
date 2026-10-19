@@ -1,4 +1,5 @@
 import logging
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
@@ -250,6 +251,8 @@ def _register_saby_payment_atomic(order: Order) -> dict | None:
     """
     with transaction.atomic():
         locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        if locked_order.status == Order.Status.CANCELED or locked_order.bonus_compensated:
+            raise SabyOrderError('Заказ требует ручной сверки перед регистрацией чека.')
 
         if locked_order.saby_payment_registered:
             logger.info(
@@ -685,6 +688,8 @@ def settle_order_return(order_return) -> None:
 
 def _dispatch_order_to_saby_core(order: Order) -> dict | None:
     """Создаёт заказ в Saby. Вызывать только под блокировкой строки заказа."""
+    if order.status == Order.Status.CANCELED or order.bonus_compensated:
+        raise SabyOrderError('Оплата отменённого заказа требует ручной сверки; автоматическая отправка запрещена.')
     if order_already_in_saby(order):
         logger.info(
             'Order #%s already exists in Saby, skipping dispatch',
@@ -724,6 +729,8 @@ def confirm_order_paid(order: Order) -> Order:
 
     with transaction.atomic():
         locked_order = Order.objects.select_for_update().get(pk=order_id)
+        if locked_order.payment_status == Order.PaymentStatus.REFUNDED:
+            return locked_order
         update_fields = []
 
         if locked_order.payment_status != Order.PaymentStatus.PAID:
@@ -741,6 +748,15 @@ def confirm_order_paid(order: Order) -> Order:
         if update_fields:
             update_fields.append('updated_at')
             locked_order.save(update_fields=update_fields)
+
+    if locked_order.status == Order.Status.CANCELED or locked_order.bonus_compensated:
+        locked_order.saby_payment_error = (
+            'Получена поздняя оплата отменённого заказа. Требуется ручная сверка оплаты '
+            'и возвращённых бонусов перед исполнением или возвратом денег.'
+        )
+        locked_order.save(update_fields=['saby_payment_error', 'updated_at'])
+        logger.error('Late payment requires manual reconciliation for order #%s', order_id)
+        return locked_order
 
     try:
         from orders.order_notification_service import try_send_admin_order_email
@@ -858,7 +874,7 @@ class SabyOrderService:
         payload = self._build_payload(order, nomenclatures)
         token = SabyCatalogService().get_token()
 
-        logger.info('Saby order create payload for order #%s: %s', order.id, payload)
+        logger.info('Saby order create for order #%s', order.id)
 
         response = requests.post(
             self.ORDER_URL,
@@ -871,10 +887,9 @@ class SabyOrderService:
         )
 
         logger.info(
-            'Saby order create response for order #%s: status=%s body=%s',
+            'Saby order create response for order #%s: status=%s',
             order.id,
             response.status_code,
-            response.text,
         )
 
         try:
@@ -961,9 +976,8 @@ class SabyOrderService:
         url = self.REGISTER_PAYMENT_URL.format(external_id=external_id)
 
         logger.info(
-            'Saby register-payment payload for order #%s: %s',
+            'Saby register-payment for order #%s',
             order.id,
-            payload,
         )
 
         response = requests.post(
@@ -977,10 +991,9 @@ class SabyOrderService:
         )
 
         logger.info(
-            'Saby register-payment response for order #%s: status=%s body=%s',
+            'Saby register-payment response for order #%s: status=%s',
             order.id,
             response.status_code,
-            response.text,
         )
 
         try:
@@ -1182,7 +1195,11 @@ class SabyOrderService:
             # Saby требует флаг именно в delivery, не в корне запроса.
             'isPickup': is_pickup,
             'paymentType': 'online',
-            'addressJSON': self._build_delivery_address_json(order, is_pickup),
+            # The API contract requires a JSON-encoded string, not a nested object.
+            'addressJSON': json.dumps(
+                self._build_delivery_address_json(order, is_pickup),
+                ensure_ascii=False,
+            ),
         }
         if not is_pickup and getattr(settings, 'SABY_DELIVERY_MODE', 'item') == 'native':
             districts = getattr(settings, 'SABY_DELIVERY_DISTRICT_IDS', {})

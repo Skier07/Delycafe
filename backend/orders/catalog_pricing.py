@@ -40,117 +40,57 @@ def _extract_saby_id(item_data: dict) -> int | None:
     return None
 
 
-def resolve_catalog_product(item_data: dict) -> Product | None:
-    saby_id = _extract_saby_id(item_data)
+def _resolve_item(item_data):
+    """Resolve identity and price together; never fall back from an unknown Saby ID."""
+    def invalid():
+        raise serializers.ValidationError({'items': 'Товар или размер недоступен. Обновите каталог.'})
 
+    try:
+        saby_id = _extract_saby_id(item_data)
+    except (TypeError, ValueError):
+        invalid()
+    pk = _extract_product_pk(item_data.get('product_api_id'))
+    product = variant = None
     if saby_id:
-        variant = (
-            ProductVariant.objects.filter(
-                saby_id=saby_id,
-                is_active=True,
-                product__is_active=True,
-            )
-            .select_related('product', 'product__category')
-            .first()
-        )
+        variant = ProductVariant.objects.select_related('product__category').filter(
+            saby_id=saby_id, is_active=True).first()
+        product = variant.product if variant else Product.objects.select_related('category').filter(saby_id=saby_id).first()
+        if product is None or (pk is not None and product.pk != pk):
+            invalid()
+    elif pk is not None:
+        product = Product.objects.select_related('category').filter(pk=pk).first()
+    if (product is None or not product.is_active
+            or not product.category.is_active or not product.category.show_in_app):
+        invalid()
+    title = str(item_data.get('variant_title') or '').strip()
+    if product.has_variants:
+        if variant is None:
+            variant = product.variants.filter(title=title, is_active=True).first()
+        if variant is None or (title and title != variant.title):
+            invalid()
+    elif variant is not None or title:
+        invalid()
+    selected = variant or product
+    if not selected.saby_id:
+        invalid()
+    return product, variant, selected
 
-        if variant is not None:
-            return variant.product
 
-        product = (
-            Product.objects.filter(
-                saby_id=saby_id,
-                is_active=True,
-            )
-            .select_related('category')
-            .first()
-        )
-
-        if product is not None:
-            return product
-
-    product_pk = _extract_product_pk(str(item_data.get('product_api_id') or ''))
-
-    if product_pk is not None:
-        return (
-            Product.objects.filter(
-                pk=product_pk,
-                is_active=True,
-            )
-            .select_related('category')
-            .first()
-        )
-
-    return None
+def resolve_catalog_product(item_data: dict) -> Product | None:
+    return _resolve_item(item_data)[0]
 
 
 def resolve_catalog_unit_price(item_data: dict) -> int:
-    saby_id = _extract_saby_id(item_data)
-
-    if saby_id:
-        variant = (
-            ProductVariant.objects.filter(
-                saby_id=saby_id,
-                is_active=True,
-                product__is_active=True,
-            )
-            .select_related('product')
-            .first()
-        )
-
-        if variant is not None:
-            return int(variant.price)
-
-        product = Product.objects.filter(
-            saby_id=saby_id,
-            is_active=True,
-        ).first()
-
-        if product is not None and not product.has_variants:
-            return int(product.price)
-
-    product_pk = _extract_product_pk(str(item_data.get('product_api_id') or ''))
-
-    if product_pk is not None:
-        product = Product.objects.filter(
-            pk=product_pk,
-            is_active=True,
-        ).first()
-
-        if product is not None:
-            variant_title = str(item_data.get('variant_title') or '').strip()
-
-            if variant_title and product.has_variants:
-                variant = product.variants.filter(
-                    title=variant_title,
-                    is_active=True,
-                ).first()
-
-                if variant is not None:
-                    return int(variant.price)
-
-            if not product.has_variants:
-                return int(product.price)
-
-    title = str(item_data.get('product_title') or '').strip()
-    raise serializers.ValidationError(
-        {
-            'items': (
-                f'Не удалось проверить цену для позиции «{title}». '
-                'Обновите каталог в приложении.'
-            ),
-        },
-    )
+    return int(_resolve_item(item_data)[2].price)
 
 
 def apply_validated_item_prices(items_data: list[dict]) -> list[dict]:
-    validated_items: list[dict] = []
-
-    for item_data in items_data:
-        server_price = resolve_catalog_unit_price(item_data)
-
-        validated_item = dict(item_data)
-        validated_item['price'] = server_price
-        validated_items.append(validated_item)
-
-    return validated_items
+    result = []
+    for item in items_data:
+        product, variant, selected = _resolve_item(item)
+        result.append({**item, 'price': int(selected.price),
+                       'product_api_id': f'api_{product.pk}',
+                       'product_title': product.title,
+                       'variant_title': variant.title if variant else '',
+                       'saby_id': selected.saby_id})
+    return result

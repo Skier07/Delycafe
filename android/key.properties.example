@@ -1,0 +1,6 @@
+# Copy to android/key.properties and enter the existing release key details.
+# Use forward slashes for Windows paths. Keep the real file and keystore private.
+storeFile=F:/private/delycafe-release.jks
+storePassword=REPLACE_WITH_STORE_PASSWORD
+keyAlias=REPLACE_WITH_EXISTING_KEY_ALIAS
+keyPassword=REPLACE_WITH_KEY_PASSWORD

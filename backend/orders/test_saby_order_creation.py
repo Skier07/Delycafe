@@ -1,4 +1,5 @@
 import json
+from json import loads
 from datetime import datetime
 from unittest.mock import Mock, patch
 
@@ -55,8 +56,10 @@ class SabyOrderCreationTests(TestCase):
             self.assertNotIn('paymentType', json)
             self.assertEqual(json['nomenclatures'][0]['id'], 394)
             if not expected_pickup:
+                self.assertIsInstance(json['delivery']['addressJSON'], str)
+                address = loads(json['delivery']['addressJSON'])
                 self.assertEqual(
-                    json['delivery']['addressJSON']['Address'],
+                    address['Address'],
                     order.address,
                 )
             return Mock(

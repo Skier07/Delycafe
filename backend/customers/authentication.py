@@ -52,10 +52,16 @@ class CustomerTokenAuthentication(BaseAuthentication):
         customer = Customer.objects.filter(
             id=payload['customer_id'],
             phone=payload['phone'],
+            is_active=True,
         ).first()
 
         if customer is None:
             raise AuthenticationFailed('Пользователь не найден.')
+
+        if customer.tokens_revoked_at is not None:
+            issued_at = payload.get('iat', 0)
+            if issued_at <= customer.tokens_revoked_at.timestamp():
+                raise AuthenticationFailed('Сессия отозвана. Войдите снова.')
 
         return (CustomerPrincipal(customer), payload)
 

@@ -1,173 +1,65 @@
 import 'package:delycafe/config/api_config.dart';
 
+bool isSecureWebUri(Uri? uri) =>
+    uri != null &&
+    uri.scheme == 'https' &&
+    uri.host.isNotEmpty &&
+    uri.userInfo.isEmpty &&
+    uri.port == 443;
+
+bool hostMatches(String host, String domain) =>
+    host == domain || host.endsWith('.$domain');
+
 bool isAllowedLegalDocumentUrl(String url) {
   final uri = Uri.tryParse(url);
-
-  if (uri == null) {
-    return false;
-  }
-
-  final host = uri.host.toLowerCase();
-  final apiHost = Uri.parse(ApiConfig.normalizedBaseUrl).host.toLowerCase();
-
-  return host == apiHost;
+  final api = Uri.parse(ApiConfig.normalizedBaseUrl);
+  return isSecureWebUri(uri) && uri!.origin == api.origin;
 }
 
 String normalizePaymentUrl(String raw) {
-  var url = raw.trim();
-
-  if (url.isEmpty) {
-    return url;
-  }
-
-  if (url.contains('%3A%2F%2F') || url.contains('%2F')) {
-    try {
-      url = Uri.decodeComponent(url);
-    } catch (_) {
-      // Keep the original value when decoding fails.
-    }
-  }
-
-  if (url.startsWith('//')) {
-    return 'https:$url';
-  }
-
-  if (!RegExp(r'^[a-zA-Z][a-zA-Z\d+\-.]*://').hasMatch(url)) {
-    return 'https://$url';
-  }
-
-  return url;
+  final url = raw.trim();
+  // Do not decode an entire URL: it changes encoded query values and separators.
+  return url.startsWith('//') ? 'https:$url' : url;
 }
 
-bool _isPaymentReturnUrl(String url) {
-  final normalized = url.toLowerCase();
-
-  return normalized.contains('/api/payments/success') ||
-      normalized.contains('/api/payments/fail');
+bool isTrustedPaymentReturnUrl(String url) {
+  final uri = Uri.tryParse(url);
+  final api = Uri.parse(ApiConfig.normalizedBaseUrl);
+  return isSecureWebUri(uri) &&
+      uri!.origin == api.origin &&
+      const {
+        '/api/payments/success/',
+        '/api/payments/fail/',
+        '/api/payments/success',
+        '/api/payments/fail'
+      }.contains(uri.path);
 }
 
-bool _isAlfaPaymentSessionUrl(String url) {
-  final normalized = normalizePaymentUrl(url).toLowerCase();
-
-  if (!normalized.contains('mdorder=')) {
-    return false;
-  }
-
-  final uri = Uri.tryParse(normalized);
-  if (uri == null || uri.host.isEmpty) {
-    return false;
-  }
-
+bool isTrustedPaymentGateway(Uri uri) {
+  if (!isSecureWebUri(uri)) return false;
   final host = uri.host.toLowerCase();
-
-  return host.contains('alfabank') ||
-      host.contains('rbsuat') ||
-      host.contains('nspk') ||
-      host.contains('securepayecom');
+  return ApiConfig.paymentAllowedHosts.contains(host) ||
+      ApiConfig.paymentAllowedHostSuffixes.any((suffix) => hostMatches(
+          host, suffix.startsWith('.') ? suffix.substring(1) : suffix)) ||
+      hostMatches(host, 'nspk.ru');
 }
 
 bool isAllowedPaymentUrl(String url) {
   final normalized = normalizePaymentUrl(url);
   final uri = Uri.tryParse(normalized);
-
-  if (uri == null || uri.host.isEmpty) {
-    return false;
-  }
-
-  if (_isPaymentReturnUrl(normalized)) {
-    return true;
-  }
-
-  if (_isAlfaPaymentSessionUrl(normalized)) {
-    return true;
-  }
-
-  final scheme = uri.scheme.toLowerCase();
-  if (scheme != 'https' && scheme != 'http') {
-    return false;
-  }
-
-  final host = uri.host.toLowerCase();
-
-  if (host.contains('alfabank') ||
-      host.contains('rbsuat') ||
-      host.contains('securepayecom') ||
-      host == 'qr.nspk.ru' ||
-      host == 'sub.nspk.ru') {
-    return true;
-  }
-
-  for (final allowedHost in ApiConfig.paymentAllowedHosts) {
-    if (host == allowedHost) {
-      return true;
-    }
-  }
-
-  for (final suffix in ApiConfig.paymentAllowedHostSuffixes) {
-    if (host == suffix.substring(1) || host.endsWith(suffix)) {
-      return true;
-    }
-  }
-
-  final lowered = normalized.toLowerCase();
-
-  return lowered.contains('alfabank.ru/payment/') ||
-      lowered.contains('rbsuat.com/payment/') ||
-      isCard3dsPaymentUrl(normalized);
+  return uri != null &&
+      (isTrustedPaymentGateway(uri) || isTrustedPaymentReturnUrl(normalized));
 }
 
-/// ACS / 3-D Secure банка-эмитента. Без этого WebView режет редирект
-/// после «Оплатить», кнопка крутится, деньги не списываются.
-///
-/// Только http(s): deep link СБП вида `bank100…://qr.nspk.ru/...` тоже
-/// имеет host `qr.nspk.ru`, но должен открывать приложение банка, не WebView.
+/// Additional ACS origins are explicit; path fragments such as /acs/ confer no trust.
+/// Unknown HTTPS issuer pages open in the system browser with a visible address.
 bool isCard3dsPaymentUrl(String url) {
-  final normalized = normalizePaymentUrl(url);
-  final uri = Uri.tryParse(normalized);
-
-  if (uri == null) {
-    return false;
-  }
-
-  final scheme = uri.scheme.toLowerCase();
-  if (scheme != 'http' && scheme != 'https') {
-    return false;
-  }
-
-  if (uri.host.isEmpty) {
-    return false;
-  }
-
-  final host = uri.host.toLowerCase();
-  final path = uri.path.toLowerCase();
-  final haystack = '$host $path';
-
-  const markers = [
-    'acs',
-    '3ds',
-    '3dsecure',
-    '3d-secure',
-    'threedsecure',
-    'miraccept',
-    'mironline',
-    'cardinalcommerce',
-    'arcot',
-    'vbv',
-    'securecode',
-    'authentication',
-    'paysec',
-  ];
-
-  if (markers.any(haystack.contains)) {
-    return true;
-  }
-
-  return host.endsWith('.nspk.ru') ||
-      host == 'nspk.ru' ||
-      host.contains('visa.com') ||
-      host.contains('mastercard.com') ||
-      host.contains('mironline.ru') ||
-      host.contains('mir-plati.ru');
+  final uri = Uri.tryParse(url);
+  if (!isSecureWebUri(uri)) return false;
+  const configured = String.fromEnvironment('PAYMENT_3DS_ALLOWED_HOSTS');
+  final hosts =
+      configured.split(',').map((value) => value.trim().toLowerCase());
+  return hosts.contains(uri!.host.toLowerCase());
 }
 
 String paymentUrlRejectionHint(String url) {

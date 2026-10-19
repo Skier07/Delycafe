@@ -704,9 +704,6 @@ def upsert_customer_from_saby(
     customer.saby_synced_at = synced_at
     update_fields.append('saby_synced_at')
 
-    if not customer.is_active:
-        customer.is_active = True
-        update_fields.append('is_active')
 
     if update_fields:
         if customer.pk is None:

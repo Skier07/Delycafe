@@ -47,6 +47,8 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
   DateTime? _lastLaunchedAt;
   int _statusRetryGeneration = 0;
   bool _sbpFlowTriggered = false;
+  bool _isOpeningBrowser = false;
+  bool get _usesBrowser => widget.paymentType.toLowerCase() == 'card';
 
   @override
   void initState() {
@@ -127,13 +129,40 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     }
 
     _paymentUrl = paymentUrl;
-    _setupWebView(paymentUrl);
+    if (!_usesBrowser) {
+      _setupWebView(paymentUrl);
+    }
     _startPolling();
 
     if (!mounted) return;
 
     setState(() {
       _isLoading = false;
+    });
+    if (_usesBrowser) await _openCardPayment();
+  }
+
+  Future<void> _openCardPayment() async {
+    final url = _paymentUrl;
+    if (!mounted ||
+        _isOpeningBrowser ||
+        url == null ||
+        !isAllowedPaymentUrl(url)) return;
+    setState(() {
+      _isOpeningBrowser = true;
+      _awaitingBankReturn = true;
+      _errorMessage = null;
+    });
+    // The browser owns the entire card session, including POST-based 3DS redirects.
+    final opened = await _tryLaunchHttpsInBrowser(url);
+    if (!mounted) return;
+    setState(() {
+      _isOpeningBrowser = false;
+      if (!opened) {
+        _awaitingBankReturn = false;
+        _errorMessage =
+            'Не удалось открыть страницу банка. Нажмите «Открыть оплату» повторно.';
+      }
     });
   }
 
@@ -351,7 +380,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
     final browserFallback = httpsFallbackFromSbpBankDeepLink(url) ??
         _httpsFallbackForFailedLaunch(url);
 
-    if (browserFallback != null) {
+    if (browserFallback != null && isHttpOrHttpsUrl(browserFallback)) {
       final openedBrowser = await _tryLaunchHttpsInBrowser(browserFallback);
       if (!mounted) {
         return;
@@ -365,6 +394,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
 
       // Браузер тоже не открылся — форма НСПК внутри WebView.
       try {
+        if (!isAllowedPaymentUrl(browserFallback)) {
+          throw StateError('Недоверенный адрес оплаты');
+        }
         await _webViewController?.loadRequest(Uri.parse(browserFallback));
         if (mounted) {
           setState(() {
@@ -664,7 +696,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
               const SizedBox(height: 6),
               Text(
                 _awaitingBankReturn
-                    ? 'Завершите оплату в приложении банка и вернитесь сюда.'
+                    ? 'Завершите оплату на странице или в приложении банка и вернитесь сюда.'
                     : 'После оплаты заказ автоматически отправится на кухню.',
                 style: TextStyle(
                   fontSize: 14,
@@ -687,9 +719,18 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen>
           ),
         ),
         Expanded(
-          child: _webViewController == null
-              ? const SizedBox.shrink()
-              : WebViewWidget(controller: _webViewController!),
+          child: _usesBrowser
+              ? _buildMessage(
+                  title: 'Оплата на странице банка',
+                  message:
+                      'Карточная оплата открывается в браузере. После подтверждения вернитесь в приложение — результат проверится автоматически.',
+                  actionLabel:
+                      _isOpeningBrowser ? 'Открываем…' : 'Открыть оплату',
+                  onAction: () => unawaited(_openCardPayment()),
+                )
+              : _webViewController == null
+                  ? const SizedBox.shrink()
+                  : WebViewWidget(controller: _webViewController!),
         ),
         SafeArea(
           top: false,

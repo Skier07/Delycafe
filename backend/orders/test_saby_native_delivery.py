@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
@@ -100,6 +101,41 @@ class SabyNativeDeliveryTests(TestCase):
                 order.refresh_from_db()
                 self.assertTrue(order.saby_payment_registered)
                 self.assertEqual(order.saby_payment_error, '')
+
+    def test_native_address_matches_json_string_contract_and_keeps_district(self):
+        order = self.make_order(1540, 250)
+        order.address_locality = 'Озёрск'
+        order.address = 'Пушкина, 10'
+        order.address_entrance = '1'
+        order.address_apartment = '3'
+        payload = SabyOrderService()._build_payload(order, [])
+        delivery = payload['delivery']
+        self.assertIsInstance(delivery['addressJSON'], str)
+        self.assertEqual(delivery['district'], 7744)
+        self.assertIs(delivery['isPickup'], False)
+        address = json.loads(delivery['addressJSON'])
+        self.assertEqual(address['Locality'], 'Озёрск')
+        self.assertEqual(address['Address'], 'Пушкина, 10')
+        self.assertEqual(address['Entrance'], '1')
+        self.assertEqual(address['AptNum'], '3')
+
+    def test_179_missing_native_delivery_stops_payment_without_recreating_sale(self):
+        order = self.make_order(1540, 250)
+        order.saby_sale_id = '93726'
+        order.saby_order_number = '93726'
+        order.saby_external_id = 'test-order-179'
+        order.save()
+        with (
+            patch.object(SabyOrderService, 'read_sale', return_value={'totalPrice': 1540}),
+            patch('orders.services.requests.post') as post,
+            patch('orders.order_notification_service.try_send_admin_order_email'),
+            patch('orders.saby_order_status_service.SabyOrderStatusService.sync_order_status'),
+        ):
+            confirm_order_paid(order)
+            post.assert_not_called()
+        order.refresh_from_db()
+        self.assertFalse(order.saby_payment_registered)
+        self.assertIn('оплачено 1790', order.saby_payment_error)
 
     @override_settings(SABY_DELIVERY_MODE='item', SABY_DELIVERY_NOM_NUMBER='X7443708')
     def test_item_mode_plus_saby_tariff_reproduces_reported_totals(self):

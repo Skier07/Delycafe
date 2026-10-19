@@ -17,24 +17,9 @@ enum PaymentUrlAction {
   ignore,
 }
 
-bool isPaymentGatewayHost(Uri uri) {
-  final host = uri.host.toLowerCase();
-  if (host.isEmpty) return false;
+bool isPaymentGatewayHost(Uri uri) => isTrustedPaymentGateway(uri);
 
-  return host.contains('alfabank') ||
-      host.contains('rbsuat') ||
-      host.contains('securepayecom') ||
-      host == 'nspk.ru' ||
-      host == 'qr.nspk.ru' ||
-      host == 'sub.nspk.ru' ||
-      host.endsWith('.nspk.ru');
-}
-
-bool isPaymentReturnUrl(String url) {
-  final normalized = url.toLowerCase();
-  return normalized.contains('/api/payments/success') ||
-      normalized.contains('/api/payments/fail');
-}
+bool isPaymentReturnUrl(String url) => isTrustedPaymentReturnUrl(url);
 
 /// Deep link приложения банка СБП (`bank100…://…`, intent://, sberpay://, …).
 bool isSbpBankAppDeepLink(String url) {
@@ -45,7 +30,8 @@ bool isSbpBankAppDeepLink(String url) {
 
   final lowered = trimmed.toLowerCase();
   if (lowered.startsWith('intent:')) {
-    return true;
+    final rebuilt = buildUrlFromAndroidIntent(trimmed);
+    return rebuilt != null && isSbpBankAppDeepLink(rebuilt);
   }
 
   final uri = Uri.tryParse(trimmed);
@@ -66,7 +52,16 @@ bool isSbpBankAppDeepLink(String url) {
     return false;
   }
 
-  return true;
+  return RegExp(r'^bank[0-9]{12}$').hasMatch(scheme) ||
+      const {
+        'sberpay',
+        'yandexbank',
+        'btripsexpenses',
+        'tinkoffbank',
+        'tbank',
+        'vtb',
+        'alfabank'
+      }.contains(scheme);
 }
 
 /// Решает, что делать с URL из платёжного WebView.
@@ -82,7 +77,9 @@ PaymentUrlAction classifyPaymentNavigationUrl(String rawUrl) {
 
   final lowered = url.toLowerCase();
   if (lowered.startsWith('intent:')) {
-    return PaymentUrlAction.openExternally;
+    return isSbpBankAppDeepLink(url)
+        ? PaymentUrlAction.openExternally
+        : PaymentUrlAction.ignore;
   }
 
   final uri = Uri.tryParse(url);
@@ -96,7 +93,10 @@ PaymentUrlAction classifyPaymentNavigationUrl(String rawUrl) {
       scheme == 'about' ||
       scheme == 'data' ||
       scheme == 'javascript' ||
-      scheme == 'blob') {
+      scheme == 'blob' ||
+      scheme == 'file' ||
+      scheme == 'content' ||
+      scheme == 'http') {
     return PaymentUrlAction.ignore;
   }
 
@@ -104,8 +104,11 @@ PaymentUrlAction classifyPaymentNavigationUrl(String rawUrl) {
   // `bank100…://qr.nspk.ru/...` имеет host qr.nspk.ru и раньше
   // ошибочно оставался в WebView → net::ERR_UNKNOWN_URL_SCHEME.
   if (scheme != 'http' && scheme != 'https') {
-    return PaymentUrlAction.openExternally;
+    return isSbpBankAppDeepLink(url)
+        ? PaymentUrlAction.openExternally
+        : PaymentUrlAction.ignore;
   }
+  if (!isSecureWebUri(uri)) return PaymentUrlAction.ignore;
 
   if (isCard3dsPaymentUrl(url)) {
     return PaymentUrlAction.stayInWebView;
@@ -180,7 +183,7 @@ bool isHttpOrHttpsUrl(String url) {
   final uri = Uri.tryParse(url.trim());
   if (uri == null) return false;
   final scheme = uri.scheme.toLowerCase();
-  return scheme == 'http' || scheme == 'https';
+  return scheme == 'https' && isSecureWebUri(uri);
 }
 
 /// `bank100…://qr.nspk.ru/PAYLOAD` → `https://qr.nspk.ru/PAYLOAD`
@@ -281,6 +284,10 @@ List<String> paymentExternalLaunchCandidates(String url) {
   final seen = <String>{};
   return [
     for (final candidate in candidates)
-      if (seen.add(candidate)) candidate,
+      if (seen.add(candidate) &&
+          (isHttpOrHttpsUrl(candidate) ||
+              isSbpBankAppDeepLink(candidate) ||
+              candidate.startsWith('market://details?id=')))
+        candidate,
   ];
 }

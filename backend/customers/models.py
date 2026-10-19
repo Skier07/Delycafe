@@ -4,6 +4,7 @@ from django.db import models
 
 
 class Customer(models.Model):
+    tokens_revoked_at = models.DateTimeField(null=True, blank=True, editable=False)
     phone = models.CharField(
         max_length=30,
         unique=True,
@@ -214,6 +215,8 @@ class BonusTransaction(models.Model):
 
 
 class PhoneAuthSession(models.Model):
+    session_secret_hash = models.CharField(max_length=64, blank=True, editable=False)
+    consumed_at = models.DateTimeField(null=True, blank=True, editable=False)
     class Mode(models.TextChoices):
         SMS = 'sms', 'SMS OTP'
         MOBILE_ID = 'mobile_id', 'Mobile ID'

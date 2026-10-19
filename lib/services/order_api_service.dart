@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:delycafe/config/api_config.dart';
+import 'package:delycafe/exceptions/auth_required_exception.dart';
 import 'package:delycafe/services/api_auth_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class OrderCreateResult {
@@ -10,6 +13,7 @@ class OrderCreateResult {
   final int paymentAmount;
   final String paymentStatus;
   final String paymentType;
+  final String status;
   final String paymentUrl;
   final String? paymentError;
   final String orderAccessToken;
@@ -23,6 +27,7 @@ class OrderCreateResult {
     required this.paymentUrl,
     this.paymentError,
     this.orderAccessToken = '',
+    this.status = '',
   });
 
   factory OrderCreateResult.fromJson(Map<String, dynamic> json) {
@@ -32,6 +37,7 @@ class OrderCreateResult {
       paymentAmount: _toInt(json['payment_amount']),
       paymentStatus: json['payment_status']?.toString() ?? '',
       paymentType: json['payment_type']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
       paymentUrl: json['payment_url']?.toString() ?? '',
       paymentError: json['payment_error']?.toString(),
       orderAccessToken: json['order_access_token']?.toString() ?? '',
@@ -48,6 +54,34 @@ class OrderCreateResult {
 }
 
 class OrderApiService {
+  static const _storage = FlutterSecureStorage();
+  static const _pendingKey = 'pending_checkout_operation';
+  static Future<void> clearPendingCheckout() =>
+      _storage.delete(key: _pendingKey);
+
+  Future<String> _requestKey(String body) async {
+    final saved = await _storage.read(key: _pendingKey);
+    if (saved != null) {
+      try {
+        final data = jsonDecode(saved);
+        if (data is Map && data['body'] == body && data['key'] is String) {
+          return data['key'] as String;
+        }
+      } catch (_) {/* Replace an invalid local draft. */}
+    }
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    final hex =
+        bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
+    final key =
+        '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+    await _storage.write(
+        key: _pendingKey, value: jsonEncode({'key': key, 'body': body}));
+    return key;
+  }
+
   Future<OrderCreateResult> createOrder({
     required String phone,
     required String customerName,
@@ -70,7 +104,7 @@ class OrderApiService {
   }) async {
     final uri = ApiConfig.uri('/api/orders/');
 
-    final body = jsonEncode({
+    final payload = <String, dynamic>{
       'phone': phone,
       'customer_name': customerName,
       'delivery_type': deliveryType,
@@ -89,29 +123,27 @@ class OrderApiService {
       'privacy_accepted': privacyAccepted,
       'pd_consent_accepted': pdConsentAccepted,
       'marketing_consent_accepted': marketingConsentAccepted,
-    });
+    };
+    payload['checkout_key'] = await _requestKey(jsonEncode(payload));
+    final body = jsonEncode(payload);
 
-    var response = await http.post(
-      uri,
-      headers: await ApiAuthStorage.instance.authorizedHeaders(
-        jsonContentType: true,
-      ),
-      body: body,
-    );
+    final response = await http
+        .post(
+          uri,
+          headers: await ApiAuthStorage.instance.authorizedHeaders(
+            jsonContentType: true,
+          ),
+          body: body,
+        )
+        .timeout(const Duration(seconds: 60));
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       await ApiAuthStorage.instance.clearCustomerSession();
 
-      response = await http.post(
-        uri,
-        headers: ApiAuthStorage.instance.headers(
-          jsonContentType: true,
-          includeAccessToken: false,
-        ),
-        body: body,
-      );
+      throw const AuthRequiredException();
     }
 
+    if (response.statusCode == 400) await clearPendingCheckout();
     if (response.statusCode != 201) {
       throw Exception(
         'Ошибка оформления заказа: ${response.statusCode}\n'

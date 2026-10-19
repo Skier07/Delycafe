@@ -2,7 +2,6 @@ import logging
 
 from django.conf import settings
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +11,7 @@ from customers.authentication import (
     get_request_customer,
 )
 from customers.services.auth_token_service import create_order_access_token
+from customers.permissions import IsAuthenticatedCustomer
 from customers.views import normalize_phone
 from payments.services import AlfaPaymentError, create_alfa_payment
 
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class OrderCreateAPIView(APIView):
+    permission_classes = [IsAuthenticatedCustomer]
     authentication_classes = [
         CustomerTokenAuthentication,
         OrderAccessTokenAuthentication,
@@ -33,7 +34,7 @@ class OrderCreateAPIView(APIView):
         if customer is not None:
             payload['phone'] = customer.phone
 
-        serializer = OrderCreateSerializer(data=payload)
+        serializer = OrderCreateSerializer(data=payload, context={'request': request})
 
         serializer.is_valid(raise_exception=True)
 
@@ -41,7 +42,8 @@ class OrderCreateAPIView(APIView):
 
         payment_error = None
 
-        if getattr(settings, 'ALFA_PAYMENT_ENABLED', False):
+        if (getattr(settings, 'ALFA_PAYMENT_ENABLED', False)
+                and order.payment_status == order.PaymentStatus.UNPAID):
             try:
                 create_alfa_payment(order)
                 order.refresh_from_db()

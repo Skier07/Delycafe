@@ -1,5 +1,7 @@
 from datetime import timedelta
 import logging
+import hashlib
+import json
 
 from django.db import transaction
 from django.db.models import Q
@@ -31,11 +33,6 @@ from .promotions import (
     MAX_BONUS_SPEND_PERCENT,
     PICKUP_DISCOUNT_PERCENT,
     pickup_discount_amount,
-)
-from .services import rollback_order
-from payments.services import (
-    evaluate_alfa_session_for_reuse,
-    expire_all_stale_unpaid_orders,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,6 +102,7 @@ class OrderItemCreateSerializer(serializers.Serializer):
 
 
 class OrderCreateSerializer(serializers.Serializer):
+    checkout_key = serializers.UUIDField(required=False)
     phone = serializers.CharField(max_length=30)
 
     customer_name = serializers.CharField(
@@ -321,6 +319,10 @@ class OrderCreateSerializer(serializers.Serializer):
 
     def save(self, **kwargs):
         validated_data = dict(self.validated_data)
+        if validated_data.get('checkout_key'):
+            validated_data['checkout_fingerprint'] = hashlib.sha256(
+                json.dumps(self.initial_data, sort_keys=True, ensure_ascii=False).encode()
+            ).hexdigest()
 
         for key in (
             'terms_accepted',
@@ -371,10 +373,7 @@ class OrderCreateSerializer(serializers.Serializer):
         candidates = (
             Order.objects.filter(
                 phone_order_filter(phone),
-                payment_status__in=[
-                    Order.PaymentStatus.UNPAID,
-                    Order.PaymentStatus.FAILED,
-                ],
+                payment_status=Order.PaymentStatus.UNPAID,
                 status=Order.Status.NEW,
                 created_at__gte=cutoff,
             )
@@ -386,36 +385,9 @@ class OrderCreateSerializer(serializers.Serializer):
             if self._build_order_items_signature(order) != signature:
                 continue
 
-            if not evaluate_alfa_session_for_reuse(order):
-                continue
-
             return order
 
         return None
-
-    def _cancel_unpaid_orders(self, phone, *, exclude_order_id=None):
-        queryset = Order.objects.filter(
-            phone_order_filter(phone),
-            payment_status__in=[
-                Order.PaymentStatus.UNPAID,
-                Order.PaymentStatus.FAILED,
-            ],
-            status=Order.Status.NEW,
-        )
-
-        if exclude_order_id is not None:
-            queryset = queryset.exclude(id=exclude_order_id)
-
-        for order in queryset:
-            order.status = Order.Status.CANCELED
-            order.save(update_fields=['status', 'updated_at'])
-            try:
-                rollback_order(order)
-            except Exception:
-                logger.exception(
-                    'rollback_order failed for unpaid order #%s',
-                    order.id,
-                )
 
     def _calculate_order_pricing(
         self,
@@ -519,29 +491,6 @@ class OrderCreateSerializer(serializers.Serializer):
 
         return customer
 
-    def _needs_new_order_for_payment_change(self, order, data, items_data):
-        requested_bonus_spent = data.get('bonus_spent', 0)
-        if not APP_BONUSES_ENABLED:
-            requested_bonus_spent = 0
-
-        delivery_type = data.get('delivery_type')
-        customer = order.customer
-
-        if customer is None:
-            return data['payment_type'] != order.payment_type
-
-        pricing = self._calculate_order_pricing(
-            customer=customer,
-            items_data=items_data,
-            delivery_type=delivery_type,
-            requested_bonus_spent=requested_bonus_spent,
-        )
-
-        return (
-            data['payment_type'] != order.payment_type
-            or pricing['total_price'] != order.payment_amount
-        )
-
     def create_or_reuse(self, validated_data):
         data = dict(validated_data)
         if native_delivery_pricing() and not is_pickup_delivery(data.get('delivery_type')):
@@ -552,111 +501,39 @@ class OrderCreateSerializer(serializers.Serializer):
                 raise serializers.ValidationError({
                     'detail': 'Не удалось проверить стоимость доставки. Попробуйте ещё раз чуть позже.'
                 }) from error
-        expire_all_stale_unpaid_orders()
+        # Bank cleanup runs in cron, not in an unrelated customer's HTTP request.
         return self._create_or_reuse_atomic(data)
 
     @transaction.atomic
     def _create_or_reuse_atomic(self, data):
-        items_data = data['items']
-        reusable_order = self._find_reusable_unpaid_order(
-            data['phone'],
-            items_data,
-        )
-
-        if reusable_order is not None:
-            if self._needs_new_order_for_payment_change(
-                reusable_order,
-                data,
-                items_data,
-            ):
-                self._cancel_unpaid_orders(data['phone'])
-                return self.create(data)
-
-            self._cancel_unpaid_orders(
-                data['phone'],
-                exclude_order_id=reusable_order.id,
-            )
-            return self._update_existing_order(reusable_order, data)
-
-        self._cancel_unpaid_orders(data['phone'])
+        # Serialize attempts for one verified account. Existing paid sessions are immutable.
+        customer = Customer.objects.select_for_update().get(phone=data['phone'])
+        if not customer.is_active:
+            raise serializers.ValidationError({'detail': 'Аккаунт отключён.'})
+        if data.get('checkout_key'):
+            existing = Order.objects.filter(checkout_key=data['checkout_key']).first()
+            if existing is not None:
+                if (existing.customer_id != customer.pk or
+                        existing.checkout_fingerprint != data['checkout_fingerprint']):
+                    raise serializers.ValidationError({'detail': 'Идентификатор оформления уже использован.'})
+                if existing.status == Order.Status.CANCELED or existing.payment_status == Order.PaymentStatus.REFUNDED:
+                    raise serializers.ValidationError({'detail': 'Срок оформления истёк. Повторите заказ.'})
+                return existing
+            return self.create(data)
+        candidate = self._find_reusable_unpaid_order(data['phone'], data['items'])
+        if candidate is not None and candidate.customer_id == customer.pk:
+            fields = ('customer_name', 'delivery_type', 'address', 'address_locality',
+                      'address_entrance', 'address_floor', 'address_apartment',
+                      'delivery_time_type', 'delivery_time', 'payment_type', 'comment')
+            same = all(str(getattr(candidate, field) or '') == str(data.get(field) or '')
+                       for field in fields)
+            requested = data.get('bonus_spent', 0)
+            if same and requested == candidate.bonus_spent:
+                # Recheck delivery against the saved discounted merchandise amount.
+                base = candidate.products_total - candidate.discount_amount - candidate.bonus_spent
+                if calculate_delivery_price(data['delivery_type'], base if native_delivery_pricing() else candidate.products_total) == candidate.delivery_price:
+                    return candidate
         return self.create(data)
-
-    @transaction.atomic
-    def _update_existing_order(self, order, validated_data):
-        data = dict(validated_data)
-        items_data = data.pop('items')
-        requested_bonus_spent = data.pop('bonus_spent', 0)
-
-        if not APP_BONUSES_ENABLED:
-            requested_bonus_spent = 0
-
-        phone = data['phone']
-        customer_name = data.get('customer_name', '').strip()
-        order_address = (data.get('address') or '').strip()
-        delivery_type = data.get('delivery_type')
-
-        if delivery_requires_address(delivery_type):
-            if not data.get('address_locality'):
-                data['address_locality'] = get_default_locality(delivery_type)
-
-        customer = order.customer
-        if customer is None:
-            customer, _ = Customer.objects.get_or_create(
-                phone=phone,
-                defaults={
-                    'name': customer_name,
-                    'default_address': order_address
-                    if delivery_requires_address(delivery_type)
-                    else '',
-                    'first_order_discount_available': APP_FIRST_ORDER_DISCOUNT_ENABLED,
-                    'first_order_discount_used': False,
-                },
-            )
-            order.customer = customer
-
-        customer = Customer.objects.select_for_update().get(pk=customer.pk)
-
-        self._sync_customer_for_checkout(
-            customer=customer,
-            customer_name=customer_name,
-            order_address=order_address,
-            delivery_type=delivery_type,
-        )
-
-        pricing = self._calculate_order_pricing(
-            customer=customer,
-            items_data=items_data,
-            delivery_type=delivery_type,
-            requested_bonus_spent=requested_bonus_spent,
-        )
-
-        order.phone = phone
-        order.customer_name = customer_name
-        order.delivery_type = delivery_type
-        order.address = data.get('address', '')
-        order.address_locality = data.get('address_locality', '')
-        order.address_entrance = data.get('address_entrance', '')
-        order.address_floor = data.get('address_floor', '')
-        order.address_apartment = data.get('address_apartment', '')
-        order.delivery_time_type = data['delivery_time_type']
-        order.delivery_time = data.get('delivery_time', '')
-        order.payment_type = data['payment_type']
-        order.comment = data.get('comment', '')
-        order.products_total = pricing['products_total']
-        order.delivery_price = pricing['delivery_price']
-        order.discount_amount = pricing['discount_amount']
-        order.bonus_spent = pricing['bonus_spent']
-        order.bonus_earned = pricing['bonus_earned']
-        order.first_order_discount_applied = pricing['first_order_discount_applied']
-        order.total_price = pricing['total_price']
-        order.payment_amount = pricing['total_price']
-        order.status = Order.Status.NEW
-
-        if order.payment_status == Order.PaymentStatus.FAILED:
-            order.payment_status = Order.PaymentStatus.UNPAID
-
-        order.save()
-        return order
 
     @transaction.atomic
     def create(self, validated_data):

@@ -4,6 +4,8 @@ from customers.models import Customer
 
 
 class Order(models.Model):
+    checkout_key = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    checkout_fingerprint = models.CharField(max_length=64, blank=True, editable=False)
     class DeliveryType(models.TextChoices):
         OZERSK = 'ozersk', 'Озёрск'
         PROMPLOSHADKA = 'promploshadka', 'Промплощадка'

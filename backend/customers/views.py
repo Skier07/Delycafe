@@ -1,3 +1,9 @@
+import hashlib
+import hmac
+import secrets
+from functools import wraps
+from django.utils import timezone
+
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -8,7 +14,7 @@ from django.conf import settings
 
 from .authenticated_views import AuthenticatedCustomerAPIView
 from .authentication import CustomerTokenAuthentication, get_request_customer
-from .models import BonusTransaction, Customer, CustomerAddress
+from .models import BonusTransaction, Customer, CustomerAddress, PhoneAuthSession
 from .serializers import (
     BonusTransactionSerializer,
     CustomerAddressSerializer,
@@ -453,14 +459,46 @@ def _uses_refresh_tokens(request) -> bool:
     return request.data.get('token_mode') == 'refresh'
 
 
+def require_otp_session_secret(handler):
+    @wraps(handler)
+    def guarded(self, request, *args, **kwargs):
+        data = request.query_params if request.method == 'GET' else request.data
+        secret = str(request.headers.get('X-OTP-Session') or data.get('session_secret') or '')
+        try:
+            session = PhoneAuthSession.objects.filter(pk=int(data.get('session_id'))).first()
+        except (TypeError, ValueError):
+            session = None
+        digest = hashlib.sha256(secret.encode()).hexdigest()
+        if (session is None or not secret or not session.session_secret_hash
+                or not hmac.compare_digest(session.session_secret_hash, digest)
+                or session.consumed_at is not None or session.is_expired):
+            return Response({'detail': 'Сессия входа недействительна. Обновите приложение и запросите новый код.',
+                             'code': 'invalid_session'}, status=400)
+        return handler(self, request, *args, **kwargs)
+    return guarded
+
+
+def _consume_otp_session(session):
+    # Compare-and-set also protects SQLite; two requests cannot both mint tokens.
+    return PhoneAuthSession.objects.filter(
+        pk=session.pk, consumed_at__isnull=True, expires_at__gt=timezone.now(),
+        status=PhoneAuthSession.Status.VERIFIED,
+    ).update(consumed_at=timezone.now()) == 1
+
+
 def _finalize_verified_otp_session(session, *, use_refresh_tokens=False) -> Response:
+    if not _consume_otp_session(session):
+        return Response({'detail': 'Сессия уже использована или истекла.'}, status=400)
+    if Customer.objects.filter(phone=session.phone, is_active=False).exists():
+        return Response({'detail': 'Аккаунт отключён.'}, status=403)
     customer, error_response = get_or_create_customer_by_phone(session.phone)
 
     if error_response is not None:
         return error_response
 
     verified_session_id = session.id
-    session.delete()
+    if not customer.is_active:
+        return Response({'detail': 'Аккаунт отключён.'}, status=403)
 
     if use_refresh_tokens:
         access_token = create_customer_access_token(
@@ -523,8 +561,12 @@ class CustomerOtpSendAPIView(APIView):
         except OtpAuthError as error:
             return _otp_error_response(error)
 
+        secret = secrets.token_urlsafe(32)
+        session.session_secret_hash = hashlib.sha256(secret.encode()).hexdigest()
+        session.save(update_fields=['session_secret_hash'])
         normalized_phone = normalize_phone(phone)
         response_data = {
+            'session_secret': secret,
             'session_id': session.id,
             'phone': SabyCustomerService().format_phone_for_app(normalized_phone),
             'mode': session.mode,
@@ -548,6 +590,7 @@ class CustomerOtpVerifyAPIView(APIView):
     def get_throttles(self):
         return [ScopedRateThrottle()]
 
+    @require_otp_session_secret
     def post(self, request):
         session_id = request.data.get('session_id')
         code = str(request.data.get('code') or '').strip()
@@ -596,6 +639,7 @@ class CustomerOtpCompleteAPIView(APIView):
     def get_throttles(self):
         return [ScopedRateThrottle()]
 
+    @require_otp_session_secret
     def post(self, request):
         session_id = request.data.get('session_id')
         phone = request.data.get('phone')
@@ -713,6 +757,7 @@ class CustomerOtpStatusAPIView(APIView):
     def get_throttles(self):
         return [ScopedRateThrottle()]
 
+    @require_otp_session_secret
     def get(self, request):
         session_id = request.query_params.get('session_id')
         phone = request.query_params.get('phone')
@@ -744,6 +789,7 @@ class CustomerAccountDeleteAPIView(AuthenticatedCustomerAPIView):
     def get_throttles(self):
         return [ScopedRateThrottle()]
 
+    @require_otp_session_secret
     def post(self, request):
         customer = get_request_customer(request)
         session_id = request.data.get('session_id')
@@ -784,7 +830,8 @@ class CustomerAccountDeleteAPIView(AuthenticatedCustomerAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        session.delete()
+        if not _consume_otp_session(session):
+            return Response({'detail': 'Сессия уже использована.'}, status=400)
         delete_customer_account(customer)
 
         return Response(
@@ -807,7 +854,7 @@ class CustomerMobileIdWebhookAPIView(APIView):
                 or request.data.get('secret')
             )
 
-            if provided_secret != settings.SMSAERO_WEBHOOK_SECRET:
+            if not hmac.compare_digest(str(provided_secret or ''), settings.SMSAERO_WEBHOOK_SECRET):
                 return Response(status=status.HTTP_403_FORBIDDEN)
         elif not settings.DEBUG:
             return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -821,10 +868,11 @@ class CustomerMobileIdWebhookAPIView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         service = OtpAuthService()
-        service.apply_mobile_id_webhook(
-            smsaero_id=int(smsaero_id),
-            status=int(raw_status),
-            number=number,
-        )
+        try:
+            service.apply_mobile_id_webhook(
+                smsaero_id=int(smsaero_id), status=int(raw_status), number=number,
+            )
+        except (TypeError, ValueError):
+            return Response(status=400)
 
         return Response({'ok': True})

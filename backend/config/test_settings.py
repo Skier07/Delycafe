@@ -6,3 +6,6 @@ DATABASES = {
         'NAME': ':memory:',
     }
 }
+
+# In-process test clients do not terminate TLS.
+SECURE_SSL_REDIRECT = False

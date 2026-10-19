@@ -64,7 +64,7 @@ class CatalogPricingResolveTests(TestCase):
             {
                 'product_title': self.product.title,
                 'saby_id': self.product.saby_id,
-                'product_api_id': 'api_999',
+                'product_api_id': f'api_{self.product.pk}',
                 'price': 999,
             },
         )

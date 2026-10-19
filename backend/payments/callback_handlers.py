@@ -98,7 +98,7 @@ def handle_alfa_callback(data: dict[str, str]) -> dict:
 
     order = find_order_for_alfa_callback(data)
     if order is None:
-        logger.warning('Alfa callback: order not found for payload %s', data)
+        logger.warning('Alfa callback: order not found')
         return {
             'result': 'not_found',
             'detail': 'Заказ не найден.',
@@ -139,16 +139,6 @@ def handle_alfa_callback(data: dict[str, str]) -> dict:
         )
         return {
             'result': 'ignored',
-            'order_id': order.id,
-            'payment_status': order.payment_status,
-        }
-
-    if is_alfa_callback_failed(data):
-        order.payment_status = Order.PaymentStatus.FAILED
-        order.save(update_fields=['payment_status', 'updated_at'])
-        logger.info('Alfa callback: order #%s marked failed', order.id)
-        return {
-            'result': 'failed',
             'order_id': order.id,
             'payment_status': order.payment_status,
         }

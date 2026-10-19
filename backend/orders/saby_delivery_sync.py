@@ -3,7 +3,9 @@ from decimal import Decimal, InvalidOperation
 
 import requests
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, connection
+from contextlib import contextmanager
+from threading import Lock
 
 from catalog.services.saby_catalog_service import SabyCatalogService
 from .models import DeliveryPriceTier, DeliveryZone
@@ -12,6 +14,32 @@ from .models import DeliveryPriceTier, DeliveryZone
 class DeliverySyncError(Exception):
     pass
 
+
+_local_sync_lock = Lock()
+
+
+@contextmanager
+def _sync_lock():
+    # Separate from tariff rows: readers are never locked behind HTTP calls.
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(%s)", [741840197])
+            acquired = cursor.fetchone()[0]
+        if not acquired:
+            raise DeliverySyncError("Тарифы уже обновляются. Повторите запрос.")
+        try:
+            yield
+        finally:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [741840197])
+    else:
+        # SQLite is used only by local tests. Production uses PostgreSQL.
+        if not _local_sync_lock.acquire(blocking=False):
+            raise DeliverySyncError("Тарифы уже обновляются. Повторите запрос.")
+        try:
+            yield
+        finally:
+            _local_sync_lock.release()
 
 def whole_rubles(value, field):
     if isinstance(value, bool) or value is None:
@@ -83,18 +111,23 @@ def fetch_districts():
     return districts
 
 
-@transaction.atomic
 def sync_delivery_tariffs(*, dry_run=False):
+    with _sync_lock():
+        districts = fetch_districts()
+        return _apply_tariffs(districts, dry_run=dry_run)
+
+
+@transaction.atomic
+def _apply_tariffs(districts, *, dry_run=False):
     mapping = settings.SABY_DELIVERY_DISTRICT_IDS
     if not mapping or any(type(value) is not int or value <= 0 for value in mapping.values()):
         raise DeliverySyncError('Не настроены SABY_DELIVERY_DISTRICT_IDS.')
     if 'pickup' in mapping or len(set(mapping.values())) != len(mapping):
         raise DeliverySyncError('Районы доставки должны быть уникальными и не включать самовывоз.')
-    # Serialize syncs before fetching: an older HTTP response cannot overwrite newer rates.
+    # Only validation and writes hold tariff row locks.
     zones = list(DeliveryZone.objects.select_for_update().filter(code__in=mapping).order_by('pk'))
     if {zone.code for zone in zones} != set(mapping):
         raise DeliverySyncError('Не все настроенные зоны существуют в базе.')
-    districts = fetch_districts()
     plans = []
     for zone in zones:
         district = districts.get(mapping[zone.code])

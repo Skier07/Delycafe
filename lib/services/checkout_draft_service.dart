@@ -7,6 +7,7 @@ class CheckoutDraft {
     this.name = '',
     this.phone = '',
     this.address = '',
+    this.house = '',
     this.entrance = '',
     this.floor = '',
     this.apartment = '',
@@ -21,6 +22,7 @@ class CheckoutDraft {
   final String name;
   final String phone;
   final String address;
+  final String house;
   final String entrance;
   final String floor;
   final String apartment;
@@ -41,6 +43,7 @@ class CheckoutDraft {
         name.trim().isEmpty &&
         phone.trim().isEmpty &&
         address.trim().isEmpty &&
+        house.trim().isEmpty &&
         entrance.trim().isEmpty &&
         floor.trim().isEmpty &&
         apartment.trim().isEmpty &&
@@ -53,6 +56,7 @@ class CheckoutDraft {
       'name': name,
       'phone': phone,
       'address': address,
+      'house': house,
       'entrance': entrance,
       'floor': floor,
       'apartment': apartment,
@@ -70,6 +74,7 @@ class CheckoutDraft {
       name: json['name']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
+      house: json['house']?.toString() ?? '',
       entrance: json['entrance']?.toString() ?? '',
       floor: json['floor']?.toString() ?? '',
       apartment: json['apartment']?.toString() ?? '',

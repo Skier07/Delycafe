@@ -5,7 +5,8 @@ from unittest.mock import Mock, patch
 
 import requests
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.db import connection
+from django.test import TestCase, TransactionTestCase, override_settings
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIRequestFactory
 
@@ -14,6 +15,18 @@ from orders.delivery_views import DeliveryConfigAPIView
 from orders.models import DeliveryInfoSection, DeliveryZone, Order
 from orders.saby_delivery_sync import DeliverySyncError, sync_delivery_tariffs
 from orders.serializers import OrderCreateSerializer
+
+
+class DeliverySyncTransactionTests(TransactionTestCase):
+    def test_network_fetch_does_not_hold_database_transaction(self):
+        def fetch():
+            self.assertFalse(connection.in_atomic_block)
+            return {}
+
+        with patch('orders.saby_delivery_sync.fetch_districts', side_effect=fetch), \
+             patch('orders.saby_delivery_sync._apply_tariffs', return_value=[]) as apply:
+            self.assertEqual(sync_delivery_tariffs(), [])
+        apply.assert_called_once_with({}, dry_run=False)
 
 
 PAYLOAD = {'districts': [
@@ -104,8 +117,7 @@ class DeliverySyncTests(TestCase):
         self.assertEqual(calculate_delivery_price('ozersk', 500), 300)
 
     def test_every_delivery_checkout_refreshes_but_pickup_does_not(self):
-        with (patch.object(OrderCreateSerializer, '_create_or_reuse_atomic', return_value='order'),
-              patch('orders.serializers.expire_all_stale_unpaid_orders')):
+        with patch.object(OrderCreateSerializer, '_create_or_reuse_atomic', return_value='order'):
             self.assertEqual(OrderCreateSerializer().create_or_reuse({'delivery_type': 'ozersk'}), 'order')
             self.assertEqual(calculate_delivery_price('ozersk', 500), 350)
             self.http.reset_mock()

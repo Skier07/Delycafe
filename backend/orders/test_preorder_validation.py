@@ -31,6 +31,7 @@ class OrderPreorderValidationTests(TestCase):
             title='Пирог с капустой',
             price=450,
             is_active=True,
+            show_in_app=True,
         )
         self.pizza = Product.objects.create(
             category=self.pizza_category,
@@ -38,6 +39,7 @@ class OrderPreorderValidationTests(TestCase):
             title='Пицца Маргарита',
             price=590,
             is_active=True,
+            show_in_app=True,
         )
         self.tz = ZoneInfo('Asia/Yekaterinburg')
         self.at_18 = timezone.make_aware(datetime(2026, 9, 1, 18, 0), self.tz)
@@ -45,6 +47,9 @@ class OrderPreorderValidationTests(TestCase):
     def _order_payload(self, products):
         return {
             'phone': '+79001234567',
+            'terms_accepted': True,
+            'privacy_accepted': True,
+            'pd_consent_accepted': True,
             'delivery_type': 'pickup',
             'delivery_time_type': 'asap',
             'items': [

@@ -7,6 +7,7 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.db.models import F
 from django.utils import timezone
 
 from customers.models import PhoneAuthSession
@@ -50,6 +51,9 @@ class OtpAuthService:
         if self._is_review_phone(normalized_phone):
             return self._send_review_otp(normalized_phone)
 
+        if not settings.SMSAERO_ENABLED and not settings.DEBUG:
+            raise OtpAuthError('Вход временно недоступен.', code='sms_unavailable')
+
         if self.mode == 'mobile_id':
             return self._send_mobile_id(normalized_phone)
 
@@ -78,8 +82,12 @@ class OtpAuthService:
                 code='too_many_attempts',
             )
 
-        session.verify_attempts += 1
-        session.save(update_fields=['verify_attempts', 'updated_at'])
+        updated = PhoneAuthSession.objects.filter(
+            pk=session.pk, consumed_at__isnull=True, expires_at__gt=timezone.now(),
+            verify_attempts__lt=settings.SMSAERO_MAX_VERIFY_ATTEMPTS,
+        ).update(verify_attempts=F('verify_attempts') + 1)
+        if not updated:
+            raise OtpAuthError('Запросите новый код.', code='too_many_attempts')
 
         if session.mode == PhoneAuthSession.Mode.MOBILE_ID:
             if session.sms_fallback_sent_at:
@@ -119,8 +127,12 @@ class OtpAuthService:
                 code='too_many_attempts',
             )
 
-        session.verify_attempts += 1
-        session.save(update_fields=['verify_attempts', 'updated_at'])
+        updated = PhoneAuthSession.objects.filter(
+            pk=session.pk, consumed_at__isnull=True, expires_at__gt=timezone.now(),
+            verify_attempts__lt=settings.SMSAERO_MAX_VERIFY_ATTEMPTS,
+        ).update(verify_attempts=F('verify_attempts') + 1)
+        if not updated:
+            raise OtpAuthError('Запросите новый код.', code='too_many_attempts')
 
         if session.mode == PhoneAuthSession.Mode.MOBILE_ID:
             if session.sms_fallback_sent_at:
@@ -153,14 +165,13 @@ class OtpAuthService:
             logger.warning('Webhook mobile-id: сессия %s не найдена', smsaero_id)
             return None
 
-        if number:
-            normalized_number = self._normalize_phone(number)
-            if normalized_number and normalized_number != session.phone:
-                logger.warning(
-                    'Webhook mobile-id: номер %s не совпадает с сессией %s',
-                    normalized_number,
-                    session.phone,
-                )
+        if session.is_expired or session.consumed_at is not None:
+            return None
+        if number and self._normalize_phone(number) != session.phone:
+            logger.warning('Mobile ID webhook phone mismatch for session #%s', session.pk)
+            return None
+        if session.status == PhoneAuthSession.Status.VERIFIED:
+            return session
 
         if status == MOBILE_ID_STATUS_SUCCESS:
             session.mark_verified()
@@ -388,6 +399,8 @@ class OtpAuthService:
 
     def _send_review_otp(self, phone: str) -> PhoneAuthSession:
         code = self._review_code()
+        if not code.isdigit() or not 4 <= len(code) <= 8:
+            raise OtpAuthError('Не настроен код демонстрационного входа.', code='misconfigured')
         expires_at = timezone.now() + timedelta(
             seconds=settings.APP_STORE_REVIEW_OTP_TTL_SECONDS,
         )
@@ -419,7 +432,7 @@ class OtpAuthService:
         )
 
         if not settings.SMSAERO_ENABLED:
-            logger.info('SMS Aero отключён: OTP для %s = %s', phone, code)
+            logger.info('Development OTP issued')
             return session
 
         text = settings.SMSAERO_OTP_MESSAGE.format(code=code)
@@ -459,7 +472,7 @@ class OtpAuthService:
             session.status = PhoneAuthSession.Status.AWAITING_OTP
             session.code_hash = self._hash_code(phone, settings.SMSAERO_DEV_CODE)
             session.save(update_fields=['status', 'code_hash', 'updated_at'])
-            logger.info('SMS Aero отключён: mobile-id для %s, dev-код %s', phone, settings.SMSAERO_DEV_CODE)
+            logger.info('Development Mobile ID session issued')
             return session
 
         try:
@@ -594,7 +607,7 @@ class OtpAuthService:
         if session.status == PhoneAuthSession.Status.FAILED and not allow_failed:
             raise OtpAuthError('Сессия недействительна. Запросите новый код.', code='expired')
 
-        if session.is_expired and session.status != PhoneAuthSession.Status.VERIFIED:
+        if session.is_expired or session.consumed_at is not None:
             session.mark_failed()
             raise OtpAuthError('Код истёк. Запросите новый.', code='expired')
 
@@ -635,7 +648,7 @@ class OtpAuthService:
 
     @staticmethod
     def _review_code() -> str:
-        return str(getattr(settings, 'APP_STORE_REVIEW_CODE', '') or '1234').strip()
+        return str(getattr(settings, 'APP_STORE_REVIEW_CODE', '') or '').strip()
 
     @staticmethod
     def _normalize_phone(value: str) -> str:

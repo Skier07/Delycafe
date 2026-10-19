@@ -436,25 +436,6 @@ class HomeBanner extends StatelessWidget {
                 top: scale.loginTop,
                 child: _LoginBannerContent(scale: scale),
               ),
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: EdgeInsets.only(top: topPadding + 1),
-                  child: _BannerGlassIconButton(
-                    scale: scale,
-                    icon: CupertinoIcons.text_justify,
-                    onPressed: onMenuPressed,
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: _BannerCartButton(
-                  scale: scale,
-                  cartIconKey: cartIconKey,
-                  totalItems: cart.totalItems,
-                ),
-              ),
             ],
           ),
         ),

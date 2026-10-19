@@ -56,3 +56,10 @@ backend/staticfiles/
 backend/media/
 backend/catalog_data.json
 backend/products.json
+
+# Local databases and signing credentials must never be committed.
+*.sqlite3
+*.sqlite3-*
+*.jks
+*.keystore
+key.properties

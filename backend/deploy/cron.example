@@ -36,3 +36,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # */10 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /var/www/delycafe_backend/venv/bin/python manage.py retry_saby_dispatch --limit=50 >> /var/log/delycafe_saby_retry.log 2>&1
 #
 # Альфа-Банк (callback, returnUrl): см. deploy/alfa.env.example
+
+
+# Освобождает резерв бонусов только после подтверждённого завершения неоплаченной банковской сессии.
+*/5 * * * * cd /var/www/delycafe_backend/Delycafe/backend && /usr/bin/flock -n /var/www/delycafe_backend/expire-orders.lock /var/www/delycafe_backend/venv/bin/python manage.py expire_stale_unpaid_orders >> /var/www/delycafe_backend/expire-orders.log 2>&1

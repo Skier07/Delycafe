@@ -12,7 +12,8 @@ void main() {
         PaymentUrlAction.stayInWebView,
       );
       expect(
-        classifyPaymentNavigationUrl('https://payment.alfabank.ru/sc/JYPwxQDHJfsypzSo'),
+        classifyPaymentNavigationUrl(
+            'https://payment.alfabank.ru/sc/JYPwxQDHJfsypzSo'),
         PaymentUrlAction.stayInWebView,
       );
     });
@@ -25,7 +26,8 @@ void main() {
         PaymentUrlAction.stayInWebView,
       );
       expect(
-        classifyPaymentNavigationUrl('https://sub.nspk.ru/proxyapp/c2bmembers.json'),
+        classifyPaymentNavigationUrl(
+            'https://sub.nspk.ru/proxyapp/c2bmembers.json'),
         PaymentUrlAction.stayInWebView,
       );
     });
@@ -87,7 +89,7 @@ void main() {
       }
     });
 
-    test('keeps return and 3DS urls in WebView', () {
+    test('keeps trusted return but opens unknown issuer externally', () {
       expect(
         classifyPaymentNavigationUrl(
           'https://api.delycafe.ru/api/payments/success/?orderId=1',
@@ -98,7 +100,7 @@ void main() {
         classifyPaymentNavigationUrl(
           'https://acs.example-bank.ru/3ds/challenge?xid=1',
         ),
-        PaymentUrlAction.stayInWebView,
+        PaymentUrlAction.openExternally,
       );
     });
 
@@ -116,8 +118,7 @@ void main() {
 
   group('paymentExternalLaunchCandidates', () {
     test('parses Android intent into bank scheme and fallbacks', () {
-      const intent =
-          'intent://payment/sbp#Intent;scheme=bank100000000007;'
+      const intent = 'intent://payment/sbp#Intent;scheme=bank100000000007;'
           'package=com.idamob.tinkoff.android;'
           'S.browser_fallback_url=https%3A%2F%2Fwww.tinkoff.ru%2Fsbp;'
           'end';
@@ -152,7 +153,8 @@ void main() {
         'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET',
       );
 
-      expect(candidates.first, 'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET');
+      expect(
+          candidates.first, 'bank100000000111://qr.nspk.ru/AD10100IQ8AIV6ET');
       expect(candidates, contains('https://qr.nspk.ru/AD10100IQ8AIV6ET'));
     });
 

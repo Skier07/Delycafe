@@ -7,6 +7,7 @@ import 'package:delycafe/models/customer_address.dart';
 import 'package:delycafe/models/user.dart';
 import 'package:delycafe/services/api_auth_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class OtpSendResult {
   const OtpSendResult({
@@ -114,6 +115,16 @@ class OtpApiException implements Exception {
 }
 
 class CustomerApiService {
+  static const _otpStorage = FlutterSecureStorage();
+  Future<String> _otpSecret(int sessionId) async {
+    final secret = await _otpStorage.read(key: 'otp_secret_$sessionId');
+    if (secret == null || secret.isEmpty) {
+      throw const OtpApiException('Запросите новый код входа.',
+          code: 'invalid_session');
+    }
+    return secret;
+  }
+
   Future<OtpSendResult> sendOtp({
     required String phone,
   }) async {
@@ -127,7 +138,14 @@ class CustomerApiService {
 
     final data = _decodeResponse(response);
 
-    return OtpSendResult.fromJson(data);
+    final result = OtpSendResult.fromJson(data);
+    final secret = data['session_secret']?.toString() ?? '';
+    if (secret.isEmpty) {
+      throw const OtpApiException('Сервер входа требует обновления.');
+    }
+    await _otpStorage.write(
+        key: 'otp_secret_${result.sessionId}', value: secret);
+    return result;
   }
 
   Future<OtpVerifyResult> verifyOtp({
@@ -140,6 +158,7 @@ class CustomerApiService {
       headers: _jsonHeaders,
       body: jsonEncode({
         'session_id': sessionId,
+        'session_secret': await _otpSecret(sessionId),
         'phone': phone,
         'code': code,
         'token_mode': 'refresh',
@@ -152,6 +171,7 @@ class CustomerApiService {
       final data = jsonDecode(decodedBody);
 
       if (data is Map<String, dynamic>) {
+        await _otpStorage.delete(key: 'otp_secret_$sessionId');
         return OtpVerifyResult.fromJson(data);
       }
 
@@ -173,6 +193,7 @@ class CustomerApiService {
           'phone': phone,
         },
       ),
+      headers: {'X-OTP-Session': await _otpSecret(sessionId)},
     );
 
     final data = _decodeResponse(response);
@@ -189,6 +210,7 @@ class CustomerApiService {
       headers: _jsonHeaders,
       body: jsonEncode({
         'session_id': sessionId,
+        'session_secret': await _otpSecret(sessionId),
         'phone': phone,
         'token_mode': 'refresh',
       }),
@@ -200,6 +222,7 @@ class CustomerApiService {
       final data = jsonDecode(decodedBody);
 
       if (data is Map<String, dynamic>) {
+        await _otpStorage.delete(key: 'otp_secret_$sessionId');
         return OtpVerifyResult.fromJson(data);
       }
 
@@ -388,6 +411,7 @@ class CustomerApiService {
       body: jsonEncode({
         'phone': phone,
         'session_id': sessionId,
+        'session_secret': await _otpSecret(sessionId),
         'code': code,
       }),
     );

@@ -1,3 +1,5 @@
+import 'package:delycafe/features/auth/auth_screen.dart';
+import 'package:delycafe/exceptions/auth_required_exception.dart';
 import 'package:delycafe/ui/components/glass/glass_back_button.dart';
 import 'dart:async';
 
@@ -37,6 +39,28 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
         unawaited(auth.refreshCurrentUser());
       }
     });
+  }
+
+  Future<void> _finishPaidCheckout(OrderCreateResult order) async {
+    final auth = context.read<AuthService>();
+    final cart = context.read<CartService>();
+    try {
+      if (auth.isLoggedIn) await auth.refreshCurrentUser();
+    } catch (error) {
+      debugPrint('Не удалось обновить бонусы после оплаты: $error');
+    }
+    if (!mounted) return;
+    cart.clearCart();
+    await OrderApiService.clearPendingCheckout();
+    await CheckoutDraftService.instance.clear();
+    await ApiAuthStorage.instance.clearOrderAccessToken();
+    if (!mounted) return;
+    final message = order.status == 'canceled'
+        ? 'Оплата заказа №${order.id} получена. Свяжитесь с кафе для проверки заказа.'
+        : 'Заказ №${order.id} оплачен';
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+    Navigator.pop(context);
   }
 
   @override
@@ -86,184 +110,187 @@ class _CheckoutScreensState extends State<CheckoutScreens> {
                 children: [
                   _CartSummaryCard(cart: cart),
                   const SizedBox(height: 24),
-                  GuestCheckoutForm(
-                    cartTotal: cart.totalPrice,
-                    cartLines: [
-                      for (final item in cart.items)
-                        (unitPrice: item.unitPrice, quantity: item.quantity),
-                    ],
-                    initialName: user?.name,
-                    initialAddress: user?.checkoutAddress,
-                    initialPhone: user?.phone,
-                    savedAddresses: user?.addresses ?? const [],
-                    availableBonuses: user?.bonusBalance ?? 0,
-                    firstOrderDiscountAvailable:
-                        user?.firstOrderDiscountAvailable ?? false,
-                    onSubmit: (data) async {
-                      final cartService = context.read<CartService>();
-                      final legalConsent = context.read<LegalConsentService>();
+                  if (user == null)
+                    FilledButton(
+                      onPressed: () => Navigator.push<void>(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const AuthScreen())),
+                      child: const Text('Войти для оформления заказа'),
+                    )
+                  else
+                    GuestCheckoutForm(
+                      cartTotal: cart.totalPrice,
+                      cartLines: [
+                        for (final item in cart.items)
+                          (unitPrice: item.unitPrice, quantity: item.quantity),
+                      ],
+                      initialName: user.name,
+                      initialAddress: user.checkoutAddress,
+                      initialPhone: user.phone,
+                      savedAddresses: user.addresses,
+                      availableBonuses: user.bonusBalance,
+                      firstOrderDiscountAvailable:
+                          user.firstOrderDiscountAvailable,
+                      onSubmit: (data) async {
+                        final cartService = context.read<CartService>();
+                        final legalConsent =
+                            context.read<LegalConsentService>();
 
-                      if (cartService.items.isEmpty) {
-                        throw Exception('Корзина пуста');
-                      }
-
-                      final order = await OrderApiService().createOrder(
-                        phone: data.phone,
-                        customerName: data.name,
-                        deliveryType: data.deliveryTypeCode,
-                        address: data.address,
-                        addressLocality: data.addressLocality,
-                        addressEntrance: data.addressEntrance,
-                        addressFloor: data.addressFloor,
-                        addressApartment: data.addressApartment,
-                        deliveryTimeType: data.urgency.apiValue,
-                        deliveryTime: data.deliveryTime ?? '',
-                        paymentType: data.paymentMethod.apiValue,
-                        comment: data.comment,
-                        items: cartService.toOrderApiItems(),
-                        bonusSpent: data.bonusSpent,
-                        termsAccepted: legalConsent.termsAccepted,
-                        privacyAccepted: legalConsent.privacyAccepted,
-                        pdConsentAccepted: legalConsent.pdConsentAccepted,
-                        marketingConsentAccepted:
-                            legalConsent.marketingAccepted,
-                      );
-
-                      if (order.orderAccessToken.isNotEmpty) {
-                        await ApiAuthStorage.instance.saveOrderAccessToken(
-                          order.orderAccessToken,
-                        );
-                      }
-
-                      if (!context.mounted) return;
-
-                      final accepted = await confirmCheckoutPriceChange(
-                        context,
-                        previousAmount: data.totalPrice,
-                        currentAmount: order.paymentAmount,
-                      );
-                      if (!accepted || !context.mounted) return;
-
-                      final auth = context.read<AuthService>();
-                      try {
-                        if (auth.isLoggedIn) {
-                          await auth.refreshCurrentUser();
+                        if (cartService.items.isEmpty) {
+                          throw Exception('Корзина пуста');
                         }
-                      } catch (error) {
-                        debugPrint(
-                          'Не удалось обновить профиль после оформления заказа: $error',
-                        );
-                      }
 
-                      if (!context.mounted) return;
+                        final order = await OrderApiService()
+                            .createOrder(
+                          phone: data.phone,
+                          customerName: data.name,
+                          deliveryType: data.deliveryTypeCode,
+                          address: data.address,
+                          addressLocality: data.addressLocality,
+                          addressEntrance: data.addressEntrance,
+                          addressFloor: data.addressFloor,
+                          addressApartment: data.addressApartment,
+                          deliveryTimeType: data.urgency.apiValue,
+                          deliveryTime: data.deliveryTime ?? '',
+                          paymentType: data.paymentMethod.apiValue,
+                          comment: data.comment,
+                          items: cartService.toOrderApiItems(),
+                          bonusSpent: data.bonusSpent,
+                          termsAccepted: legalConsent.termsAccepted,
+                          privacyAccepted: legalConsent.privacyAccepted,
+                          pdConsentAccepted: legalConsent.pdConsentAccepted,
+                          marketingConsentAccepted:
+                              legalConsent.marketingAccepted,
+                        )
+                            .onError<AuthRequiredException>(
+                                (error, stack) async {
+                          if (!context.mounted) throw error;
+                          await context.read<AuthService>().logout();
+                          if (context.mounted) {
+                            await Navigator.push<void>(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AuthScreen()));
+                          }
+                          throw error;
+                        });
 
-                      var paymentUrl = normalizePaymentUrl(order.paymentUrl);
-                      var paymentError = order.paymentError?.trim();
-
-                      if (paymentUrl.isEmpty) {
-                        try {
-                          final session =
-                              await PaymentApiService().createPayment(order.id);
-                          paymentUrl = normalizePaymentUrl(session.paymentUrl);
-                        } catch (error) {
-                          paymentError ??= error.toString();
+                        if (order.orderAccessToken.isNotEmpty) {
+                          await ApiAuthStorage.instance.saveOrderAccessToken(
+                            order.orderAccessToken,
+                          );
                         }
-                      }
 
-                      if (paymentUrl.isNotEmpty &&
-                          !isAllowedPaymentUrl(paymentUrl)) {
+                        if (!context.mounted) return;
+
+                        if (order.paymentStatus == 'paid') {
+                          await _finishPaidCheckout(order);
+                          return;
+                        }
+
+                        final accepted = await confirmCheckoutPriceChange(
+                          context,
+                          previousAmount: data.totalPrice,
+                          currentAmount: order.paymentAmount,
+                        );
+                        if (!accepted || !context.mounted) return;
+
+                        final auth = context.read<AuthService>();
                         try {
-                          final session =
-                              await PaymentApiService().createPayment(order.id);
-                          final refreshed =
-                              normalizePaymentUrl(session.paymentUrl);
-
-                          if (refreshed.isNotEmpty &&
-                              isAllowedPaymentUrl(refreshed)) {
-                            paymentUrl = refreshed;
+                          if (auth.isLoggedIn) {
+                            await auth.refreshCurrentUser();
                           }
                         } catch (error) {
-                          paymentError ??= error.toString();
+                          debugPrint(
+                            'Не удалось обновить профиль после оформления заказа: $error',
+                          );
                         }
-                      }
 
-                      if (paymentUrl.isNotEmpty) {
-                        paymentError = null;
-                      }
+                        if (!context.mounted) return;
 
-                      if (paymentUrl.isEmpty) {
-                        AppHaptics.error();
-                        throw Exception(
-                          paymentError?.isNotEmpty == true
-                              ? paymentError!
-                              : 'Не удалось получить ссылку на оплату '
-                                  'для заказа №${order.id}.',
-                        );
-                      }
+                        var paymentUrl = normalizePaymentUrl(order.paymentUrl);
+                        var paymentError = order.paymentError?.trim();
 
-                      if (!isAllowedPaymentUrl(paymentUrl)) {
-                        AppHaptics.error();
-                        throw Exception(paymentUrlRejectionHint(paymentUrl));
-                      }
+                        if (paymentUrl.isEmpty) {
+                          try {
+                            final session = await PaymentApiService()
+                                .createPayment(order.id);
+                            paymentUrl =
+                                normalizePaymentUrl(session.paymentUrl);
+                          } catch (error) {
+                            paymentError ??= error.toString();
+                          }
+                        }
 
-                      final paid = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OrderPaymentScreen(
-                            orderId: order.id,
-                            paymentUrl: paymentUrl,
-                            paymentAmount: order.paymentAmount,
-                            paymentType: order.paymentType,
-                          ),
-                        ),
-                      );
+                        if (paymentUrl.isNotEmpty &&
+                            !isAllowedPaymentUrl(paymentUrl)) {
+                          try {
+                            final session = await PaymentApiService()
+                                .createPayment(order.id);
+                            final refreshed =
+                                normalizePaymentUrl(session.paymentUrl);
 
-                      if (!context.mounted) return;
+                            if (refreshed.isNotEmpty &&
+                                isAllowedPaymentUrl(refreshed)) {
+                              paymentUrl = refreshed;
+                            }
+                          } catch (error) {
+                            paymentError ??= error.toString();
+                          }
+                        }
 
-                      if (paid != true) {
-                        AppHaptics.error();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Оплата не подтверждена. Если деньги списались, '
-                              'откройте «История заказов» или оформите снова — '
-                              'будет использован заказ №${order.id}.',
+                        if (paymentUrl.isNotEmpty) {
+                          paymentError = null;
+                        }
+
+                        if (paymentUrl.isEmpty) {
+                          AppHaptics.error();
+                          throw Exception(
+                            paymentError?.isNotEmpty == true
+                                ? paymentError!
+                                : 'Не удалось получить ссылку на оплату '
+                                    'для заказа №${order.id}.',
+                          );
+                        }
+
+                        if (!isAllowedPaymentUrl(paymentUrl)) {
+                          AppHaptics.error();
+                          throw Exception(paymentUrlRejectionHint(paymentUrl));
+                        }
+
+                        final paid = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OrderPaymentScreen(
+                              orderId: order.id,
+                              paymentUrl: paymentUrl,
+                              paymentAmount: order.paymentAmount,
+                              paymentType: order.paymentType,
                             ),
                           ),
                         );
-                        Navigator.pop(context);
-                        return;
-                      }
 
-                      try {
-                        if (auth.isLoggedIn) {
-                          await auth.refreshCurrentUser();
+                        if (!context.mounted) return;
+
+                        if (paid != true) {
+                          AppHaptics.error();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Оплата не подтверждена. Если деньги списались, '
+                                'проверьте заказ №${order.id} в «Истории заказов» '
+                                'перед повторным оформлением.',
+                              ),
+                            ),
+                          );
+                          Navigator.pop(context);
+                          return;
                         }
-                      } catch (error) {
-                        debugPrint(
-                          'Не удалось обновить бонусы после оплаты: $error',
-                        );
-                      }
 
-                      if (!context.mounted) return;
-
-                      cartService.clearCart();
-                      await CheckoutDraftService.instance.clear();
-                      await ApiAuthStorage.instance.clearOrderAccessToken();
-
-                      if (!context.mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Заказ №${order.id} оплачен и принят в работу',
-                          ),
-                        ),
-                      );
-
-                      Navigator.pop(context);
-                    },
-                  ),
+                        await _finishPaidCheckout(order);
+                      },
+                    ),
                 ],
               ),
             ),

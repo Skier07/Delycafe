@@ -9,6 +9,11 @@ from payments.services import AlfaPaymentError, _fetch_alfa_status_response
 
 def validate_paid_response(order, response):
     """Не передавать в исполнение чужой, неполный или возвращённый платёж."""
+    if not isinstance(response, dict):
+        raise AlfaPaymentError('Неверный формат ответа банка.')
+    external_id = response.get('orderId') or response.get('order_id')
+    if external_id and order.payment_external_id and str(external_id) != order.payment_external_id:
+        raise AlfaPaymentError('ID платежа банка не совпадает.')
     expected = f'delycafe-{order.pk}'
     if response.get('orderNumber') != expected:
         raise AlfaPaymentError('Номер заказа в ответе банка не совпадает.')
@@ -18,7 +23,8 @@ def validate_paid_response(order, response):
         info = response.get('paymentAmountInfo') or {}
         deposited = Decimal(str(info.get('depositedAmount', amount)))
         refunded = Decimal(str(info.get('refundedAmount', 0)))
-        if expected_amount <= 0 or amount != expected_amount or deposited != amount:
+        if (not all(value.is_finite() for value in (amount, expected_amount, deposited, refunded))
+                or expected_amount <= 0 or amount != expected_amount or deposited != amount):
             raise AlfaPaymentError('Сумма зачисления банка не совпадает с заказом.')
         if refunded != 0:
             raise AlfaPaymentError('По платежу есть возврат; требуется сверка вручную.')

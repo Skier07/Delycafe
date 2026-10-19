@@ -19,6 +19,7 @@ from customers.services.smsaero_service import SmsAeroError
 class MobileIdSmsFallbackTests(TestCase):
     def setUp(self):
         self.sms_client = MagicMock()
+        self.sms_client.mobile_id_status.return_value = {"data": {"status": 0}}
         self.service = OtpAuthService(sms_client=self.sms_client)
         self.phone = '79001234567'
 

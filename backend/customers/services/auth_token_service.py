@@ -83,8 +83,14 @@ def decode_customer_access_token(token: str) -> dict:
     if not customer_id or not phone:
         raise AuthTokenError('Недействительный токен.')
 
+    try:
+        customer_id = int(customer_id)
+        issued_at = int(payload.get('iat', 0))
+    except (TypeError, ValueError, OverflowError) as error:
+        raise AuthTokenError('Недействительный токен.') from error
     return {
-        'customer_id': int(customer_id),
+        'iat': issued_at,
+        'customer_id': customer_id,
         'phone': str(phone),
         'jti': payload.get('jti'),
     }
@@ -198,7 +204,11 @@ def decode_order_access_token(token: str) -> dict:
     if order_id is None or not phone:
         raise AuthTokenError('Недействительный токен заказа.')
 
+    try:
+        order_id = int(order_id)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise AuthTokenError('Недействительный токен заказа.') from error
     return {
-        'order_id': int(order_id),
+        'order_id': order_id,
         'phone': str(phone),
     }

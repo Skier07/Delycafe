@@ -44,6 +44,11 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', str(not DEBUG)).lower() == 'true'
+SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '3600' if not DEBUG else '0'))
+# Enable subdomains/preload only after verifying every subdomain is HTTPS.
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
 
 
 # Application definition
@@ -368,11 +373,11 @@ SMSAERO_DEV_CODE = os.getenv('SMSAERO_DEV_CODE', '1234')
 # Телефоны через запятую, в любом виде: +79000000000 или 79000000000.
 APP_STORE_REVIEW_PHONES = os.getenv(
     'APP_STORE_REVIEW_PHONES',
-    '79000000000',
+    '',
 )
-APP_STORE_REVIEW_CODE = os.getenv('APP_STORE_REVIEW_CODE', '1234')
+APP_STORE_REVIEW_CODE = os.getenv('APP_STORE_REVIEW_CODE', '')
 APP_STORE_REVIEW_OTP_TTL_SECONDS = int(
-    os.getenv('APP_STORE_REVIEW_OTP_TTL_SECONDS', str(7 * 24 * 60 * 60))
+    os.getenv('APP_STORE_REVIEW_OTP_TTL_SECONDS', str(300))
 )
 
 # Уведомления администратору об оплаченных заказах (Mail.ru SMTP).
